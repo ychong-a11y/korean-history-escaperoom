@@ -39,10 +39,11 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "river", available: false, icon: "🌊", year: "???",
+    id: "river", available: true, href: "river.html", icon: "🌊", year: "???",
     title: "물이 빠진 강",
     summary: "강물이 얕아졌다. 강을 건너오는 대군, 그리고 상류에 숨겨진 비밀.",
     cover: "linear-gradient(135deg,#2d5a6b,#142a33)",
+    playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
     id: "snowfort", available: false, icon: "❄️", year: "???",
