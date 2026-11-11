@@ -50,9 +50,10 @@ THEMES.push(
     cover: "linear-gradient(135deg,#5a5a6b,#22222b)",
   },
   {
-    id: "paper", available: false, icon: "📜", year: "???",
+    id: "paper", available: true, href: "paper.html", icon: "📜", year: "???",
     title: "숨겨진 종이 뭉치",
     summary: "인쇄소 바닥 밑에 숨긴 종이 수만 장. 날이 밝기 전에 전해야 한다.",
     cover: "linear-gradient(135deg,#6b3a3a,#2b1717)",
+    playtime: "전 6장 · 약 1시간", level: "3D",
   },
 );
