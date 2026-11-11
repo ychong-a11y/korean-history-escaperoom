@@ -46,10 +46,11 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "snowfort", available: false, icon: "❄️", year: "???",
+    id: "snowfort", available: true, href: "snowfort.html", icon: "❄️", year: "???",
     title: "눈 덮인 산성",
     summary: "산성에 갇힌 지 수십 일. 성안의 식량은 줄어들고, 결정을 내려야 한다.",
     cover: "linear-gradient(135deg,#5a5a6b,#22222b)",
+    playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
     id: "paper", available: true, href: "paper.html", icon: "📜", year: "???",
