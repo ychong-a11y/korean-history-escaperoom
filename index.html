@@ -1,0 +1,619 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>역사 방탈출</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --paper: #f3ead8;
+  --paper-2: #e8dcc2;
+  --paper-3: #fbf6ea;
+  --ink: #2b2118;
+  --ink-soft: #5c4d3c;
+  --red: #b23a2e;
+  --green: #2f6b4f;
+  --blue: #24557a;
+  --gold: #c9a227;
+  --night: #16130f;
+  --line: rgba(43, 33, 24, .18);
+  --ok: #2f6b4f;
+  --bad: #b23a2e;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; min-height: 100%; }
+body {
+  background: var(--night); color: var(--ink);
+  font-family: "Noto Sans KR", system-ui, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+button { font: inherit; cursor: pointer; color: inherit; }
+.serif { font-family: "Gowun Batang", serif; }
+.dancheong {
+  height: 10px;
+  background: repeating-linear-gradient(90deg,
+    var(--red) 0 18px, var(--gold) 18px 22px, var(--green) 22px 40px,
+    var(--gold) 40px 44px, var(--blue) 44px 62px, var(--gold) 62px 66px);
+}
+.app { max-width: 980px; margin: 0 auto; min-height: 100vh; display: flex; flex-direction: column; }
+.hidden { display: none !important; }
+
+/* ---------- 테마 선택 ---------- */
+.hub { padding: 28px 16px 40px; color: var(--paper); }
+.hub-head { text-align: center; margin-bottom: 26px; }
+.hub-head .tag { color: var(--gold); font-weight: 700; letter-spacing: .12em; font-size: 13px; }
+.hub-head h1 { font-family: "Gowun Batang", serif; font-size: 40px; margin: 6px 0 8px; }
+.hub-head p { opacity: .75; margin: 0; line-height: 1.6; }
+.themes { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+.theme {
+  text-align: left; border: 0; padding: 0; border-radius: 14px; overflow: hidden;
+  background: var(--paper); color: var(--ink); box-shadow: 0 10px 30px rgba(0,0,0,.45);
+  display: flex; flex-direction: column; transition: transform .15s;
+}
+.theme:not(.soon):hover { transform: translateY(-4px); }
+.theme .cover { height: 120px; display: grid; place-items: center; font-size: 56px; position: relative; }
+.theme .cover .year {
+  position: absolute; left: 12px; bottom: 10px; background: rgba(0,0,0,.45); color: var(--paper);
+  border-radius: 999px; padding: 3px 10px; font-size: 13px; font-weight: 700;
+}
+.theme .info { padding: 14px 16px 16px; flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.theme h2 { font-family: "Gowun Batang", serif; margin: 0; font-size: 22px; }
+.theme p { margin: 0; font-size: 14px; line-height: 1.6; color: var(--ink-soft); flex: 1; }
+.theme .meta { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+.badge { font-size: 12px; border-radius: 999px; padding: 3px 9px; background: var(--paper-2); }
+.badge.play { background: var(--red); color: var(--paper); font-weight: 700; }
+.badge.cleared { background: var(--green); color: var(--paper); }
+.theme.soon { opacity: .55; cursor: default; }
+.theme.soon .cover { filter: grayscale(1); }
+
+/* ---------- 상단 바 ---------- */
+.topbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 12px 16px; color: var(--paper); }
+.topbar .room-title { font-family: "Gowun Batang", serif; font-size: 20px; font-weight: 700; flex: 1; min-width: 180px; }
+.topbar .room-title small { display: block; font-family: "Noto Sans KR"; font-size: 12px; font-weight: 400; opacity: .7; }
+.chip {
+  background: rgba(243,234,216,.1); border: 1px solid rgba(243,234,216,.25);
+  color: var(--paper); border-radius: 999px; padding: 6px 12px; font-size: 14px;
+}
+button.chip:hover { background: rgba(243,234,216,.2); }
+.timer { font-variant-numeric: tabular-nums; }
+.progress { display: flex; gap: 6px; padding: 0 16px 12px; }
+.progress span { flex: 1; height: 6px; border-radius: 3px; background: rgba(243,234,216,.15); }
+.progress span.done { background: var(--gold); }
+.progress span.now { background: rgba(201,162,39,.5); }
+
+/* ---------- 방 ---------- */
+.scene { margin: 0 16px; border-radius: 14px; padding: 22px 18px 26px; box-shadow: inset 0 0 80px rgba(0,0,0,.55); }
+.scene-date { color: var(--gold); font-weight: 700; font-size: 13px; letter-spacing: .05em; margin-bottom: 6px; }
+.scene-desc { color: var(--paper); opacity: .9; font-size: 15px; line-height: 1.7; margin: 0 0 18px; max-width: 680px; }
+.objects { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 14px; }
+.obj {
+  background: linear-gradient(180deg, var(--paper), var(--paper-2));
+  border: 1px solid rgba(0,0,0,.2); border-radius: 12px; padding: 16px 10px 12px; text-align: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,.35); transition: transform .15s, box-shadow .15s; position: relative;
+}
+.obj:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,.45); }
+.obj:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+.obj .icon { font-size: 40px; line-height: 1; display: block; margin-bottom: 8px; }
+.obj .name, .obj .state { display: block; }
+.obj .name { font-family: "Gowun Batang", serif; font-weight: 700; font-size: 16px; }
+.obj .state { font-size: 12px; color: var(--ink-soft); margin-top: 4px; min-height: 16px; }
+.obj.solved::after { content: "✓"; position: absolute; top: 8px; right: 10px; color: var(--ok); font-weight: 700; }
+.obj.door { border: 2px solid var(--gold); }
+.obj.new::before {
+  content: "새 단서"; position: absolute; top: -8px; left: 50%; transform: translateX(-50%);
+  background: var(--red); color: var(--paper); font-size: 11px; padding: 2px 8px; border-radius: 999px;
+}
+
+.bottom { padding: 16px; display: grid; gap: 12px; grid-template-columns: 1fr 1fr; }
+.panel { background: rgba(243,234,216,.06); border: 1px solid rgba(243,234,216,.15); border-radius: 12px; padding: 12px 14px; color: var(--paper); }
+.panel h3 { margin: 0 0 8px; font-size: 13px; font-weight: 500; opacity: .7; }
+.inv { display: flex; gap: 8px; flex-wrap: wrap; min-height: 36px; }
+.item { background: var(--paper); color: var(--ink); border-radius: 8px; padding: 6px 10px; font-size: 14px; display: inline-flex; gap: 6px; align-items: center; }
+.item.used { opacity: .4; text-decoration: line-through; }
+.tile { background: var(--red); color: var(--paper); font-family: "Gowun Batang", serif; font-weight: 700; border-radius: 8px; padding: 6px 12px; font-size: 18px; border: 2px solid var(--gold); }
+.empty { opacity: .55; font-size: 14px; align-self: center; }
+
+/* ---------- 모달 ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(10,8,6,.72); display: none; align-items: center; justify-content: center; padding: 16px; z-index: 10; }
+.overlay.open { display: flex; }
+.modal { background: var(--paper); border-radius: 14px; width: 100%; max-width: 560px; max-height: calc(100vh - 32px); overflow: auto; box-shadow: 0 20px 60px rgba(0,0,0,.6); }
+.modal-body { padding: 20px 22px 22px; }
+.modal h2 { font-family: "Gowun Batang", serif; margin: 0 0 4px; font-size: 22px; display: flex; gap: 10px; align-items: center; }
+.modal .sub { color: var(--ink-soft); font-size: 13px; margin-bottom: 14px; }
+.modal p { line-height: 1.75; margin: 0 0 12px; }
+.doc { font-family: "Gowun Batang", serif; background: var(--paper-3); border: 1px solid var(--line); border-left: 4px solid var(--red); border-radius: 6px; padding: 12px 14px; line-height: 1.85; margin-bottom: 12px; }
+.doc ol, .doc ul { margin: 4px 0; padding-left: 22px; }
+.doc table { border-collapse: collapse; width: 100%; font-size: 14px; }
+.doc td, .doc th { border: 1px solid var(--line); padding: 4px 6px; text-align: center; }
+.note { font-size: 13px; color: var(--ink-soft); }
+.actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin-top: 16px; }
+.btn { border: 0; border-radius: 10px; padding: 10px 16px; font-weight: 700; background: var(--ink); color: var(--paper); }
+.btn:hover { filter: brightness(1.2); }
+.btn.ghost { background: transparent; color: var(--ink); border: 1px solid var(--line); }
+.btn.gold { background: var(--gold); color: var(--ink); }
+.btn.red { background: var(--red); color: var(--paper); }
+.msg { min-height: 22px; font-size: 14px; margin-top: 10px; font-weight: 500; }
+.msg.bad { color: var(--bad); }
+.msg.ok { color: var(--ok); }
+.shake { animation: shake .35s; }
+@keyframes shake { 20%,60% { transform: translateX(-6px);} 40%,80% { transform: translateX(6px);} }
+
+/* ---------- 퍼즐 ---------- */
+.code-display { display: flex; gap: 8px; justify-content: center; margin: 6px 0 14px; }
+.code-display span { width: 46px; height: 56px; border-radius: 8px; background: var(--ink); color: var(--gold); display: grid; place-items: center; font-size: 28px; font-weight: 700; }
+.keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; max-width: 260px; margin: 0 auto; }
+.keypad button { padding: 12px 0; border-radius: 10px; border: 1px solid var(--line); background: var(--paper-3); font-size: 20px; font-weight: 700; }
+.keypad button:hover { background: #fff; }
+.choices { display: grid; gap: 8px; }
+.choices.grid2 { grid-template-columns: 1fr 1fr; }
+.choices button { text-align: left; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper-3); }
+.choices button:hover { border-color: var(--ink); }
+.order-slots { display: flex; gap: 6px; flex-wrap: wrap; min-height: 48px; padding: 8px; border: 2px dashed var(--line); border-radius: 10px; margin-bottom: 10px; }
+.order-slots .placed { background: var(--ink); color: var(--paper); border-radius: 8px; padding: 6px 10px; font-size: 14px; }
+.order-slots .placed b { color: var(--gold); margin-right: 4px; }
+.order-pool { display: grid; gap: 8px; }
+.order-pool button { text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper-3); }
+.order-pool button[disabled] { opacity: .35; cursor: default; }
+.order-pool small { display: block; color: var(--ink-soft); font-size: 12px; margin-top: 2px; }
+.match-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.match-row .left { flex: 1; min-width: 120px; font-weight: 700; font-family: "Gowun Batang", serif; }
+.match-row select { flex: 1.4; min-width: 160px; padding: 10px; border-radius: 8px; border: 1px solid var(--line); background: var(--paper-3); font: inherit; }
+input.text-answer { width: 100%; padding: 12px; font-size: 18px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper-3); font-family: inherit; }
+.tiles-row { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 6px 0; }
+.torches { display: flex; gap: 10px; justify-content: center; margin: 8px 0 4px; }
+.torches button { width: 56px; height: 76px; border-radius: 10px; border: 1px solid var(--line); background: #3a2f25; font-size: 30px; }
+.torches button.on { background: #5a2a12; box-shadow: 0 0 18px rgba(255,140,40,.7); }
+.formation { display: inline-grid; gap: 3px; margin-top: 6px; }
+.formation i { width: 14px; height: 14px; border-radius: 3px; background: rgba(0,0,0,.08); display: block; }
+.formation i.s { background: var(--blue); }
+.formation i.e { background: var(--red); border-radius: 50%; }
+
+/* ---------- 시작/끝 ---------- */
+.screen { flex: 1; display: grid; place-items: center; padding: 24px 16px; }
+.card { background: var(--paper); border-radius: 16px; max-width: 580px; width: 100%; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.card-body { padding: 26px 24px 24px; }
+.card h1 { font-family: "Gowun Batang", serif; font-size: 32px; margin: 0 0 4px; }
+.card .tag { color: var(--red); font-weight: 700; font-size: 13px; letter-spacing: .08em; }
+.card p { line-height: 1.75; }
+.howto { background: var(--paper-3); border-radius: 10px; padding: 12px 14px; font-size: 14px; line-height: 1.7; border: 1px solid var(--line); }
+.howto ul { margin: 0; padding-left: 18px; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 16px 0; }
+.stats div { background: var(--paper-3); border: 1px solid var(--line); border-radius: 10px; padding: 10px; text-align: center; }
+.stats b { display: block; font-size: 22px; }
+.stats span { font-size: 12px; color: var(--ink-soft); }
+.timeline { list-style: none; padding: 0; margin: 0; font-size: 14px; }
+.timeline li { padding: 7px 0; border-bottom: 1px solid var(--line); display: flex; gap: 10px; line-height: 1.55; }
+.timeline li b { min-width: 92px; color: var(--red); flex-shrink: 0; }
+.stars { font-size: 30px; color: var(--gold); letter-spacing: 4px; text-align: center; }
+
+@media (max-width: 600px) {
+  .objects { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .obj .icon { font-size: 34px; }
+  .card h1, .hub-head h1 { font-size: 28px; }
+  .scene { padding: 18px 12px 20px; }
+  .bottom { grid-template-columns: 1fr; }
+  .choices.grid2 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="dancheong"></div>
+
+  <!-- 테마 선택 -->
+  <section id="hub" class="hub">
+    <div class="hub-head">
+      <div class="tag">한국사 방탈출</div>
+      <h1>시간의 문</h1>
+      <p>사건 하나를 골라 그 시대 속으로 들어가세요.<br>단서를 모아 문을 열면 역사가 보입니다.</p>
+    </div>
+    <div class="themes" id="themes"></div>
+  </section>
+
+  <!-- 테마 소개 -->
+  <section id="intro" class="screen hidden">
+    <div class="card">
+      <div class="dancheong"></div>
+      <div class="card-body">
+        <div class="tag" id="intro-tag"></div>
+        <h1 id="intro-title"></h1>
+        <div id="intro-story"></div>
+        <div class="howto">
+          <ul>
+            <li>방 안의 물건을 눌러 단서를 찾고 잠긴 것을 여세요.</li>
+            <li>읽은 단서는 <b>수첩</b>에 모입니다. 앞 방에서 본 단서가 뒤에서 다시 필요할 수 있어요.</li>
+            <li>막히면 <b>힌트</b>를 쓸 수 있지만, 쓸 때마다 기록에 1분이 더해집니다.</li>
+            <li>중간에 나가도 이 기기에 진행 상황이 저장됩니다.</li>
+          </ul>
+        </div>
+        <div class="actions">
+          <button class="btn ghost" id="btn-back">← 테마 선택</button>
+          <button class="btn ghost hidden" id="btn-restart">처음부터</button>
+          <button class="btn red" id="btn-start">시작하기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 게임 -->
+  <section id="game" class="hidden">
+    <div class="topbar">
+      <div class="room-title" id="room-title"></div>
+      <span class="chip timer" id="timer">00:00</span>
+      <button class="chip" id="btn-journal">📖 수첩</button>
+      <button class="chip" id="btn-hint">💡 힌트</button>
+      <button class="chip" id="btn-exit" aria-label="나가기">✕</button>
+    </div>
+    <div class="progress" id="progress"></div>
+    <div class="scene" id="scene">
+      <div class="scene-date" id="scene-date"></div>
+      <p class="scene-desc serif" id="scene-desc"></p>
+      <div class="objects" id="objects"></div>
+    </div>
+    <div class="bottom">
+      <div class="panel"><h3>소지품</h3><div class="inv" id="inv"></div></div>
+      <div class="panel"><h3 id="tiles-label">모은 조각</h3><div class="inv" id="tiles"></div></div>
+    </div>
+  </section>
+
+  <!-- 엔딩 -->
+  <section id="ending" class="screen hidden">
+    <div class="card">
+      <div class="dancheong"></div>
+      <div class="card-body">
+        <div class="tag">탈출 성공</div>
+        <h1 id="end-title"></h1>
+        <div id="end-story"></div>
+        <div class="stars" id="stars"></div>
+        <div class="stats">
+          <div><b id="end-time">-</b><span>걸린 시간</span></div>
+          <div><b id="end-hints">-</b><span>쓴 힌트</span></div>
+          <div><b id="end-wrong">-</b><span>틀린 횟수</span></div>
+        </div>
+        <h3 class="serif">이번에 지나온 역사</h3>
+        <ul class="timeline" id="end-timeline"></ul>
+        <div class="actions">
+          <button class="btn ghost" id="btn-hub">다른 테마 고르기</button>
+          <button class="btn red" id="btn-again">다시 하기</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="dancheong"></div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+window.THEMES = [];
+/* 진형 그림 만들기 (테마 파일에서 사용): o = 아군 배, X = 적, . = 빈칸 */
+window.formation = function (rows) {
+  const w = rows[0].length;
+  return `<span class="formation" style="grid-template-columns:repeat(${w},14px)">${rows.join("").split("").map((c) => `<i class="${c === "o" ? "s" : c === "X" ? "e" : ""}"></i>`).join("")}</span>`;
+};
+</script>
+<script src="themes/upcoming.js"></script>
+<script>
+/* ===================== 공통 ===================== */
+const $ = (id) => document.getElementById(id);
+const has = (arr, v) => arr.includes(v);
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+function josa(word, a, b) {
+  const c = word.charCodeAt(word.length - 1) - 0xac00;
+  return word + (c >= 0 && c <= 11171 && c % 28 !== 0 ? a : b);
+}
+function show(id) { ["hub", "intro", "game", "ending"].forEach((x) => $(x).classList.toggle("hidden", x !== id)); window.scrollTo(0, 0); }
+
+let T = null;   // 현재 테마
+let S = null;   // 현재 진행 상태
+const saveKey = () => "escape-save-" + T.id;
+const clearKey = (id) => "escape-cleared-" + id;
+function fresh() { return { room: 0, solved: [], used: [], inv: [], tiles: [], journal: [], seen: [], hintsUsed: 0, hintIdx: {}, wrong: 0, elapsed: 0 }; }
+function save() { if (T && S) store.set(saveKey(), S); }
+
+/* ===================== 테마 선택 ===================== */
+function renderHub() {
+  $("themes").innerHTML = "";
+  THEMES.forEach((t) => {
+    const b = document.createElement("button");
+    const cleared = store.get(clearKey(t.id));
+    const inProgress = t.available && store.get("escape-save-" + t.id);
+    b.className = "theme" + (t.available ? "" : " soon");
+    b.innerHTML = `
+      <div class="cover" style="background:${t.cover}"><span>${t.icon}</span><span class="year">${t.year}</span></div>
+      <div class="info">
+        <h2>${t.title}</h2>
+        <p>${t.summary}</p>
+        <div class="meta">
+          ${t.available ? `<span class="badge play">${inProgress ? "이어서 하기" : "플레이"}</span>` : `<span class="badge">준비 중</span>`}
+          ${t.available ? `<span class="badge">⏱ ${t.playtime}</span><span class="badge">🧩 ${t.level}</span>` : ""}
+          ${cleared ? `<span class="badge cleared">탈출 성공 · ${cleared}</span>` : ""}
+        </div>
+      </div>`;
+    if (t.available && t.href) b.onclick = () => { location.href = t.href; };
+    else if (t.available) b.onclick = () => openIntro(t);
+    else b.setAttribute("aria-disabled", "true");
+    $("themes").appendChild(b);
+  });
+  show("hub");
+}
+
+function openIntro(t) {
+  T = t;
+  $("intro-tag").textContent = `${t.year} · ${t.playtime} · ${t.level}`;
+  $("intro-title").textContent = t.title;
+  $("intro-story").innerHTML = t.intro;
+  const saved = store.get(saveKey());
+  $("btn-start").textContent = saved ? "이어서 하기" : "시작하기";
+  $("btn-restart").classList.toggle("hidden", !saved);
+  show("intro");
+}
+$("btn-back").onclick = renderHub;
+$("btn-start").onclick = () => begin(store.get(saveKey()));
+$("btn-restart").onclick = () => begin(null);
+$("btn-exit").onclick = () => { save(); stopTimer(); renderHub(); };
+
+/* ===================== 타이머 ===================== */
+let tick = null;
+function startTimer() {
+  stopTimer();
+  let last = Date.now();
+  tick = setInterval(() => {
+    const now = Date.now(); S.elapsed += (now - last) / 1000; last = now;
+    renderTimer();
+    if (Math.floor(S.elapsed) % 5 === 0) save();
+  }, 250);
+}
+function stopTimer() { if (tick) clearInterval(tick); tick = null; }
+function fmt(sec) {
+  sec = Math.floor(sec);
+  const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  const mm = String(m).padStart(2, "0"), ss = String(s).padStart(2, "0");
+  return h ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+}
+function renderTimer() { $("timer").textContent = "⏱ " + fmt(S.elapsed); }
+
+/* ===================== 방 그리기 ===================== */
+const room = () => T.rooms[S.room];
+const isDone = (o) => has(S.solved, o.id);
+function available(o) { return !o.needs || o.needs.every((n) => has(S.solved, n)); }
+
+function stateLabel(o) {
+  if (isDone(o)) return o.type === "clue" ? "단서 확인" : "해결";
+  if (!available(o)) return "";
+  if (o.requires && !has(S.used, o.requires)) return has(S.inv, o.requires) ? "사용할 물건이 있다" : "";
+  if (o.puzzle) return "잠겨 있음";
+  return "";
+}
+
+function render() {
+  const r = room();
+  $("room-title").innerHTML = `${r.title}<small>${T.title} · ${S.room + 1} / ${T.rooms.length}</small>`;
+  $("scene").style.background = r.bg;
+  $("scene-date").textContent = r.date || "";
+  $("scene-desc").textContent = r.desc;
+  $("progress").innerHTML = T.rooms.map((_, i) => `<span class="${i < S.room ? "done" : i === S.room ? "now" : ""}"></span>`).join("");
+
+  $("objects").innerHTML = "";
+  r.objects.filter((o) => !o.hiddenUntil || o.hiddenUntil.every((n) => has(S.solved, n))).forEach((o) => {
+    const b = document.createElement("button");
+    const fresh = o.hiddenUntil && !has(S.seen, o.id);
+    b.className = "obj" + (o.type === "door" ? " door" : "") + (isDone(o) ? " solved" : "") + (fresh ? " new" : "");
+    b.innerHTML = `<span class="icon">${o.icon}</span><span class="name">${o.name}</span><span class="state">${stateLabel(o)}</span>`;
+    b.onclick = () => { if (!has(S.seen, o.id)) S.seen.push(o.id); openObject(o); };
+    $("objects").appendChild(b);
+  });
+
+  const inv = S.inv.map((k) => `<span class="item ${has(S.used, k) ? "used" : ""}">${T.items[k].icon} ${T.items[k].name}</span>`);
+  $("inv").innerHTML = inv.length ? inv.join("") : `<span class="empty">아직 없음</span>`;
+  $("tiles-label").textContent = T.tilesLabel;
+  $("tiles").innerHTML = S.tiles.length ? S.tiles.map((t) => `<span class="tile">${t}</span>`).join("") : `<span class="empty">방을 탈출할 때마다 하나씩 얻어요</span>`;
+  renderTimer();
+}
+
+/* ===================== 모달 ===================== */
+function openModal(html) {
+  $("modal-body").innerHTML = html;
+  $("overlay").classList.add("open");
+  $("overlay").querySelector(".modal").scrollTop = 0;
+}
+function closeModal() { $("overlay").classList.remove("open"); render(); }
+$("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") closeModal(); });
+document.addEventListener("keydown", (e) => { if (e.key === "Escape" && $("overlay").classList.contains("open")) closeModal(); });
+const header = (o) => `<h2><span>${o.icon}</span>${o.title}</h2><div class="sub">${o.name}</div>`;
+const closeBtn = `<button class="btn ghost" data-close>닫기</button>`;
+$("modal-body").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeModal(); });
+
+function openObject(o, justUsed) {
+  if (!available(o)) return openModal(`${header(o)}<p>${o.blockedText}</p><div class="actions">${closeBtn}</div>`);
+  if (o.requires && !has(S.used, o.requires)) {
+    const it = T.items[o.requires];
+    if (has(S.inv, o.requires)) {
+      openModal(`${header(o)}<p>${o.lockedText}</p><div class="actions">${closeBtn}<button class="btn gold" id="use-btn">${it.icon} ${it.name} 사용하기</button></div>`);
+      $("use-btn").onclick = () => { S.used.push(o.requires); save(); openObject(o, true); };
+      return;
+    }
+    return openModal(`${header(o)}<p>${o.lockedText}</p><div class="actions">${closeBtn}</div>`);
+  }
+  const pre = justUsed && o.useText ? `<p class="msg ok">${o.useText}</p>` : "";
+
+  if (o.type === "clue") {
+    if (!isDone(o)) { S.solved.push(o.id); if (o.journal) S.journal.push({ room: S.room, text: o.journal }); save(); }
+    return openModal(`${header(o)}${pre}${o.text}<div class="actions">${closeBtn}</div>`);
+  }
+  if (isDone(o)) return openModal(`${header(o)}<p>${o.solvedText || "이미 풀었다."}</p><div class="actions">${closeBtn}</div>`);
+
+  openModal(`${header(o)}${pre}${o.text}<div id="puzzle"></div><div class="msg" id="msg"></div><div class="actions" id="pz-actions">${closeBtn}</div>`);
+  PUZZLES[o.puzzle.kind](o, $("puzzle"), (ok) => (ok ? solve(o) : wrong(o)));
+}
+
+function wrong(o) {
+  S.wrong++; save();
+  const m = $("msg");
+  m.className = "msg bad";
+  m.textContent = o.wrongText || "아무 일도 일어나지 않는다. 단서를 다시 살펴보자.";
+  const modal = document.querySelector(".modal");
+  modal.classList.remove("shake"); void modal.offsetWidth; modal.classList.add("shake");
+}
+
+function solve(o) {
+  S.solved.push(o.id);
+  if (o.journal) S.journal.push({ room: S.room, text: o.journal });
+  let extra = "";
+  if (o.reward) {
+    S.inv.push(o.reward);
+    const it = T.items[o.reward];
+    extra += `<p class="msg ok">${it.icon} <b>${josa(it.name, "을", "를")}</b> 얻었다!</p>`;
+  }
+  save();
+  if (o.final) return finish();
+  if (o.type === "door") {
+    const r = room();
+    if (r.tile && !has(S.tiles, r.tile)) S.tiles.push(r.tile);
+    save();
+    openModal(`${header(o)}<p class="msg ok">문이 열렸다!</p><p>${o.solvedText || ""}</p>${r.tile ? `<p>${T.tileFound}</p><div class="tiles-row"><span class="tile">${r.tile}</span></div>` : ""}<div class="actions"><button class="btn red" id="next-btn">다음 장소로 →</button></div>`);
+    $("next-btn").onclick = () => { S.room++; save(); closeModal(); window.scrollTo(0, 0); };
+    return;
+  }
+  openModal(`${header(o)}<p class="msg ok">풀었다!</p><p>${o.solvedText || ""}</p>${extra}<div class="actions">${closeBtn}</div>`);
+}
+
+/* ===================== 퍼즐 종류 ===================== */
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+  if (a.length > 1 && a.every((x, n) => x.i === n)) [a[0], a[1]] = [a[1], a[0]];
+  return a;
+}
+function addBtn(label, cls, fn) {
+  const b = document.createElement("button"); b.className = "btn " + cls; b.textContent = label; b.onclick = fn;
+  $("pz-actions").appendChild(b); return b;
+}
+const PUZZLES = {
+  code(o, el, done) {
+    const ans = o.puzzle.answer, len = ans.length;
+    let v = "";
+    el.innerHTML = `<div class="code-display" id="cd"></div><div class="keypad" id="kp"></div>`;
+    const draw = () => { $("cd").innerHTML = Array.from({ length: len }, (_, i) => `<span>${v[i] ?? ""}</span>`).join(""); };
+    $("kp").innerHTML = ["1","2","3","4","5","6","7","8","9","⌫","0","✓"].map((k) => `<button data-k="${k}" aria-label="${k === "⌫" ? "지우기" : k === "✓" ? "확인" : k}">${k}</button>`).join("");
+    const press = (k) => {
+      if (k === "⌫") v = v.slice(0, -1);
+      else if (k === "✓") { if (v.length === len) { const ok = v === ans; done(ok); if (!ok) v = ""; } }
+      else if (v.length < len) v += k;
+      if ($("cd")) draw();
+    };
+    $("kp").onclick = (e) => { const k = e.target.dataset.k; if (k) press(k); };
+    el.tabIndex = -1;
+    el.onkeydown = (e) => { if (/^[0-9]$/.test(e.key)) press(e.key); else if (e.key === "Backspace") press("⌫"); else if (e.key === "Enter") press("✓"); };
+    draw(); el.focus();
+  },
+  choice(o, el, done) {
+    el.innerHTML = `<div class="choices ${o.puzzle.grid ? "grid2" : ""}">${o.puzzle.options.map((t, i) => `<button data-i="${i}">${t}</button>`).join("")}</div>`;
+    el.querySelector(".choices").onclick = (e) => { const b = e.target.closest("button"); if (b) done(+b.dataset.i === o.puzzle.answer); };
+  },
+  text(o, el, done) {
+    el.innerHTML = `<input class="text-answer serif" id="ta" placeholder="${o.puzzle.placeholder || "여기에 쓰세요"}" autocomplete="off">`;
+    const check = () => done(o.puzzle.answers.includes($("ta").value.replace(/\s/g, "")));
+    addBtn("확인", "red", check);
+    $("ta").onkeydown = (e) => { if (e.key === "Enter") check(); };
+    $("ta").focus();
+  },
+  order(o, el, done) {
+    const items = o.puzzle.items.map((it, i) => ({ ...it, i }));
+    const pool = shuffle(items.slice());
+    let seq = [];
+    el.innerHTML = `<div class="order-slots" id="slots"></div><div class="order-pool" id="pool"></div>`;
+    const draw = () => {
+      $("slots").innerHTML = seq.length ? seq.map((i, n) => `<span class="placed"><b>${n + 1}</b>${items[i].label}</span>`).join("") : `<span class="empty" style="color:var(--ink-soft)">${o.puzzle.hint || "순서대로 눌러 주세요"}</span>`;
+      $("pool").innerHTML = pool.map((it) => `<button data-i="${it.i}" ${seq.includes(it.i) ? "disabled" : ""}>${it.label}${it.desc ? `<small>${it.desc}</small>` : ""}</button>`).join("");
+    };
+    $("pool").onclick = (e) => {
+      const b = e.target.closest("button"); if (!b || b.disabled) return;
+      seq.push(+b.dataset.i); draw();
+      if (seq.length === items.length) {
+        const ok = seq.every((v, n) => v === n);
+        done(ok);
+        if (!ok) { seq = []; setTimeout(() => { if ($("pool")) draw(); }, 500); }
+      }
+    };
+    const reset = document.createElement("button"); reset.className = "btn ghost"; reset.textContent = "다시 놓기";
+    reset.onclick = () => { seq = []; draw(); };
+    $("pz-actions").prepend(reset);
+    draw();
+  },
+  match(o, el, done) {
+    const P = o.puzzle;
+    // 보기 순서를 섞어 정답 순서가 드러나지 않게 한다 (value는 원래 번호)
+    const opts = shuffle(P.right.map((r, i) => ({ r, i }))).map(({ r, i }) => `<option value="${i}">${r}</option>`).join("");
+    el.innerHTML = P.left.map((l, i) => `<div class="match-row"><span class="left">${l}</span><select data-i="${i}"><option value="">${P.placeholder || "고르기"}</option>${opts}</select></div>`).join("");
+    addBtn("맞추기", "red", () => {
+      const vals = [...el.querySelectorAll("select")].map((s) => s.value);
+      if (vals.some((v) => v === "")) { const m = $("msg"); m.className = "msg bad"; m.textContent = "모든 칸을 골라 주세요."; return; }
+      done(vals.every((v, i) => +v === P.answer[i]));
+    });
+  },
+  torch(o, el, done) {
+    const n = o.puzzle.count; const on = Array(n).fill(false);
+    el.innerHTML = `<div class="torches" id="tc"></div>`;
+    const draw = () => { $("tc").innerHTML = on.map((v, i) => `<button data-i="${i}" class="${v ? "on" : ""}" aria-label="횃불 ${i + 1} ${v ? "켜짐" : "꺼짐"}">${v ? "🔥" : "🪵"}</button>`).join(""); };
+    $("tc").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; on[+b.dataset.i] = !on[+b.dataset.i]; draw(); };
+    addBtn(o.puzzle.button || "확인", "red", () => done(on.filter(Boolean).length === o.puzzle.answer));
+    draw();
+  },
+};
+
+/* ===================== 수첩 · 힌트 ===================== */
+$("btn-journal").onclick = () => {
+  const groups = T.rooms.map((r, i) => {
+    const items = S.journal.filter((j) => j.room === i);
+    return items.length ? `<h3 class="serif" style="margin:12px 0 4px">${r.title}</h3><ul class="timeline">${items.map((j) => `<li>${j.text}</li>`).join("")}</ul>` : "";
+  }).join("");
+  openModal(`<h2>📖 수첩</h2><div class="sub">지금까지 찾은 단서</div>${groups || "<p>아직 찾은 단서가 없다. 물건을 살펴보자.</p>"}<div class="actions">${closeBtn}</div>`);
+};
+function openHint() {
+  const r = room(); const idx = S.hintIdx[S.room] ?? 0;
+  const shown = r.hints.slice(0, idx).map((h, i) => `<div class="doc">힌트 ${i + 1}. ${h}</div>`).join("");
+  const more = idx < r.hints.length ? `<button class="btn gold" id="more-hint">${idx ? "다음 힌트" : "힌트 보기"} (+1분)</button>` : "";
+  openModal(`<h2>💡 힌트</h2><div class="sub">${r.title} · 볼 때마다 기록에 1분이 더해져요</div>${shown || "<p>정말 막혔을 때만 써 보세요. 수첩을 다시 읽는 것도 방법이에요.</p>"}<div class="actions">${closeBtn}${more}</div>`);
+  if (more) $("more-hint").onclick = () => { S.hintIdx[S.room] = idx + 1; S.hintsUsed++; S.elapsed += 60; save(); openHint(); };
+}
+$("btn-hint").onclick = openHint;
+
+/* ===================== 시작 · 끝 ===================== */
+function begin(resume) {
+  S = resume || fresh();
+  save(); show("game"); render(); startTimer();
+}
+function finish() {
+  stopTimer();
+  store.del(saveKey());
+  store.set(clearKey(T.id), fmt(S.elapsed));
+  $("overlay").classList.remove("open");
+  $("end-title").textContent = T.ending.title;
+  $("end-story").innerHTML = T.ending.story;
+  $("end-time").textContent = fmt(S.elapsed);
+  $("end-hints").textContent = S.hintsUsed + "개";
+  $("end-wrong").textContent = S.wrong + "번";
+  const min = S.elapsed / 60, [a, b] = T.starMinutes;
+  const stars = min <= a && S.hintsUsed <= 1 ? 3 : min <= b && S.hintsUsed <= 6 ? 2 : 1;
+  $("stars").textContent = "★".repeat(stars) + "☆".repeat(3 - stars);
+  $("end-timeline").innerHTML = T.ending.timeline.map(([y, t]) => `<li><b>${y}</b><span>${t}</span></li>`).join("");
+  show("ending");
+}
+$("btn-hub").onclick = renderHub;
+$("btn-again").onclick = () => begin(null);
+
+renderHub();
+</script>
+</body>
+</html>

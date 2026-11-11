@@ -1,0 +1,9 @@
+이 폴더의 재질(tex/)과 하늘 사진(hdri/)은 Poly Haven(https://polyhaven.com)의 자료입니다.
+모두 CC0(퍼블릭 도메인) 라이선스로, 무료이며 상업적 이용이 가능하고 출처 표시 의무가 없습니다.
+
+재질 (1k JPG: diff=색, nor=요철, rough=거칠기)
+- dirt_floor, sparse_grass, japanese_cedar_planks, dark_wooden_planks, grey_roof_tiles, clay_plaster, bark_willow
+
+하늘 사진 (2k HDR)
+- qwantani_dawn_puresky (1장), kloofendal_48d_partly_cloudy_puresky (2장), belfast_sunset_puresky (3장),
+  qwantani_morning_puresky (4장), qwantani_sunrise_puresky (6장), qwantani_dusk_2_puresky (6장 노량)
