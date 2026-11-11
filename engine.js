@@ -10,7 +10,7 @@ import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js"
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 const $ = (id) => document.getElementById(id);
-document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 Space로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\">\n  <button id=\"move-fwd\" class=\"f\" aria-label=\"앞으로\">▲</button>\n  <button id=\"move-left\" class=\"l\" aria-label=\"왼쪽으로\">◀</button>\n  <button id=\"move-right\" class=\"r\" aria-label=\"오른쪽으로\">▶</button>\n  <button id=\"move-back\" class=\"b\" aria-label=\"뒤로\">▼</button>\n</div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·수첩). 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요. Esc를 누르면 마우스가 풀려요.</li>\n      <li><b>휴대폰:</b> 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
+document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\">\n  <button id=\"move-fwd\" class=\"f\" aria-label=\"앞으로\">▲</button>\n  <button id=\"move-left\" class=\"l\" aria-label=\"왼쪽으로\">◀</button>\n  <button id=\"move-right\" class=\"r\" aria-label=\"오른쪽으로\">▶</button>\n  <button id=\"move-back\" class=\"b\" aria-label=\"뒤로\">▼</button>\n</div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·수첩). 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요. Esc를 누르면 마우스가 풀려요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
 let THEME = null, CHAPTERS = [];
 
 /* ================================================================
@@ -479,18 +479,20 @@ document.addEventListener("mousemove", (e) => {
 });
 renderer.domElement.addEventListener("pointerdown", (e) => {
   if (inputLocked || (e.pointerType === "mouse" && !lockFailed)) return;
-  drag = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false };
+  if (drag) return;
+  drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false };
   renderer.domElement.setPointerCapture(e.pointerId);
 });
 renderer.domElement.addEventListener("pointermove", (e) => {
-  if (!drag || inputLocked) return;
+  if (!drag || drag.id !== e.pointerId || inputLocked) return;
   if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 8) drag.moved = true;
   targetYaw += (e.clientX - drag.x) * 0.004;
   pitch = Math.max(-1.2, Math.min(1.0, pitch + (e.clientY - drag.y) * 0.003));
   drag.x = e.clientX; drag.y = e.clientY;
 });
+renderer.domElement.addEventListener("pointercancel", (e) => { if (drag && drag.id === e.pointerId) drag = null; });
 renderer.domElement.addEventListener("pointerup", (e) => {
-  if (!drag) return;
+  if (!drag || drag.id !== e.pointerId) return;
   const tap = !drag.moved; drag = null;
   if (tap && !inputLocked) tryInteract(pick(e.clientX, e.clientY));
 });
@@ -547,6 +549,11 @@ function holdBtn(id, k) {
   const on = (e) => { e.preventDefault(); held[k] = 1; }, off = () => { held[k] = 0; };
   b.addEventListener("pointerdown", on); ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => b.addEventListener(ev, off));
 }
+function doJump() { if (inputLocked || $("overlay").classList.contains("open")) return; if (swimming) climbOut(); else if (onGround()) { vy = 5.0; hideGuide(); sfx("jump"); } }
+$("btn-jump").addEventListener("pointerdown", (e) => { e.preventDefault(); doJump(); });
+$("btn-run").addEventListener("pointerdown", (e) => { e.preventDefault(); running = !running; $("btn-run").classList.toggle("on", running); });
+$("rotate-skip").onclick = () => document.body.classList.add("portrait-ok");
+if (isTouch) document.querySelectorAll(".k-up").forEach((el) => (el.textContent = "점프 버튼"));
 holdBtn("move-fwd", "fwd"); holdBtn("move-back", "back"); holdBtn("move-left", "left"); holdBtn("move-right", "right");
 const KEYMAP = { arrowup: "fwd", w: "fwd", arrowdown: "back", s: "back", arrowleft: "left", a: "left", arrowright: "right", d: "right" };
 const keys = { fwd: 0, back: 0, left: 0, right: 0 };
@@ -564,7 +571,7 @@ addEventListener("keydown", (e) => {
   if (e.key === "Tab") { e.preventDefault(); if (open) { if (bagOpen) closeModal(); } else if (!inputLocked && S) openBag(); return; }
   if (e.key === "Escape" && open) { closeModal(); return; }
   if (open) return;
-  if (e.code === "Space" && !e.repeat) { e.preventDefault(); if (inputLocked) return; if (swimming) climbOut(); else if (onGround()) { vy = 5.0; hideGuide(); sfx("jump"); } return; }
+  if (e.code === "Space" && !e.repeat) { e.preventDefault(); doJump(); return; }
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
 });
 addEventListener("keyup", (e) => { const k = KEYMAP[e.key.toLowerCase()]; if (k) keys[k] = 0; });
@@ -624,7 +631,7 @@ function frame(dt) {
   const nowSwim = !air && !!WORLD.isWater?.(targetPos.x, targetPos.z) && feet < WORLD.water.level - 0.5;
   if (nowSwim !== swimming) {
     swimming = nowSwim; $("swim").classList.toggle("hidden", !swimming);
-    if (swimming) { toast("풍덩! 물에 빠졌다. 헤엄쳐서 가까이 간 뒤 Space로 올라가자.", 3500); sfx("splash"); }
+    if (swimming) { toast(`풍덩! 물에 빠졌다. 헤엄쳐서 가까이 간 뒤 ${isTouch ? "점프 버튼" : "Space"}으로 올라가자.`, 3500); sfx("splash"); }
   }
   camera.position.y = feet + (CH.eye ?? 1.6) + (swimming ? Math.sin(ELAPSED_T * 2.2) * 0.07 : air ? 0 : Math.sin(bob) * 0.025 * Math.min(1, moved * 40));
   yaw += (targetYaw - yaw) * 0.15;
@@ -825,15 +832,25 @@ function loadChapter(i, resumePos) {
   setMusic(CH.musicKey ? CH.musicKey(S) : "ch" + (i + 1));
   hovered = null;
 }
+function goLandscape() {
+  if (!isTouch) return;
+  try {
+    const el = document.documentElement, fs = el.requestFullscreen || el.webkitRequestFullscreen;
+    const lock = () => screen.orientation?.lock?.("landscape").catch(() => {});
+    if (fs && !document.fullscreenElement && !document.webkitFullscreenElement) { const p = fs.call(el, { navigationUI: "hide" }); if (p && p.then) p.then(lock, () => {}); else lock(); }
+    else lock();
+  } catch (e) {}
+}
 function showHUD(on) {
-  ["hud-top", "hud-bottom", "guide", "move"].forEach((x) => $(x).classList.toggle("hidden", !on));
+  ["hud-top", "hud-bottom", "guide", "move", "act"].forEach((x) => $(x).classList.toggle("hidden", !on));
+  document.body.classList.toggle("playing", on);
   if (!on) { ["cross", "lockhint", "tip"].forEach((x) => $(x).classList.add("hidden")); if (document.pointerLockElement) document.exitPointerLock(); }
   else if (!isTouch && !lockFailed) $("lockhint").classList.remove("hidden");
 }
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
   showHUD(true);
-  $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 버튼으로 걷기 · 가까이 가서 물건 누르기"
+  $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 버튼으로 걷기 · 오른쪽 아래 점프·달리기 · 가까이 가서 물건 누르기"
     : lockFailed ? "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방"
     : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 마우스 풀기";
   $("guide").style.opacity = 0.85;
@@ -855,7 +872,7 @@ function clearChapter() {
   $("fade").style.opacity = 1;
   setTimeout(() => { $("clear").classList.remove("hidden"); $("fade").style.opacity = 0; }, 800);
 }
-$("btn-next").onclick = () => { audioInit(); loadChapter(S.ch); play(); };
+$("btn-next").onclick = () => { goLandscape(); audioInit(); loadChapter(S.ch); play(); };
 function endGame() {
   clearInterval(tickT); inputLocked = true;
   $("overlay").classList.remove("open"); showHUD(false);
@@ -1054,12 +1071,12 @@ export function start(theme) {
   $("end-note").textContent = en.note || "";
   refreshIntro();
   $("btn-start").onclick = () => {
-    audioInit(); setSoundOn(AU.on);
+    goLandscape(); audioInit(); setSoundOn(AU.on);
     S = store.get() || fresh();
     loadChapter(S.ch, S.pos);
     save(); play();
   };
-  $("btn-restart").onclick = () => { audioInit(); setSoundOn(AU.on); store.del(); S = fresh(); loadChapter(0); save(); play(); };
+  $("btn-restart").onclick = () => { goLandscape(); audioInit(); setSoundOn(AU.on); store.del(); S = fresh(); loadChapter(0); save(); play(); };
   $("loading").textContent = "";
 }
 

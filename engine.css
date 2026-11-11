@@ -127,3 +127,35 @@ input.text-answer { width: 100%; padding: 12px; font-size: 20px; border-radius: 
   .choices.grid2 { grid-template-columns: 1fr; }
   .reveal .name { font-size: 40px; }
 }
+
+/* ===== 휴대폰 (터치) ===== */
+/* 안내·알림 글씨가 손가락 터치를 가로채지 않게 */
+.guide, .toast, .tip { pointer-events: none; }
+body { -webkit-user-select: none; -webkit-touch-callout: none; }
+@media (pointer: coarse) { .guide { top: 64px; bottom: auto; } }
+.act { position: fixed; right: 14px; bottom: 60px; display: flex; gap: 10px; align-items: flex-end; }
+.act button { width: 64px; height: 64px; border-radius: 50%; border: 1px solid rgba(243,234,216,.35); background: rgba(20,16,12,.5); color: var(--paper); font-size: 22px; line-height: 1; touch-action: none; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+.act button small { font-size: 10px; opacity: .8; }
+.act #btn-run { width: 52px; height: 52px; font-size: 18px; }
+.act button:active, .act button.on { background: rgba(178,58,46,.7); }
+@media (pointer: fine) { .act { display: none !important; } }
+/* 세로 화면이면 가로로 돌리라는 안내 (게임 중에만) */
+#rotate { display: none; position: fixed; inset: 0; z-index: 15; background: rgba(10,8,6,.92); color: var(--paper); place-items: center; text-align: center; padding: 24px; }
+#rotate > div { font-size: 42px; }
+#rotate p { font-size: 18px; margin: 14px 0 6px; }
+#rotate span { display: block; font-size: 13px; opacity: .7; }
+#rotate button { margin-top: 22px; background: none; border: 1px solid rgba(243,234,216,.35); color: var(--paper); border-radius: 999px; padding: 8px 16px; font-size: 13px; }
+@media (pointer: coarse) and (orientation: portrait) { body.playing:not(.portrait-ok) #rotate { display: grid; } }
+/* 가로로 눕힌 휴대폰: 화면 높이가 낮으니 버튼·글씨를 작게 */
+@media (pointer: coarse) and (max-height: 500px) {
+  .hud-top { padding: 6px 10px; gap: 6px; }
+  .place { font-size: 14px; } .place small { font-size: 11px; }
+  .chip { padding: 4px 9px; font-size: 12px; }
+  .guide { top: 44px; font-size: 12px; }
+  .toast { top: 46px; }
+  .hud-bottom { padding: 4px 10px 6px; }
+  .move { bottom: 34px; left: 10px; grid-template-columns: repeat(3, 48px); grid-template-rows: repeat(2, 44px); }
+  .act { bottom: 34px; right: 12px; }
+  .overlay { padding: 8px; }
+  .modal { max-height: calc(100vh - 16px); max-width: 640px; }
+}
