@@ -413,7 +413,7 @@ function pick(cx, cy) {
   ray.setFromCamera(ndc, camera);
   const hit = ray.intersectObjects([...clickable, ...blockers], false)[0];
   lastHit = hit || null;
-  if (!hit || !hit.object.userData.objId || hit.distance > 60) { lastPickFar = false; return null; }
+  if (!hit || !hit.object.userData.objId || hit.distance > 150) { lastPickFar = false; return null; }
   const id = hit.object.userData.objId;
   lastPickFar = hit.distance > (CH.reach?.(id) ?? REACH);
   return hit.object;

@@ -32,10 +32,11 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "gate668", available: false, icon: "🏯", year: "???",
+    id: "gate668", available: true, href: "gate668.html", icon: "🏯", year: "???",
     title: "무너지는 성문",
     summary: "성 밖을 가득 메운 두 나라의 깃발. 성문이 열리기 전에 무엇을 지켜야 할까?",
     cover: "linear-gradient(135deg,#3b4a6b,#1a2033)",
+    playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
     id: "river", available: false, icon: "🌊", year: "???",
