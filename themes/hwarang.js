@@ -220,7 +220,7 @@ CHAPTERS.push({
     "횃대 세 개의 높이를 비교해 보세요. 바위 글: 낮은 불에서 시작해 높은 불로, 가운데 불은 물을 비춘다. 차례가 틀리면 모두 꺼져요.",
     "물웅덩이에서 몸을 씻은 뒤, 밝아진 벽 그림의 네 글자를 읽으세요. 三·一은 1장 점수판(수첩), 國·統은 입구 바위 글에 있어요.",
     "두루마리는 '南'이 위쪽이에요. 바닥 방위석에서 北이 어느 쪽인지 보고, 그림을 거꾸로(180도) 돌려 읽으세요. ↑는 ↓가, →는 ←가 돼요.",
-    "횃대: 입구(낮음) → 웅덩이 옆(가운데) → 돌단 뒤(높음). 맹세: 삼국통일. 돌문: ↓ ↓ ← ↓ → →",
+    "횃대: 입구(낮음) → 웅덩이 옆(가운데) → 돌단 왼쪽 뒤(높음). 맹세: 삼국통일. 돌문: ↓ ↓ ← ↓ → →",
   ],
   build(A) {
     L = { torches: [], lit: [] };
@@ -233,7 +233,7 @@ CHAPTERS.push({
     inst(new THREE.IcosahedronGeometry(1, 1), rockMat, rocks);
     // 입구 빛
     const ent = new THREE.PointLight(0x8090b0, 3, 12, 1.4); ent.position.set(0, 2.6, 6.5); E.ROOT.add(ent);
-    const amb = new THREE.PointLight(0xa08a70, 1.2, 16, 1.2); amb.position.set(0, 4, -1); E.ROOT.add(amb);
+    const amb = new THREE.PointLight(0xa08a70, 2.2, 18, 1.1); amb.position.set(0, 4, -1); E.ROOT.add(amb);
     // 물웅덩이
     const pool = new THREE.Mesh(new THREE.CircleGeometry(1.5, 28), new THREE.MeshStandardMaterial({ color: 0x16242e, roughness: 0.05, metalness: 0.5 }));
     pool.rotation.x = -Math.PI / 2; pool.position.set(3.8, 0.02, 1.5); E.ROOT.add(pool); tag(pool, "pool", "얕은 물웅덩이");
@@ -246,9 +246,13 @@ CHAPTERS.push({
     tag(al, "altar", "돌단");
     const sf = cyl(0.03, 0.04, 1.8, MAT.wood, 1.7, 0.9, -7.3, 6); sf.rotation.z = 0.25; tag(sf, "staff", "낡은 지팡이");
     // 횃대 (낮음 · 가운데 · 높음)
-    [[4.6, 5.0, 1.0], [5.6, 1.4, 1.6], [-1.9, -7.9, 2.4]].forEach(([x, z, h], i) => {
+    [[4.6, 5.0, 1.0], [5.6, 1.4, 1.6], [-2.4, -7.2, 2.4]].forEach(([x, z, h], i) => {
       const g = group(x, 0, z);
-      cyl(0.04, 0.05, h, MAT.wood, 0, h / 2, 0, 6, g); cyl(0.09, 0.06, 0.22, MAT.dark, 0, h + 0.05, 0, 8, g);
+      cyl(0.06, 0.08, h, C(0x8a6a44), 0, h / 2, 0, 6, g); cyl(0.13, 0.08, 0.26, MAT.dark, 0, h + 0.05, 0, 8, g);
+      cyl(0.22, 0.24, 0.08, MAT.stone, 0, 0.04, 0, 8, g);
+      // 불 붙이기 전에도 찾을 수 있게: 머리에 남은 불씨가 희미하게 빛난다
+      const ember = new THREE.Mesh(new THREE.SphereGeometry(0.1, 10, 8), new THREE.MeshStandardMaterial({ color: 0x3a1a08, emissive: 0xc04a10, emissiveIntensity: 0.9 })); ember.position.set(0, h + 0.17, 0); g.add(ember);
+      const glow = new THREE.PointLight(0xff7a30, 1.2, 3.5, 1.6); glow.position.set(0, h + 0.3, 0); g.add(glow);
       const f = flame(0, h + 0.12, 0, g, 0.8); f.visible = false;
       const li = new THREE.PointLight(0xffa050, 0, 14, 1.5); li.position.set(0, h + 0.5, 0); g.add(li);
       tag(g, "torch" + i, "횃대");
@@ -278,7 +282,7 @@ CHAPTERS.push({
     if (A.has("h2_lit")) [0, 1, 2].forEach((i) => setTorch(i, true));
     return {
       start: [0, 5.2, 0], bounds: [-6.5, 6.5, -8.8, 6.8],
-      circles: [[-2.6, 5.6, 0.75], [4.6, 5.0, 0.15], [5.6, 1.4, 0.15], [-1.9, -7.9, 0.15]],
+      circles: [[-2.6, 5.6, 0.75], [4.6, 5.0, 0.2], [5.6, 1.4, 0.2], [-2.4, -7.2, 0.2]],
       rects: [[-1.3, -7.7, 1.3, -6.3, 0.95]],
       extra: (x, z) => (x / 6.6) ** 2 + ((z + 1) / 8.1) ** 2 > 1,
     };
