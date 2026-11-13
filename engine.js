@@ -1098,7 +1098,7 @@ window.__game = {
   step: (n = 1, dt = 1 / 60) => { for (let i = 0; i < n; i++) frame(dt); },   // 테스트용: 화면이 숨겨져 있어도 프레임 진행
   key: (k, down) => { const m = KEYMAP[k]; if (m) keys[m] = down ? 1 : 0; },
   jump: () => { if (!inputLocked && onGround()) vy = 5.0; },
-  get feet() { return feet; },
+  get feet() { return feet; }, get WORLD() { return WORLD; },
   shot: async (name) => { frame(1 / 60); const data = renderer.domElement.toDataURL("image/jpeg", 0.8); return (await fetch("/__shot", { method: "POST", body: JSON.stringify({ name, data }) })).text(); },
   get GFX() { return GFX; },
   get AU() { return AU; }, sfx,

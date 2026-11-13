@@ -230,7 +230,8 @@ CHAPTERS.push({
     const rocks = [];
     for (let i = 0; i < 44; i++) { const a = (i / 44) * Math.PI * 2; [0.6, 2.2, 3.9].forEach((y, k) => { const r = 1.3 + rnd() * 1.0; rocks.push([Math.cos(a) * (7.8 + rnd() * 0.6), y + rnd() * 0.3, -1 + Math.sin(a) * (9.2 + rnd() * 0.6), r, r * (0.8 + rnd() * 0.4), r, rnd() * 3]); }); }
     for (let i = 0; i < 26; i++) rocks.push([(rnd() - 0.5) * 14, 5.0, -1 + (rnd() - 0.5) * 17, 1.2 + rnd(), 0.6, 1.2 + rnd(), rnd() * 3]);
-    inst(new THREE.IcosahedronGeometry(1, 1), rockMat, rocks);
+    // 돌문 앞의 바위는 치워서 문이 보이게 한다 (돌문: x 5.7, z -4.2)
+    inst(new THREE.IcosahedronGeometry(1, 1), rockMat, rocks.filter(([x, y, z]) => !(y < 3.2 && Math.hypot(x - 7.2, z + 4.2) < 2.6)));
     // 입구 빛
     const ent = new THREE.PointLight(0x8090b0, 3, 12, 1.4); ent.position.set(0, 2.6, 6.5); E.ROOT.add(ent);
     const amb = new THREE.PointLight(0xa08a70, 2.2, 18, 1.1); amb.position.set(0, 4, -1); E.ROOT.add(amb);
@@ -246,7 +247,7 @@ CHAPTERS.push({
     tag(al, "altar", "돌단");
     const sf = cyl(0.03, 0.04, 1.8, MAT.wood, 1.7, 0.9, -7.3, 6); sf.rotation.z = 0.25; tag(sf, "staff", "낡은 지팡이");
     // 횃대 (낮음 · 가운데 · 높음)
-    [[4.6, 5.0, 1.0], [5.6, 1.4, 1.6], [-2.4, -7.2, 2.4]].forEach(([x, z, h], i) => {
+    [[3.4, 4.5, 1.0], [5.6, 1.4, 1.6], [-2.4, -7.2, 2.4]].forEach(([x, z, h], i) => {
       const g = group(x, 0, z);
       cyl(0.06, 0.08, h, C(0x8a6a44), 0, h / 2, 0, 6, g); cyl(0.13, 0.08, 0.26, MAT.dark, 0, h + 0.05, 0, 8, g);
       cyl(0.22, 0.24, 0.08, MAT.stone, 0, 0.04, 0, 8, g);
@@ -276,14 +277,18 @@ CHAPTERS.push({
     const vr = group(-2.6, 0, 5.6, 0.3); box(1.3, 1.5, 0.45, MAT.stone, 0, 0.75, 0, vr); tag(vr, "verse", "입구 바위의 글");
     const bd = sphere(0.28, C(0x8a7a5a), 1.6, 0.2, 5.0); bd.scale.set(1.2, 0.7, 1); tag(bd, "bundle", "보따리");
     const dr = group(0, 0, 0); [[-3, -3], [-1.5, 0.5], [2.5, -4.5], [-4, 1.5]].forEach(([x, z]) => { const c = new THREE.Mesh(new THREE.ConeGeometry(0.18, 1.2, 7), MAT.stone); c.position.set(x, 4.5, z); c.rotation.x = Math.PI; dr.add(c); }); tag(dr, "drip", "종유석");
-    L.door = group(6.2, 0, -4.2, -Math.PI / 2);
+    // 돌문 뒤를 막는 어두운 바위벽과 돌 문틀
+    box(0.4, 3.6, 3.4, rockMat, 6.6, 1.8, -4.2);
+    box(0.4, 3.0, 0.4, MAT.stone, 5.75, 1.5, -5.25); box(0.4, 3.0, 0.4, MAT.stone, 5.75, 1.5, -3.15); box(0.5, 0.4, 2.5, MAT.stone, 5.75, 3.1, -4.2);
+    const dl = new THREE.PointLight(0x9fb0d0, 2.2, 6, 1.5); dl.position.set(4.6, 2.6, -4.2); E.ROOT.add(dl);
+    L.door = group(5.95, 0, -4.2, -Math.PI / 2);
     box(1.7, 2.7, 0.35, C(0x5a544c), 0, 1.35, 0, L.door); box(0.9, 0.9, 0.05, C(0x6e675c), 0, 1.4, 0.19, L.door);
     tag(L.door, "door", "돌문");
     if (A.has("h2_lit")) [0, 1, 2].forEach((i) => setTorch(i, true));
     return {
       start: [0, 5.2, 0], bounds: [-6.5, 6.5, -8.8, 6.8],
-      circles: [[-2.6, 5.6, 0.75], [4.6, 5.0, 0.2], [5.6, 1.4, 0.2], [-2.4, -7.2, 0.2]],
-      rects: [[-1.3, -7.7, 1.3, -6.3, 0.95]],
+      circles: [[-2.6, 5.6, 0.75], [3.4, 4.5, 0.2], [5.6, 1.4, 0.2], [-2.4, -7.2, 0.2]],
+      rects: [[-1.3, -7.7, 1.3, -6.3, 0.95], [5.55, -5.45, 7, -2.95]],
       extra: (x, z) => (x / 6.6) ** 2 + ((z + 1) / 8.1) ** 2 > 1,
     };
   },
