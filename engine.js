@@ -239,12 +239,13 @@ function photoMat(mat, id, rep = [1, 1], opt = {}) {
   const load = (k, srgb) => new Promise((res) => texLoader.load(`assets/tex/${id}_${k}.jpg`, (t) => {
     t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep[0], rep[1]); t.anisotropy = 8; if (srgb) t.colorSpace = THREE.SRGBColorSpace; res(t);
   }, undefined, () => res(null)));
-  Promise.all([load("diff", true), load("nor"), load("rough")]).then(([d, n, r]) => {
-    if (!d) return;
-    mat.map = d;
+  // opt.relief: 색(diff)은 지금 그림 그대로 두고 요철·거칠기만 빌려 온다
+  Promise.all([opt.relief ? null : load("diff", true), load("nor"), load("rough")]).then(([d, n, r]) => {
+    if (!d && !opt.relief) return;
+    if (d) mat.map = d;
     if (n) { mat.normalMap = n; mat.normalScale.set(opt.ns ?? 1, opt.ns ?? 1); }
     if (r) { mat.roughnessMap = r; mat.roughness = opt.rough ?? 1; }
-    mat.color.set(opt.color ?? 0xffffff);
+    if (!opt.relief) mat.color.set(opt.color ?? 0xffffff);
     mat.needsUpdate = true;
   });
 }
@@ -259,6 +260,9 @@ photoMat(MAT.bark, "bark_willow", [1, 2]);
 photoMat(MAT.stoneFloor, "dirt_floor", [3, 2], { color: 0x8a8274 });
 photoMat(MAT.hull, "dark_wooden_planks", [3, 1], { color: 0xe0c49c });
 photoMat(MAT.hill, "sparse_grass", [22, 9], { color: 0xd8f0a8 });
+photoMat(MAT.stone, "rock_face", [1, 1], { relief: true, ns: 1.2 });
+photoMat(MAT.stoneBlock, "stone_wall", [1, 1], { color: 0xd0c8bc });
+photoMat(MAT.prisonWall, "stone_wall", [3, 1], { color: 0x8a8070 });
 let ROOT;   // 현재 장의 모든 물체
 function box(w, h, d, mat, x, y, z, p = ROOT) { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; p.add(m); return m; }
 function cyl(rt, rb, h, mat, x, y, z, seg = 12, p = ROOT) { const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; p.add(m); return m; }
@@ -1247,7 +1251,7 @@ const CORE = {
 /* 테마 파일에서 쓰는 도구 모음 */
 export const E = {
   THREE, TEX, MAT, M, MN, C, canvasTex, textTex, speckle, rand: () => rand(),
-  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, stoneBlocks, crowdBody: PG.crowd, faceMat: FACE_MAT,
+  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, photoMat, stoneBlocks, crowdBody: PG.crowd, faceMat: FACE_MAT,
   tag, collectClickables, toast, sfx, setAtmosphere, setMusic, formation, GANJI_TABLE, REACH, $,
   get S() { return S; }, get ROOT() { return ROOT; }, get CH() { return CH; }, get camera() { return camera; },
   lockInput() { inputLocked = true; },

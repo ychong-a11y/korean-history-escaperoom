@@ -225,7 +225,7 @@ CHAPTERS.push({
     L = { torches: [], lit: [] };
     box(18, 0.1, 20, MAT.stoneFloor, 0, -0.05, -1);
     box(18, 0.4, 20, C(0x2e2822), 0, 5.3, -1);
-    const rockMat = C(0x51473c, { roughness: 1, flatShading: true });
+    const rockMat = C(0x51473c, { roughness: 1, flatShading: true }); E.photoMat(rockMat, "rock_face", [2, 2], { relief: true });   // 바위 요철
     const rocks = [];
     for (let i = 0; i < 44; i++) { const a = (i / 44) * Math.PI * 2; [0.6, 2.2, 3.9].forEach((y, k) => { const r = 1.3 + rnd() * 1.0; rocks.push([Math.cos(a) * (7.8 + rnd() * 0.6), y + rnd() * 0.3, -1 + Math.sin(a) * (9.2 + rnd() * 0.6), r, r * (0.8 + rnd() * 0.4), r, rnd() * 3]); }); }
     for (let i = 0; i < 26; i++) rocks.push([(rnd() - 0.5) * 14, 5.0, -1 + (rnd() - 0.5) * 17, 1.2 + rnd(), 0.6, 1.2 + rnd(), rnd() * 3]);

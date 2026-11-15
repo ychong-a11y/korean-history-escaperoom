@@ -36,7 +36,8 @@ const SNOW_TEX = canvasTex(512, 512, (g, w, h) => { g.fillStyle = "#edf1f6"; g.f
 const SNOW = new THREE.MeshStandardMaterial({ map: SNOW_TEX, roughness: 0.93 });
 const SNOWCAP = new THREE.MeshStandardMaterial({ color: 0xf0f3f8, roughness: 0.9 });
 const SNOWHILL = new THREE.MeshStandardMaterial({ color: 0xdfe5ec, roughness: 0.95 });
-new THREE.TextureLoader().load("assets/tex/dirt_floor_nor.jpg", (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(20, 20); SNOW.normalMap = t; SNOW.normalScale.set(0.45, 0.45); SNOW.needsUpdate = true; });
+// 눈 바닥: 색은 위의 흰 그림 그대로, 눈 사진(Poly Haven snow_02, CC0)의 요철만 빌려 온다
+new THREE.TextureLoader().load("assets/tex/snow_02_nor.jpg", (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(16, 16); SNOW.normalMap = t; SNOW.normalScale.set(0.9, 0.9); SNOW.needsUpdate = true; });
 function snowRoof(x, y, z, w, d, h) { return E.hanokRoof(x, y, z, w, d, h, { cap: SNOWCAP }); }
 function snowHill(x, z, r, h) { const m = hill(x, z, r, h); m.material = SNOWHILL; return m; }
 
@@ -57,6 +58,7 @@ const BLOCK_TEX = canvasTex(256, 256, (g, w, h) => {
 }, [1, 1]);
 const MAT_BLOCK = new THREE.MeshStandardMaterial({ map: BLOCK_TEX, roughness: 0.95 });
 MAT_BLOCK.normalMap = E.normalFrom(BLOCK_TEX, 4);   // 줄눈이 움푹 들어가 보이게
+E.photoMat(MAT_BLOCK, "stone_wall", [1, 1], { color: 0xc4c4c0 });   // 돌 쌓은 성벽 사진 재질
 function sbox(w, h, d, x, y, z, p = E.ROOT, mat = MAT_BLOCK, tile = 1.4) {
   const geo = new THREE.BoxGeometry(w, h, d), uv = geo.attributes.uv;
   for (let f = 0; f < 6; f++) {
@@ -305,7 +307,7 @@ const DRAFT = [["一", "和約後 金兵 卽撤"], ["二", "朝鮮 割地 與金
 const DRAFT_HTML = `<div class="doc" style="font-size:20px;line-height:1.9">${DRAFT.map(([n, t]) => `<b>${n}.</b> ${t}`).join("<br>")}</div>`;
 const GLYPH2 = [["和", "화할 화"], ["約", "맺을 약"], ["後", "뒤 후"], ["金", "쇠 금 (북쪽 나라 이름 '금')"], ["兵", "군사 병"], ["卽", "곧 즉"], ["撤", "거둘 철 (물러가다)"], ["朝鮮", "조선"], ["割", "벨 할"], ["地", "땅 지"], ["與", "줄 여"], ["不", "아닐 불"], ["越", "넘을 월"], ["鴨綠江", "압록강"], ["兩", "두 량"], ["國", "나라 국"], ["爲", "될 위"], ["兄", "형 형"], ["弟", "아우 제"], ["絶", "끊을 절"], ["明", "밝을 명 (나라 이름 '명')"]];
 const HOURS = [["子", "夜半", "야반 · 한밤중"], ["丑", "▒▒", "(이름이 번져 지워짐)"], ["寅", "平旦", "평단 · 동틀 무렵"], ["卯", "日出", "일출 · 해 뜰 때"], ["辰", "食時", "식시 · 아침밥 때"], ["巳", "隅中", "우중 · 해가 한쪽에 오를 때"], ["午", "日中", "일중 · 한낮"], ["未", "日昳", "일질 · 해 기울 때"], ["申", "晡時", "포시 · 늦은 오후"], ["酉", "日入", "일입 · 해 질 때"], ["戌", "黃昏", "황혼 · 어스름"], ["亥", "人定", "인정 · 사람이 잠자리에 들 때"]];
-const GREY2 = { top: 0x8a96a8, mid: 0xb8c2cc, low: 0xd8dde2, sun: [0.3, 0.4, -0.6], sunCol: 0xe8eef8, glow: 0.25, fog: 0xc8ced6, fogNear: 30, fogFar: 140, hemiSky: 0xe0e8f4, hemiGround: 0x7a7a80, hemiI: 1.3, light: 0xf0f4ff, lightI: 1.4, exposure: 1.05, waterColor: 0x2a3a48 };
+const GREY2 = { hdri: "kloofendal_overcast_puresky", hdrExposure: 0.85, top: 0x8a96a8, mid: 0xb8c2cc, low: 0xd8dde2, sun: [0.3, 0.4, -0.6], sunCol: 0xe8eef8, glow: 0.25, fog: 0xc8ced6, fogNear: 30, fogFar: 140, hemiSky: 0xe0e8f4, hemiGround: 0x7a7a80, hemiI: 1.3, light: 0xf0f4ff, lightI: 1.4, exposure: 1.05, waterColor: 0x2a3a48 };
 CHAPTERS.push({
   place: "섬으로 건너간 임금", when: "네 해 뒤 늦겨울 · 바다 건너 섬",
   atmosphere: GREY2,
@@ -641,7 +643,7 @@ function rodsSvg(num, unit = "") {
   const w = 12 + n * W + (unit ? 64 : 0);
   return `<svg viewBox="0 0 ${w} ${H + 14}" style="height:${H + 14}px;max-width:100%;vertical-align:middle">${s}${unit ? `<text x="${12 + n * W + 4}" y="${H / 2 + 14}" font-size="22" ${FONT_SVG} fill="#2b2118">${unit}</text>` : ""}</svg>`;
 }
-const SNOW4 = { top: 0x7d8796, mid: 0xa8b0ba, low: 0xc6ccd2, sun: [0.2, 0.35, -0.5], sunCol: 0xdde4f0, glow: 0.2, fog: 0xb8bec6, fogNear: 20, fogFar: 110, hemiSky: 0xd8e0ec, hemiGround: 0x6a6a70, hemiI: 1.35, light: 0xe8eef8, lightI: 1.1, exposure: 1.0 };
+const SNOW4 = { hdri: "overcast_soil_puresky", hdrExposure: 0.8, top: 0x7d8796, mid: 0xa8b0ba, low: 0xc6ccd2, sun: [0.2, 0.35, -0.5], sunCol: 0xdde4f0, glow: 0.2, fog: 0xb8bec6, fogNear: 20, fogFar: 110, hemiSky: 0xd8e0ec, hemiGround: 0x6a6a70, hemiI: 1.35, light: 0xe8eef8, lightI: 1.1, exposure: 1.0 };
 CHAPTERS.push({
   place: "산성의 겨울", when: "그해 섣달 · 눈 덮인 산성",
   atmosphere: SNOW4,
@@ -945,7 +947,7 @@ CHAPTERS.push({
 
 /* ───────────── 제6장 · 끓는 물과 얼음 ───────────── */
 const POEM_L = ["湯氷", "裘葛", "事或", "心寧"], POEM_R = ["俱是水", "莫非衣", "隨時別", "與道違"];
-const GREY6 = { top: 0x6a7282, mid: 0x9aa2ae, low: 0xc0c4ca, sun: [-0.4, 0.3, -0.5], sunCol: 0xd8dce8, glow: 0.2, fog: 0xa8aeb6, fogNear: 20, fogFar: 90, hemiSky: 0xd0d8e4, hemiGround: 0x5a5a60, hemiI: 1.3, light: 0xe0e6f0, lightI: 1.0, exposure: 1.0 };
+const GREY6 = { hdri: "overcast_soil_puresky", hdrExposure: 0.75, top: 0x6a7282, mid: 0x9aa2ae, low: 0xc0c4ca, sun: [-0.4, 0.3, -0.5], sunCol: 0xd8dce8, glow: 0.2, fog: 0xa8aeb6, fogNear: 20, fogFar: 90, hemiSky: 0xd0d8e4, hemiGround: 0x5a5a60, hemiI: 1.3, light: 0xe0e6f0, lightI: 1.0, exposure: 1.0 };
 CHAPTERS.push({
   place: "끓는 물과 얼음", when: "몇 해 뒤 겨울 · 북쪽 먼 도성의 감옥",
   atmosphere: GREY6,

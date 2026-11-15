@@ -3,7 +3,11 @@
 
 재질 (1k JPG: diff=색, nor=요철, rough=거칠기)
 - dirt_floor, sparse_grass, japanese_cedar_planks, dark_wooden_planks, grey_roof_tiles, clay_plaster, bark_willow
+- stone_wall (성벽 · 담장 굽 · 감옥 벽)
+- rock_face (요철·거칠기만: 바위 · 돌 물건 · 동굴 벽)
+- snow_02 (요철만: 눈 바닥)
 
 하늘 사진 (2k HDR)
 - qwantani_dawn_puresky (1장), kloofendal_48d_partly_cloudy_puresky (2장), belfast_sunset_puresky (3장),
   qwantani_morning_puresky (4장), qwantani_sunrise_puresky (6장), qwantani_dusk_2_puresky (6장 노량)
+- kloofendal_overcast_puresky, overcast_soil_puresky (눈 덮인 산성의 흐린 날)
