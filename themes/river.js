@@ -20,6 +20,7 @@ function inst(geo, mat, list, o = {}) {
   E.ROOT.add(m); return m;
 }
 function hipRoof(x, y, z, w, d, h, mat) {
+  if (mat === MAT.roof) return E.hanokRoof(x, y, z, w, d, h);   // 기와지붕은 엔진의 한옥 지붕(처마 곡선)
   const geo = new THREE.ConeGeometry(1, 1, 4); geo.rotateY(PI / 4);
   const m = new THREE.Mesh(geo, mat); m.scale.set((w / 2) * Math.SQRT2, h, (d / 2) * Math.SQRT2); m.position.set(x, y + h / 2, z);
   m.castShadow = m.receiveShadow = true; E.ROOT.add(m); return m;
@@ -51,7 +52,7 @@ const imgOf = (tex, w = "100%") => `<img src="${tex.image.toDataURL()}" style="w
 function rm(o) { if (o && o.parent) o.parent.remove(o); }
 // 사람 무리 (몸통 · 머리 · 투구)
 function crowd(list, robeCols, helmet, id, label) {
-  const b1 = inst(new THREE.CylinderGeometry(0.2, 0.32, 1.2, 8), C(0xffffff), list.map(([x, z, r]) => [x, 0.6, z, r || 0]), { colors: robeCols });
+  const b1 = inst(E.crowdBody, C(0xffffff), list.map(([x, z, r]) => [x, 0.6, z, r || 0]), { colors: robeCols });
   const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), MAT.skin, list.map(([x, z]) => [x, 1.38, z]));
   const ms = [b1, b2];
   if (helmet) ms.push(inst(new THREE.SphereGeometry(0.17, 10, 6), MAT.iron, list.map(([x, z]) => [x, 1.46, z, 0, 1, 0.7, 1])));

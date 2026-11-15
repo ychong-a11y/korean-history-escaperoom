@@ -58,8 +58,7 @@ function hanok(o = {}) {   // 한옥 안채 앞면 + 마당 담 (3장 · 6장)
   [-5.2, -2.6, 0, 2.6, 5.2].forEach((x) => cyl(0.14, 0.16, 3.3, MAT.wood, x, 2.1, -5.35));
   box(11, 2.3, 0.15, MAT.door, 0, 1.95, -6.7);
   box(11.4, 0.25, 0.3, MAT.wood, 0, 3.15, -6.6);
-  box(14.5, 0.35, 4.6, MAT.roof, 0, 4.0, -6.4).rotation.x = 0.42;
-  box(14.6, 0.35, 0.5, MAT.roof, 0, 4.85, -8.1);
+  E.hanokRoof(0, 3.45, -7.3, 14.6, 5.8, 1.9);   // 처마가 휜 기와지붕 (엔진)
   wallSeg(12.6, 6.3, -0.4, Math.PI / 2); wallSeg(12.6, -6.3, -0.4, Math.PI / 2);
   if (o.gate === false) { postLine(-6.3, 5.9, 6.3, 5.9, 1.1); return null; }
   wallSeg(5.1, -3.75, 5.9, 0); wallSeg(5.1, 3.75, 5.9, 0);

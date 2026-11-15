@@ -20,6 +20,7 @@ function inst(geo, mat, list, o = {}) {
 }
 // 네모 지붕 (모임지붕)
 function hipRoof(x, y, z, w, d, h, mat) {
+  if (mat === MAT.roof) return E.hanokRoof(x, y, z, w, d, h);   // 기와지붕은 엔진의 한옥 지붕(처마 곡선)
   const geo = new THREE.ConeGeometry(1, 1, 4); geo.rotateY(PI / 4);
   const m = new THREE.Mesh(geo, mat); m.scale.set((w / 2) * Math.SQRT2, h, (d / 2) * Math.SQRT2); m.position.set(x, y + h / 2, z);
   m.castShadow = m.receiveShadow = true; E.ROOT.add(m); return m;
@@ -807,7 +808,7 @@ CHAPTERS.push({
     // 환영 인파
     const crowd = []; for (let i = 0; i < 30; i++) crowd.push([2 + E.rand() * 11, 0, 1 + E.rand() * 2.6, E.rand() * 6]);
     const cols = [0x2a2a30, 0x3a3428, 0x4a4a52, 0x5a4a3a, 0x222228];
-    const b1 = inst(new THREE.CylinderGeometry(0.2, 0.33, 1.25, 8), C(0xffffff), crowd.map(([x, y, z, r]) => [x, 0.62, z, r]), { colors: cols });
+    const b1 = inst(E.crowdBody, C(0xffffff), crowd.map(([x, y, z, r]) => [x, 0.62, z, r]), { colors: cols });
     const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), MAT.skin, crowd.map(([x, y, z]) => [x, 1.42, z]));
     const b3 = inst(new THREE.CylinderGeometry(0.16, 0.18, 0.14, 10), MAT.black, crowd.map(([x, y, z]) => [x, 1.58, z]));
     [b1, b2, b3].forEach((m) => tag(m, "crowd", "환영 인파"));

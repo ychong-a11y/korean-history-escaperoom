@@ -26,6 +26,7 @@ const BLOCK_TEX = canvasTex(256, 256, (g, w, h) => {
   E.speckle(g, w, h, 900, ["#6a645a", "#8a8274", "#4e4840"], 2);
 }, [1, 1]);
 const MAT_BLOCK = new THREE.MeshStandardMaterial({ map: BLOCK_TEX, roughness: 0.95 });
+MAT_BLOCK.normalMap = E.normalFrom(BLOCK_TEX, 4);   // 줄눈이 움푹 들어가 보이게
 // 찰갑(작은 쇠 비늘을 엮은 갑옷) 무늬
 const SCALE_TEX = canvasTex(128, 128, (g, w, h) => {
   g.fillStyle = "#2a2826"; g.fillRect(0, 0, w, h);
@@ -185,7 +186,7 @@ CHAPTERS.push({
     [-6, -3, 0, 3, 6].forEach((x) => cyl(0.22, 0.25, 4, MAT.red, x, 2.6, -8.6, 12));
     box(16, 0.32, 0.32, MAT.red, 0, 4.55, -8.6);
     box(16, 4, 0.3, MAT.wall, 0, 2.6, -13.2); [-7.8, 7.8].forEach((x) => box(0.3, 4, 4.6, MAT.wall, x, 2.6, -11));
-    box(18, 0.35, 4.4, MAT.roof, 0, 5.25, -9.3).rotation.x = 0.36; box(18, 0.35, 4.4, MAT.roof, 0, 5.25, -12.7).rotation.x = -0.36; box(18.3, 0.3, 0.5, MAT.roof, 0, 5.98, -11);
+    E.hanokRoof(0, 4.5, -11, 18.6, 7.8, 1.6);
     // 할아버지의 투구
     const hm = group(-3, 0, -6.6);
     cyl(0.06, 0.08, 1.3, MAT.wood, 0, 0.65, 0, 8, hm); box(0.6, 0.06, 0.06, MAT.wood, 0, 1.15, 0, hm);
@@ -196,7 +197,7 @@ CHAPTERS.push({
     // 서쪽 서고 (큰아버지의 서고)
     box(5, 0.3, 5, MAT.stone, -10.5, 0.15, -0.5);
     [[-12.7, -2.7], [-8.3, -2.7], [-12.7, 1.7], [-8.3, 1.7]].forEach(([x, z]) => cyl(0.16, 0.18, 3, MAT.red, x, 1.8, z, 10));
-    box(6, 0.3, 6, MAT.roof, -10.5, 3.45, -0.5); box(6.4, 0.25, 0.4, MAT.roof, -10.5, 3.7, -0.5);
+    E.hanokRoof(-10.5, 3.3, -0.5, 6.6, 6.6, 1.3);
     box(0.2, 3, 5, MAT.wall, -12.95, 1.8, -0.5);
     box(0.55, 2.3, 3.8, MAT.wood, -12.55, 1.45, -0.5);
     [0.75, 1.25, 1.75, 2.25].forEach((y) => box(0.6, 0.04, 3.8, MAT.woodLight, -12.3, y + 0.15, -0.5));
@@ -212,7 +213,7 @@ CHAPTERS.push({
     // 동쪽 사당
     box(4, 0.3, 4, MAT.stone, 10.5, 0.15, -4);
     box(0.2, 2.6, 3.6, MAT.wall, 12.35, 1.6, -4); [[8.8, -5.7], [8.8, -2.3], [12.2, -5.7], [12.2, -2.3]].forEach(([x, z]) => cyl(0.13, 0.15, 2.6, MAT.red, x, 1.6, z, 10));
-    box(4.6, 0.3, 4.6, MAT.roof, 10.5, 3.05, -4); box(4.8, 0.25, 0.4, MAT.roof, 10.5, 3.3, -4);
+    E.hanokRoof(10.5, 2.95, -4, 5.0, 5.0, 1.1);
     const sh = group(11.6, 0.3, -4);
     box(0.8, 0.9, 2.4, MAT.wood, 0, 0.45, 0, sh); box(0.84, 0.05, 2.44, MAT.red, 0, 0.92, 0, sh);
     L.tablets = [-0.84, -0.28, 0.28, 0.84].map((z) => { const t = box(0.08, 0.55, 0.24, C(0x5a3a22), -0.1, 1.24, z, sh); return t; });

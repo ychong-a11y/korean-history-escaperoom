@@ -9,6 +9,7 @@ import { SSAOPass } from "three/addons/postprocessing/SSAOPass.js";
 import { UnrealBloomPass } from "three/addons/postprocessing/UnrealBloomPass.js";
 import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
+import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 const $ = (id) => document.getElementById(id);
 document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\">\n  <button id=\"move-fwd\" class=\"f\" aria-label=\"앞으로\">▲</button>\n  <button id=\"move-left\" class=\"l\" aria-label=\"왼쪽으로\">◀</button>\n  <button id=\"move-right\" class=\"r\" aria-label=\"오른쪽으로\">▶</button>\n  <button id=\"move-back\" class=\"b\" aria-label=\"뒤로\">▼</button>\n</div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·수첩). 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요. Esc를 누르면 마우스가 풀려요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
 let THEME = null, CHAPTERS = [];
@@ -30,6 +31,26 @@ function speckle(g, w, h, n, colors, size) { for (let i = 0; i < n; i++) { g.fil
 function grain(base, line, rep) {
   return canvasTex(256, 256, (g, w, h) => { g.fillStyle = base; g.fillRect(0, 0, w, h); for (let y = 0; y < h; y += 3) { g.fillStyle = line.replace("A", (0.1 + rand() * 0.25).toFixed(2)); g.fillRect(0, y, w, 1 + rand() * 2); } }, rep);
 }
+// 돌 쌓은 벽 무늬: 줄마다 높이가 다르고, 돌마다 색과 모서리 밝기가 다르다 (normalFrom으로 줄눈이 움푹 들어가 보임)
+function stoneBlocks(tones, mortar, rep, W = 256, H = 256) {
+  return canvasTex(W, H, (g, w, h) => {
+    g.fillStyle = mortar; g.fillRect(0, 0, w, h);
+    let y = 0;
+    while (y < h) {
+      const rh = Math.min(h - y, 40 + Math.floor(rand() * 26)); let x = -Math.floor(rand() * 40);
+      while (x < w) {
+        const bw = 46 + Math.floor(rand() * 54);
+        g.fillStyle = tones[Math.floor(rand() * tones.length)];
+        g.beginPath(); g.roundRect(x + 2.5, y + 2.5, bw - 5, rh - 5, 6); g.fill();
+        g.fillStyle = "rgba(255,255,255,.10)"; g.fillRect(x + 5, y + 3, bw - 10, 4);
+        g.fillStyle = "rgba(0,0,0,.16)"; g.fillRect(x + 5, y + rh - 8, bw - 10, 5);
+        x += bw;
+      }
+      y += rh;
+    }
+    speckle(g, w, h, 1400, ["rgba(0,0,0,.12)", "rgba(255,255,255,.08)", "rgba(60,50,40,.15)"], 2.5);
+  }, rep);
+}
 const TEX = {
   dirt: canvasTex(512, 512, (g, w, h) => { g.fillStyle = "#a88e68"; g.fillRect(0, 0, w, h); speckle(g, w, h, 5000, ["#9a8060", "#b59c76", "#8d7455", "#c2aa84"], 4); }, [5, 5]),
   grass: canvasTex(512, 512, (g, w, h) => { g.fillStyle = "#6f7f45"; g.fillRect(0, 0, w, h); speckle(g, w, h, 7000, ["#647540", "#7d8d4e", "#5a6a38", "#8a9a5a", "#9a8a5a"], 4); }, [8, 8]),
@@ -38,7 +59,7 @@ const TEX = {
   woodLight: grain("#9c7448", "rgba(90,60,30,A)", [2, 1]),
   plank: canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#8a6a44"; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 32) { g.fillStyle = "rgba(40,25,10,.45)"; g.fillRect(x, 0, 2, h); } for (let y = 0; y < h; y += 3) { g.fillStyle = `rgba(60,40,20,${(rand() * 0.15).toFixed(2)})`; g.fillRect(0, y, w, 1); } }, [6, 2]),
   wall: canvasTex(512, 256, (g, w, h) => { g.fillStyle = "#cdbb98"; g.fillRect(0, 0, w, h); speckle(g, w, h, 1500, ["#bfae8b", "#d8c8a6"], 5); for (let i = 0; i < 40; i++) { g.fillStyle = ["#8a7d6a", "#9a8c76", "#7a6e5c"][i % 3]; g.beginPath(); g.ellipse(rand() * w, h * 0.55 + rand() * h * 0.45, 14 + rand() * 16, 10 + rand() * 8, 0, 0, 7); g.fill(); } }, [3, 1]),
-  prisonWall: canvasTex(512, 256, (g, w, h) => { g.fillStyle = "#4a4239"; g.fillRect(0, 0, w, h); speckle(g, w, h, 2500, ["#3e372f", "#564d43", "#352f28"], 6); }, [3, 1]),
+  prisonWall: stoneBlocks(["#4a4239", "#524940", "#433b33", "#3e372f"], "#26211c", [3, 1], 512, 256),
   roof: canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#3b3d42"; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 32) { g.fillStyle = "#2c2e33"; g.fillRect(x, 0, 6, h); g.fillStyle = "#4a4d53"; g.fillRect(x + 8, 0, 3, h); } }, [6, 2]),
   door: canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#efe4c8"; g.fillRect(0, 0, w, h); g.strokeStyle = "#6b4a2e"; g.lineWidth = 5; g.strokeRect(2, 2, w - 4, h - 4); g.lineWidth = 3; for (let x = 32; x < w; x += 32) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, h); g.stroke(); } for (let y = 32; y < h; y += 32) { g.beginPath(); g.moveTo(0, y); g.lineTo(w, y); g.stroke(); } }, [5, 1]),
   gate: canvasTex(256, 512, (g, w, h) => { g.fillStyle = "#5a3d24"; g.fillRect(0, 0, w, h); for (let x = 0; x < w; x += 42) { g.fillStyle = "rgba(0,0,0,.35)"; g.fillRect(x, 0, 3, h); } g.fillStyle = "#2a241e"; [80, 250, 420].forEach((y) => g.fillRect(0, y, w, 16)); g.fillStyle = "#c9a227"; [80, 250, 420].forEach((y) => { for (let x = 16; x < w; x += 48) { g.beginPath(); g.arc(x, y + 8, 5, 0, 7); g.fill(); } }); }),
@@ -48,6 +69,8 @@ const TEX = {
   bark: canvasTex(64, 256, (g, w, h) => { g.fillStyle = "#4a3828"; g.fillRect(0, 0, w, h); for (let i = 0; i < 40; i++) { g.fillStyle = "rgba(0,0,0,.3)"; g.fillRect(rand() * w, 0, 2, h); } }),
   straw: canvasTex(128, 128, (g, w, h) => { g.fillStyle = "#b99a52"; g.fillRect(0, 0, w, h); for (let i = 0; i < 400; i++) { g.strokeStyle = ["#d4b66a", "#9c7e3e", "#c8a858"][i % 3]; g.beginPath(); const x = rand() * w, y = rand() * h; g.moveTo(x, y); g.lineTo(x + (rand() - .5) * 30, y + (rand() - .5) * 8); g.stroke(); } }, [2, 2]),
   target: canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#e9e1cc"; g.fillRect(0, 0, w, h); [["#2a2a2a", 120], ["#e9e1cc", 96], ["#24557a", 76], ["#e9e1cc", 54], ["#b23a2e", 34]].forEach(([c, r]) => { g.fillStyle = c; g.beginPath(); g.arc(128, 128, r, 0, 7); g.fill(); }); }),
+  blocks: stoneBlocks(["#8c8478", "#968e80", "#7f786c", "#8a8070"], "#4e4840", [1, 1]),
+  stone: canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#8c8378"; g.fillRect(0, 0, w, h); speckle(g, w, h, 2200, ["#7e766b", "#988f83", "#857c71", "#a39a8d", "#736b61"], 5); }, [1, 1]),
   spiral: canvasTex(256, 256, (g, w, h) => { g.clearRect(0, 0, w, h); g.strokeStyle = "rgba(230,245,255,.55)"; g.lineWidth = 5; g.beginPath(); for (let a = 0; a < 30; a += 0.05) { const r = a * 4; g.lineTo(128 + Math.cos(a) * r, 128 + Math.sin(a) * r); } g.stroke(); }),
 };
 function textTex(text, o = {}) {
@@ -108,6 +131,8 @@ sunLight.castShadow = true; sunLight.shadow.mapSize.set(GFX.ultra ? 2048 : 1024,
 Object.assign(sunLight.shadow.camera, { left: -18, right: 18, top: 18, bottom: -18, near: 1, far: 90 });
 sunLight.shadow.bias = -0.0008;
 scene.add(sunLight); scene.add(sunLight.target);
+// 어두운 장(밤 · 실내 · 동굴)에서 눈앞 물건이 보이도록 머리 위에 은은한 등불 하나 (그림자 없음 · 늘 켜 두어 셰이더가 다시 만들어지지 않게)
+const lantern = new THREE.PointLight(0xffd8a8, 0, 9, 1.6); scene.add(lantern);
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 const envSky = new THREE.Mesh(sky.geometry, sky.material);
@@ -164,6 +189,10 @@ function setAtmosphere(a) {
   hemi.color.set(a.hemiSky); hemi.groundColor.set(a.hemiGround); hemi.intensity = a.hemiI;
   sunLight.color.set(a.light); sunLight.intensity = a.lightI;
   sunLight.position.copy(skyU.sun.value).multiplyScalar(40);
+  // 어두운 장: 주변광 바닥값 + 등불 (a.lantern으로 직접 정할 수도 있음: 0이면 끔)
+  const dark = !a.hdri && (a.lightI ?? 2) < 1.2;
+  if (dark) { const lum = hemi.color.r * 0.3 + hemi.color.g * 0.55 + hemi.color.b * 0.15, need = 0.3 / Math.max(0.02, lum); if (hemi.intensity < need) hemi.intensity = Math.min(need, a.hemiI * 2.2); }
+  lantern.intensity = a.lantern ?? (dark ? 6 : 0);
   renderer.toneMappingExposure = a.exposure ?? 1.05;
   const token = ++ATM_TOKEN;
   hdriSky.visible = envHdri.visible = false; sky.visible = envSky.visible = true;
@@ -197,7 +226,7 @@ const MAT = {
   dirt: MN(TEX.dirt, 3), grass: MN(TEX.grass, 3), stoneFloor: MN(TEX.stoneFloor, 4), wood: MN(TEX.wood, 3, { roughness: 0.75 }), woodLight: MN(TEX.woodLight, 3, { roughness: 0.7 }), plank: MN(TEX.plank, 3, { roughness: 0.75 }),
   wall: MN(TEX.wall, 5), prisonWall: MN(TEX.prisonWall, 5), roof: MN(TEX.roof, 4, { roughness: 0.6 }), door: M(TEX.door), gate: MN(TEX.gate, 2),
   jar: M(TEX.jar, { roughness: 0.22 }), leaves: MN(TEX.leaves, 2), willow: M(TEX.willow, { side: THREE.DoubleSide }), bark: MN(TEX.bark, 4), straw: MN(TEX.straw, 3),
-  target: M(TEX.target), stone: C(0x8c8378, { roughness: 0.95 }), paper: C(0xf4ecd8, { roughness: 0.9 }),
+  target: M(TEX.target), stone: MN(TEX.stone, 2, { roughness: 0.95 }), stoneBlock: MN(TEX.blocks, 4, { roughness: 0.95 }), paper: C(0xf4ecd8, { roughness: 0.9 }),
   iron: C(0x3a3632, { metalness: 0.6, roughness: 0.5 }), white: C(0xeeeae0), red: C(0x9e2b25), blue: C(0x2c4a7a), black: C(0x1e1c1a),
   skin: C(0xd9b48f), horse: C(0x5e3a22), rice: C(0xc9a83a), tent: C(0xe6dcc4, { side: THREE.DoubleSide }), sail: C(0xe9e1cc, { side: THREE.DoubleSide }),
   water: C(0x1f4c66, { roughness: 0.15, metalness: 0.2 }), hull: C(0x4a3320), hill: MN(canvasTex(256, 256, (g, w, h) => { g.fillStyle = "#4a5a3a"; g.fillRect(0, 0, w, h); speckle(g, w, h, 4000, ["#3e4e30", "#55663f", "#5e6a44", "#4a503a"], 6); }, [6, 3]), 3, { roughness: 0.95 }), dark: C(0x2a2420),
@@ -243,14 +272,66 @@ function board(text, w, h, x, y, z, rot, p = ROOT, o = {}) {
   face.position.z = 0.015; g.add(face);
   return g;
 }
+/* 사람: 미리 만들어 둔 공용 도형(PG)을 함께 쓴다 (장을 바꿔도 지우지 않음 · userData.keep).
+   얼굴은 -Z 쪽(회전 0일 때 북쪽). 발 y=0, 머리 가운데 1.52, 머리 꼭대기 약 1.68 (예전 원뿔 사람과 같은 키 · 같은 모자 높이). */
+const keepGeo = (g) => { g.userData.keep = true; return g; };
+const lathe = (pts, seg) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
+const flatZ = (geo, f) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) * f(p.getY(i))); geo.computeVertexNormals(); return geo; };
+const PG = (() => {
+  const skirt = flatZ(lathe([[0.335, 0.03], [0.315, 0.18], [0.27, 0.48], [0.222, 0.78], [0.21, 0.9]], 14), (y) => 0.86 - y * 0.12);
+  const torso = flatZ(lathe([[0.21, 0.88], [0.218, 1.0], [0.222, 1.14], [0.205, 1.26], [0.16, 1.335], [0.075, 1.38], [0.001, 1.39]], 12), () => 0.75);
+  const sleeve = (s) => new THREE.CylinderGeometry(0.062, 0.105, 0.5, 8).rotateZ(s * 0.2).translate(s * 0.255, 1.06, 0);
+  const robe = mergeGeometries([skirt, torso, sleeve(1), sleeve(-1)]);
+  const hand = (s) => new THREE.SphereGeometry(0.052, 8, 6).translate(s * 0.31, 0.77, -0.01);
+  const skin = mergeGeometries([new THREE.CylinderGeometry(0.055, 0.062, 0.1, 8).translate(0, 1.4, 0), hand(1), hand(-1)]);
+  const shoe = (s) => new THREE.SphereGeometry(0.075, 8, 6).scale(0.85, 0.5, 1.5).translate(s * 0.1, 0.035, -0.2);
+  const belt = flatZ(new THREE.CylinderGeometry(0.218, 0.218, 0.06, 14, 1, true), () => 0.77).translate(0, 0.89, 0);
+  const dark = mergeGeometries([shoe(1), shoe(-1), belt]);
+  const head = new THREE.SphereGeometry(0.15, 16, 12).scale(0.95, 1.04, 1).translate(0, 0.135, 0);
+  const hair = new THREE.SphereGeometry(0.158, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.56).rotateX(0.75).translate(0, 0.14, 0);
+  const hat = mergeGeometries([new THREE.CylinderGeometry(0.3, 0.3, 0.02, 18).translate(0, 0.255, 0), new THREE.CylinderGeometry(0.09, 0.11, 0.17, 12).translate(0, 0.355, 0)]);
+  const helm = new THREE.SphereGeometry(0.17, 14, 10).scale(1, 0.7, 1).translate(0, 0.215, 0);
+  const plume = new THREE.CylinderGeometry(0.01, 0.01, 0.25, 4).translate(0, 0.395, 0);
+  const crowd = robe.clone().translate(0, -0.62, 0);   // 테마의 InstancedMesh 군중용 몸통 (원기둥 0.62 높이 자리에 그대로)
+  const all = { robe, skin, dark, head, hair, hat, helm, plume, crowd };
+  Object.values(all).forEach(keepGeo);
+  return all;
+})();
+// 얼굴: 머리 공의 -Z 쪽(u=0.75)에 눈썹 · 눈 · 입을 살짝 그린다
+const FACE_MAT = new THREE.MeshStandardMaterial({ roughness: 0.8, map: canvasTex(256, 128, (g, w, h) => {
+  g.fillStyle = "#d9b48f"; g.fillRect(0, 0, w, h);
+  const cx = w * 0.75;
+  g.fillStyle = "rgba(200,120,100,.18)"; [-1, 1].forEach((s) => { g.beginPath(); g.ellipse(cx + s * 17, 74, 7, 4, 0, 0, 7); g.fill(); });
+  g.fillStyle = "#2a1e16"; [-1, 1].forEach((s) => { g.beginPath(); g.ellipse(cx + s * 11, 61, 3.2, 2.4, 0, 0, 7); g.fill(); });
+  g.strokeStyle = "#3a2a1e"; g.lineWidth = 2.2; g.lineCap = "round";
+  [-1, 1].forEach((s) => { g.beginPath(); g.moveTo(cx + s * 6, 53.5); g.lineTo(cx + s * 16, 52.5); g.stroke(); });
+  g.strokeStyle = "rgba(120,70,50,.35)"; g.lineWidth = 1.5; g.beginPath(); g.moveTo(cx, 62); g.lineTo(cx - 1, 72); g.stroke();
+  g.strokeStyle = "#8a4a3a"; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - 5, 82); g.quadraticCurveTo(cx, 84, cx + 5, 82); g.stroke();
+}) });
+const HAIR_MAT = new THREE.MeshStandardMaterial({ color: 0x17130f, roughness: 0.55 });
+const PEOPLE = [];   // 지금 장의 사람들 (숨쉬기 · 고개 돌리기)
 function person(x, z, rot, robe = MAT.white, p = ROOT, o = {}) {
   const g = group(x, 0, z, rot, p);
-  cyl(0.2, 0.36, 1.2, robe, 0, 0.6, 0, 10, g);
-  cyl(0.16, 0.2, 0.25, robe, 0, 1.28, 0, 10, g);
-  sphere(0.15, MAT.skin, 0, 1.52, 0, g);
-  if (o.helmet) { sphere(0.17, MAT.iron, 0, 1.6, 0, g).scale.y = 0.7; cyl(0.01, 0.01, 0.25, MAT.red, 0, 1.78, 0, 4, g); }
-  else if (!o.bare) { cyl(0.3, 0.3, 0.02, MAT.black, 0, 1.64, 0, 16, g); cyl(0.09, 0.11, 0.17, MAT.black, 0, 1.74, 0, 12, g); }
+  const mk = (geo, mat, par, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = shadow; m.receiveShadow = true; par.add(m); return m; };
+  mk(PG.dark, MAT.black, g);
+  const body = new THREE.Group(); g.add(body);
+  mk(PG.robe, robe, body); mk(PG.skin, MAT.skin, body);
+  const head = new THREE.Group(); head.position.y = 1.385; body.add(head);
+  mk(PG.head, FACE_MAT, head);
+  if (o.helmet) { mk(PG.helm, MAT.iron, head); mk(PG.plume, MAT.red, head, false); }
+  else if (!o.bare) mk(PG.hat, MAT.black, head);
+  else mk(PG.hair, HAIR_MAT, head);
+  g.userData.person = { body, head, ph: x * 1.7 + z * 3.1, n: g.children.length };
+  PEOPLE.push(g);
   return g;
+}
+// 가벼운 움직임 (보통 · 높음에서만): 숨쉬기 + 가끔 고개 돌리기. 테마가 사람에 장식을 덧붙였으면 고개는 돌리지 않는다.
+function animPeople(t) {
+  for (const g of PEOPLE) {
+    const u = g.userData.person, k = t + u.ph, br = Math.sin(k * 1.9) * 0.012;
+    u.body.scale.set(1 + br, 1 + br * 0.4, 1 + br);
+    if (g.children.length === u.n) { const s = Math.sin(k * 0.37); u.head.rotation.y = 0.45 * s * s * s; }
+  }
 }
 function horse(x, z, rot) {
   const g = group(x, 0, z, rot);
@@ -384,7 +465,67 @@ function hill(x, z, r, h) {
   geo.computeVertexNormals();
   const m = new THREE.Mesh(geo, MAT.hill); m.position.set(x, -1.5, z); m.receiveShadow = true; m.castShadow = false; m.userData.noPick = true; ROOT.add(m); return m;
 }
-function wallSeg(len, x, z, rot, h = 2.4) { const g = group(x, 0, z, rot); box(len, h, 0.45, MAT.wall, 0, h / 2, 0, g); box(len + 0.2, 0.22, 0.85, MAT.roof, 0, h + 0.1, 0, g); return g; }
+// 크기에 맞춰 무늬가 늘어나지 않는 상자 (tile m마다 한 번 반복)
+function tbox(w, h, d, mat, x, y, z, p = ROOT, tile = 1.4) {
+  const geo = new THREE.BoxGeometry(w, h, d), uv = geo.attributes.uv;
+  for (let f = 0; f < 6; f++) { const su = (f < 2 ? d : w) / tile, sv = (f === 2 || f === 3 ? d : h) / tile; for (let k = 0; k < 4; k++) { const i = f * 4 + k; uv.setXY(i, uv.getX(i) * su, uv.getY(i) * sv); } }
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = m.receiveShadow = true; p.add(m); return m;
+}
+// 기와 얹은 흙담: 아래는 돌 쌓은 굽, 위는 맞배 기와 (충돌은 테마의 rects가 맡으므로 모양만 바뀜)
+function wallSeg(len, x, z, rot, h = 2.4) {
+  const g = group(x, 0, z, rot);
+  tbox(len, 0.55, 0.5, MAT.stoneBlock, 0, 0.275, 0, g, 1.6);
+  box(len, h - 0.55, 0.45, MAT.wall, 0, 0.55 + (h - 0.55) / 2, 0, g);
+  const L = len + 0.24, slab = (s) => { const b = new THREE.BoxGeometry(L, 0.06, 0.52).rotateX(s * 0.42).translate(0, 0.1, s * 0.22), uv = b.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setX(i, uv.getX(i) * L / 2.5); return b; };
+  const cap = new THREE.Mesh(mergeGeometries([slab(1), slab(-1), new THREE.BoxGeometry(L + 0.04, 0.12, 0.14).translate(0, 0.22, 0)]), MAT.roof);
+  cap.position.y = h; cap.castShadow = cap.receiveShadow = true; g.add(cap);
+  return g;
+}
+/* 한옥 지붕 (우진각): 처마가 오목하게 휘고 네 귀가 들린다. 용마루 · 내림마루 · 서까래 빛깔의 처마 밑면.
+   테마의 hipRoof(x,y,z,w,d,h)와 같은 자리: 처마 높이 y, 바닥 w×d, 높이 h. 돌려주는 묶음의 위치 = (x, y+h/2, z).
+   o.cap: 위에 한 겹 더 덮을 재질 (눈) · o.under: 처마 밑 재질 · p: 부모 */
+const ROOF_UNDER = new THREE.MeshStandardMaterial({ color: 0x5a3e28, roughness: 0.9, side: THREE.BackSide });
+const ROOF_RIDGE = C(0x2a2c30, { roughness: 0.7 });
+function hanokRoof(x, y, z, w, d, h, o = {}, p = ROOT) {
+  const swap = d > w, A = Math.max(w, d) / 2, B = Math.min(w, d) / 2, r = A - B;
+  const lift = Math.min(0.45, h * 0.22, B * 0.18), f = (q) => q * (0.5 + 0.5 * q), slope = Math.hypot(B, h);
+  const NT = 12, NQ = 7, pos = [], uvs = [];
+  const P = (face, t, q) => {
+    let px, pz;
+    if (face < 2) { px = t * (A - B * q); pz = (face === 0 ? 1 : -1) * B * (1 - q); }
+    else { pz = t * B * (1 - q); px = (face === 2 ? 1 : -1) * (r + B * (1 - q)); }
+    const e = Math.abs(t) ** 3 * (1 - q) * (1 - q), k = 1 + 0.06 * e;
+    return [px * k, h * f(q) - h / 2 + lift * e, pz * k, (face < 2 ? px : pz) / 8, (q * slope) / 4];
+  };
+  for (let face = 0; face < 4; face++) {
+    const flip = face === 1 || face === 2;
+    for (let i = 0; i < NT; i++) for (let j = 0; j < NQ; j++) {
+      const t0 = -1 + (2 * i) / NT, t1 = -1 + (2 * (i + 1)) / NT, q0 = j / NQ, q1 = (j + 1) / NQ;
+      const a = P(face, t0, q0), b = P(face, t1, q0), c = P(face, t1, q1), dd = P(face, t0, q1);
+      (flip ? [a, c, b, a, dd, c] : [a, b, c, a, c, dd]).forEach((v) => { pos.push(v[0], v[1], v[2]); uvs.push(v[3], v[4]); });
+    }
+  }
+  let geo = new THREE.BufferGeometry();
+  geo.setAttribute("position", new THREE.Float32BufferAttribute(pos, 3)); geo.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geo = mergeVertices(geo); geo.computeVertexNormals();
+  // 용마루 + 내림마루 (곡면을 따라 세 토막씩)
+  const beams = [], th = Math.min(0.18, 0.06 + h * 0.05), _m = new THREE.Matrix4(), _q = new THREE.Quaternion(), _s = new THREE.Vector3(1, 1, 1);
+  const beam = (p1, p2, s = th) => { const v1 = new THREE.Vector3(...p1), v2 = new THREE.Vector3(...p2), len = v1.distanceTo(v2); if (len < 0.01) return; _q.setFromUnitVectors(new THREE.Vector3(0, 0, 1), v2.clone().sub(v1).normalize()); beams.push(new THREE.BoxGeometry(s, s, len + s * 0.5).applyMatrix4(_m.compose(v1.clone().add(v2).multiplyScalar(0.5), _q, _s))); };
+  const top = h / 2 + th * 0.35;
+  if (r > 0.05) { beam([-r - th, top, 0], [r + th, top, 0], th * 1.25); [-1, 1].forEach((s) => beam([s * (r + th * 0.6), top, 0], [s * (r + th * 1.6), top + th * 1.4, 0], th)); }
+  else beams.push(new THREE.SphereGeometry(th * 0.9, 8, 6).translate(0, top, 0));
+  [[1, 1], [1, -1], [-1, 1], [-1, -1]].forEach(([sx, sz]) => {
+    const face = 0, pts = [0, 0.34, 0.67, 1].map((q) => { const v = P(face, sx, q); return [v[0], v[1] + th * 0.45, v[2] * sz]; });
+    for (let i = 0; i < 3; i++) beam(pts[i], pts[i + 1]);
+  });
+  const ridge = mergeGeometries(beams);
+  const g = group(x, y + h / 2, z, swap ? Math.PI / 2 : 0, p);
+  const mk = (gg, mat, yy = 0, sc = 1, shadow = true) => { const m = new THREE.Mesh(gg, mat); m.position.y = yy; m.scale.set(sc, 1, sc); m.castShadow = shadow; m.receiveShadow = true; g.add(m); return m; };
+  mk(geo, MAT.roof); mk(geo, o.under || ROOF_UNDER, -0.07, 1, false);
+  if (o.cap) { mk(geo, o.cap, 0.07, 0.975, false); }
+  mk(ridge, o.cap || ROOF_RIDGE, o.cap ? 0.07 : 0);
+  return g;
+}
 const jarGeo = new THREE.LatheGeometry([[0, 0], [0.22, 0], [0.32, 0.12], [0.42, 0.4], [0.44, 0.55], [0.38, 0.78], [0.26, 0.9], [0.24, 0.98], [0, 0.98]].map(([a, b]) => new THREE.Vector2(a, b)), 24);
 function jar(x, z, s = 1) { const g = group(x, 0, z); g.scale.setScalar(s); const j = new THREE.Mesh(jarGeo, MAT.jar); j.castShadow = j.receiveShadow = true; g.add(j); cyl(0.28, 0.3, 0.08, MAT.jar, 0, 1.02, 0, 24, g); return g; }
 
@@ -638,6 +779,8 @@ function frame(dt) {
   camera.lookAt(camera.position.x - Math.sin(yaw) * Math.cos(pitch), camera.position.y + Math.sin(pitch), camera.position.z - Math.cos(yaw) * Math.cos(pitch));
   sky.position.copy(camera.position); hdriSky.position.copy(camera.position);
   CH.tick?.(dt, ELAPSED_T, A);
+  if (GFX.high && PEOPLE.length) animPeople(ELAPSED_T);
+  if (lantern.intensity > 0) lantern.position.set(camera.position.x, camera.position.y + 0.35, camera.position.z);
   if (++frameNo % 3 === 0) updateAim();
   WATERS.forEach((w) => { w.material.uniforms.time.value += dt * 0.5; });
   if (composer) composer.render(dt); else renderer.render(scene, camera);
@@ -811,7 +954,8 @@ function startTimer() { clearInterval(tickT); let last = Date.now(); tickT = set
 function disposeRoot() {
   WATERS.length = 0;
   if (!ROOT) return;
-  ROOT.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.material && m.userData.hl) m.material.dispose(); });
+  PEOPLE.length = 0;
+  ROOT.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); if (m.material && m.userData.hl) m.material.dispose(); });
   scene.remove(ROOT);
 }
 function loadChapter(i, resumePos) {
@@ -1083,7 +1227,7 @@ export function start(theme) {
 /* 테마 파일에서 쓰는 도구 모음 */
 export const E = {
   THREE, TEX, MAT, M, MN, C, canvasTex, textTex, speckle, rand: () => rand(),
-  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass,
+  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, stoneBlocks, crowdBody: PG.crowd,
   tag, collectClickables, toast, sfx, setAtmosphere, setMusic, formation, GANJI_TABLE, REACH, $,
   get S() { return S; }, get ROOT() { return ROOT; }, get CH() { return CH; }, get camera() { return camera; },
   lockInput() { inputLocked = true; },

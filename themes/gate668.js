@@ -38,6 +38,7 @@ const BLOCK_TEX = canvasTex(256, 256, (g, w, h) => {
   E.speckle(g, w, h, 900, ["#6a645a", "#8a8274", "#4e4840"], 2);
 }, [1, 1]);
 const MAT_BLOCK = new THREE.MeshStandardMaterial({ map: BLOCK_TEX, roughness: 0.95 });
+MAT_BLOCK.normalMap = E.normalFrom(BLOCK_TEX, 4);   // 줄눈이 움푹 들어가 보이게
 function sbox(w, h, d, x, y, z, p = E.ROOT, mat = MAT_BLOCK, tile = 1.4) {
   const geo = new THREE.BoxGeometry(w, h, d), uv = geo.attributes.uv;
   for (let f = 0; f < 6; f++) {
@@ -107,7 +108,7 @@ function smokeCol(x, z, h) {
 function crowd(list, cols, parent) {
   const body = list.map(([x, z, sit]) => [x, sit ? 0.35 : 0.62, z, 0, 1, sit ? 0.56 : 1, 1]);
   const head = list.map(([x, z, sit]) => [x, sit ? 0.86 : 1.42, z]);
-  const a = inst(new THREE.CylinderGeometry(0.2, 0.33, 1.25, 8), C(0xffffff), body, { colors: cols, parent });
+  const a = inst(E.crowdBody, C(0xffffff), body, { colors: cols, parent });
   const b = inst(new THREE.SphereGeometry(0.15, 10, 8), MAT.skin, head, { parent });
   return [a, b];
 }
@@ -137,6 +138,7 @@ function snowTick(p, dt) {
 }
 // 네모 지붕 (모임지붕)
 function hipRoof(x, y, z, w, d, h, mat) {
+  if (mat === MAT.roof) return E.hanokRoof(x, y, z, w, d, h);   // 기와지붕은 엔진의 한옥 지붕(처마 곡선)
   const geo = new THREE.ConeGeometry(1, 1, 4); geo.rotateY(PI / 4);
   const m = new THREE.Mesh(geo, mat); m.scale.set((w / 2) * Math.SQRT2, h, (d / 2) * Math.SQRT2); m.position.set(x, y + h / 2, z);
   m.castShadow = m.receiveShadow = true; E.ROOT.add(m); return m;

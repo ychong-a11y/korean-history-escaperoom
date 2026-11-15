@@ -20,6 +20,7 @@ function inst(geo, mat, list, o = {}) {
   (o.parent || E.ROOT).add(m); return m;
 }
 function hipRoof(x, y, z, w, d, h, mat) {
+  if (mat === MAT.roof) return E.hanokRoof(x, y, z, w, d, h);   // 기와지붕은 엔진의 한옥 지붕(처마 곡선)
   const geo = new THREE.ConeGeometry(1, 1, 4); geo.rotateY(PI / 4);
   const m = new THREE.Mesh(geo, mat); m.scale.set((w / 2) * Math.SQRT2, h, (d / 2) * Math.SQRT2); m.position.set(x, y + h / 2, z);
   m.castShadow = m.receiveShadow = true; E.ROOT.add(m); return m;
@@ -36,7 +37,7 @@ const SNOW = new THREE.MeshStandardMaterial({ map: SNOW_TEX, roughness: 0.93 });
 const SNOWCAP = new THREE.MeshStandardMaterial({ color: 0xf0f3f8, roughness: 0.9 });
 const SNOWHILL = new THREE.MeshStandardMaterial({ color: 0xdfe5ec, roughness: 0.95 });
 new THREE.TextureLoader().load("assets/tex/dirt_floor_nor.jpg", (t) => { t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(20, 20); SNOW.normalMap = t; SNOW.normalScale.set(0.45, 0.45); SNOW.needsUpdate = true; });
-function snowRoof(x, y, z, w, d, h) { hipRoof(x, y, z, w, d, h, MAT.roof); return hipRoof(x, y + 0.07, z, w * 0.97, d * 0.97, h, SNOWCAP); }
+function snowRoof(x, y, z, w, d, h) { return E.hanokRoof(x, y, z, w, d, h, { cap: SNOWCAP }); }
 function snowHill(x, z, r, h) { const m = hill(x, z, r, h); m.material = SNOWHILL; return m; }
 
 // 다듬은 돌을 쌓은 무늬 (산성 성벽)
@@ -55,6 +56,7 @@ const BLOCK_TEX = canvasTex(256, 256, (g, w, h) => {
   E.speckle(g, w, h, 900, ["#6a6862", "#8a8780", "#4e4c48"], 2);
 }, [1, 1]);
 const MAT_BLOCK = new THREE.MeshStandardMaterial({ map: BLOCK_TEX, roughness: 0.95 });
+MAT_BLOCK.normalMap = E.normalFrom(BLOCK_TEX, 4);   // 줄눈이 움푹 들어가 보이게
 function sbox(w, h, d, x, y, z, p = E.ROOT, mat = MAT_BLOCK, tile = 1.4) {
   const geo = new THREE.BoxGeometry(w, h, d), uv = geo.attributes.uv;
   for (let f = 0; f < 6; f++) {
