@@ -787,7 +787,7 @@ CHAPTERS.push({
     const bx = group(-11.0, 0.42, 1.4);
     box(0.5, 0.32, 0.36, C(0x5a3a22), 0, 0.16, 0, bx); box(0.08, 0.08, 0.02, MAT.brass, 0, 0.18, 0.19, bx);
     tag(bx, "box5", "주막 마루의 함");
-    addLight(0xffb060, day ? 1.2 : 3.2, 8, -11.6, 2.2, 0);
+    L.shopLight = addLight(0xffb060, day ? 1.2 : 3.2, 8, -11.6, 2.2, 0);
     L.mapTex = map5Tex();
     const ms = group(-9.4, 0, 3.6, PI / 2);
     [-0.6, 0.6].forEach((x) => box(0.08, 1.9, 0.08, MAT.wood, x, 0.95, 0, ms));
@@ -844,7 +844,7 @@ CHAPTERS.push({
       A.flag("p5_signal"); sfx("buk");
       L.fire = campfire(46, 15, -4, 30, 1.6);
       if (L.stars) { E.ROOT.remove(L.stars); L.stars = null; }
-      setAtmosphere(DAY5); addMarketCrowd(A);
+      setAtmosphere(DAY5); addMarketCrowd(A); if (L.shopLight) L.shopLight.intensity = 1.2;   // 다시 지은 모습(낮)과 같게
       A.note("3월 31일 밤, 매봉산 꼭대기에 횃불을 올리자 둘레의 산과 마을에서도 불이 올랐다고 전한다. 이튿날 아침, 장날의 아우내 장터에 사람들이 모여들었다.");
       return A.card("전날 밤의 횃불", `<p class="msg ok">매봉산 꼭대기에 불이 올랐다.</p><p>만세 전날 밤, 매봉산에 횃불을 올리자 둘레의 산과 마을에서도 하나둘 불이 올라 신호를 주고받았다고 전한다.</p><p>…밤이 지나고 <b>장날 아침</b>이 밝았다. 장터로 사람들이 모여든다. 이제 태극기를 나눠 줄 차례다.</p>`);
     }

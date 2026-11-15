@@ -53,7 +53,7 @@ function rm(o) { if (o && o.parent) o.parent.remove(o); }
 // 사람 무리 (몸통 · 머리 · 투구)
 function crowd(list, robeCols, helmet, id, label) {
   const b1 = inst(E.crowdBody, C(0xffffff), list.map(([x, z, r]) => [x, 0.6, z, r || 0]), { colors: robeCols });
-  const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), MAT.skin, list.map(([x, z]) => [x, 1.38, z]));
+  const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), E.faceMat, list.map(([x, z, r]) => [x, 1.38, z, r || 0]));   // 얼굴이 몸과 같은 쪽을 봄
   const ms = [b1, b2];
   if (helmet) ms.push(inst(new THREE.SphereGeometry(0.17, 10, 6), MAT.iron, list.map(([x, z]) => [x, 1.46, z, 0, 1, 0.7, 1])));
   ms.forEach((m) => (id ? tag(m, id, label) : (m.userData.noPick = true)));
@@ -581,8 +581,8 @@ CHAPTERS.push({
     const hf = inst(new THREE.BoxGeometry(2.2, 1.4, 0.06), C(0xa83228), HB.map(([x, z]) => [x + 1.1, 12, z]));
     tag(hf, "enemyhill", "서남쪽 산");
     // 먼 평양성과 돌기둥
-    const pw = C(0x9a9282, { roughness: 0.95 });
-    box(60, 7, 3, pw, 0, 3.5, 64); box(8, 3, 4, MAT.red, 0, 8.5, 62.5); hipRoof(0, 10, 62.5, 10, 5, 2.4, MAT.roof);
+    const pw = new THREE.MeshStandardMaterial({ map: E.TEX.blocks, color: 0xd8d0c4, roughness: 0.95 });   // 돌 쌓은 성벽 무늬
+    E.tbox(60, 7, 3, pw, 0, 3.5, 64, E.ROOT, 2.2); box(8, 3, 4, MAT.red, 0, 8.5, 62.5); hipRoof(0, 10, 62.5, 10, 5, 2.4, MAT.roof);
     const pyb = board("平壤城", 4, 1.4, 0, 5.4, 62.4, PI, E.ROOT, { size: 110 }); tag(pyb, "pyongyang", "멀리 보이는 평양성");
     const A0 = [-25, 35], B0 = [0, 61.5];
     const road = new THREE.Mesh(new THREE.PlaneGeometry(2.4, Math.hypot(B0[0] - A0[0], B0[1] - A0[1])), MAT.dirt);
@@ -595,13 +595,13 @@ CHAPTERS.push({
     L.banners = F4.map(([x, z], i) => {
       const g = group(x, 0, z);
       cyl(0.07, 0.09, 3.8, MAT.wood, 0, 1.9, 0, 8, g);
-      const mat = C(A.has("c4_lured") ? 0x8a8a80 : 0x2a3a6a, { side: THREE.DoubleSide });
+      const mat = C(A.has("c4_lured") || A.has("c4_r" + i) ? 0x8a8a80 : 0x2a3a6a, { side: THREE.DoubleSide });
       const fl = box(1.0, 1.3, 0.03, mat, 0.52, 3.0, 0, g);
       for (let k = 0; k < 5; k++) sphere(0.18, MAT.stone, Math.cos(k * 1.3) * 0.35, 0.08, Math.sin(k * 1.3) * 0.35, g);
       tag(g, "f" + i, "들판의 깃대");
       return { g, mat, fl };
     });
-    L.seq = [];
+    L.seq = F4.map((_, i) => i).filter((i) => A.has("c4_r" + i));   // 차례대로 물러난 자리는 표시로 남김 (다시 짓기 · 협동)
     // 고구려 진영
     const mt = group(-10, 0, 9);
     box(1.6, 0.06, 1.1, MAT.wood, 0, 0.85, 0, mt); [[-0.7, -0.45], [0.7, -0.45], [-0.7, 0.45], [0.7, 0.45]].forEach(([a, b]) => box(0.06, 0.85, 0.06, MAT.wood, a, 0.42, b, mt));
@@ -661,11 +661,11 @@ CHAPTERS.push({
       if (!A.has("c4_start")) return toast("아직 싸움이 시작되지 않았다. 먼저 북을 울리자.");
       if (L.seq.includes(i)) return toast("이미 물러난 자리다.");
       if (i !== L.seq.length) {
-        const had = L.seq.length; L.seq.forEach((k) => L.banners[k].mat.color.set(0x2a3a6a)); L.seq = [];
+        const had = L.seq.length; L.seq.forEach((k) => L.banners[k].mat.color.set(0x2a3a6a)); L.seq = []; E.S.flags = E.S.flags.filter((fl) => !/^c4_rd$/.test(fl));
         if (had) { E.miss(); sfx("wrong"); return toast("적이 눈치챈 것 같다! 다시 처음부터 물러나자. (지도를 다시 보자)"); }
         return toast("여기가 첫 번째 자리일까? 지도를 다시 보자.");
       }
-      L.seq.push(i); L.banners[i].mat.color.set(0x8a8a80); sfx("item");
+      L.seq.push(i); L.banners[i].mat.color.set(0x8a8a80); sfx("item"); A.flag("c4_r" + i);
       if (L.seq.length < 7) return toast(`⚔️ ${L.seq.length}번째 싸움 — 지는 척 물러났다.`);
       A.flag("c4_lured");
       A.note("하루에 일곱 번 싸워 일곱 번 모두 지는 척 물러났다. 적은 이긴 줄 알고 더 깊이 내려와 서남쪽 산에 진을 쳤다.");

@@ -175,7 +175,7 @@ CHAPTERS.push({
     [-2.9, 2.9].forEach((x) => sbox(1.6, 4.6, 2.4, x, 2.3, 0, gate));
     sbox(7.4, 0.9, 2.4, 0, 4.85, 0, gate);
     box(8, 0.3, 3.2, MAT.roof, 0, 5.6, 0, gate); [-3.4, 3.4].forEach((x) => cyl(0.14, 0.14, 1.2, MAT.red, x, 5.9, 1.2, 8, gate));
-    box(7.6, 0.35, 3.6, MAT.roof, 0, 6.6, 0, gate);
+    E.hanokRoof(0, 6.45, 0, 8.0, 3.8, 1.2, {}, gate);
     L.doorL = group(-2.1, 0, -0.4, 0, gate); box(2.1, 4.0, 0.14, MAT.gate, 1.05, 2.0, 0, L.doorL);
     L.doorR = group(2.1, 0, -0.4, 0, gate); box(2.1, 4.0, 0.14, MAT.gate, -1.05, 2.0, 0, L.doorR);
     box(0.5, 0.3, 0.16, MAT.iron, 0, 1.8, -0.55, gate);
@@ -581,7 +581,7 @@ CHAPTERS.push({
     stepWall(-9.6, -27.2, 15.6, 0, 4); stepWall(9.6, -27.2, 15.6, 0, 4);
     const bg = group(0, 0, -27.2);
     [-2.4, 2.4].forEach((x) => sbox(1.4, 4.8, 2.4, x, 2.4, 0, bg)); sbox(6.2, 0.9, 2.4, 0, 4.75, 0, bg);
-    box(6.8, 0.3, 3, MAT.roof, 0, 5.4, 0, bg);
+    E.hanokRoof(0, 5.2, 0, 7.0, 3.2, 1.1, {}, bg);
     box(1.7, 3.8, 0.14, MAT.gate, -0.85, 1.9, 1.0, bg); box(1.7, 3.8, 0.14, MAT.gate, 0.85, 1.9, 1.0, bg); box(0.5, 0.3, 0.16, MAT.iron, 0, 1.8, 1.1, bg);
     tag(bg, "bgate", "백제 성문");
     const sd = group(3, 0, -21);
@@ -694,7 +694,7 @@ CHAPTERS.push({
     // 신라 성
     stepWall(-10, -17.4, 17, 0, 4.2); stepWall(10, -17.4, 17, 0, 4.2);
     const sg = group(0, 0, -17.4);
-    [-2.2, 2.2].forEach((x) => sbox(1.4, 5, 2.4, x, 2.5, 0, sg)); sbox(5.8, 0.8, 2.4, 0, 4.6, 0, sg); box(6.4, 0.3, 3, MAT.roof, 0, 5.2, 0, sg);
+    [-2.2, 2.2].forEach((x) => sbox(1.4, 5, 2.4, x, 2.5, 0, sg)); sbox(5.8, 0.8, 2.4, 0, 4.6, 0, sg); E.hanokRoof(0, 5.0, 0, 6.6, 3.2, 1.1, {}, sg);
     box(1.5, 3.6, 0.14, MAT.gate, -0.75, 1.8, 1.0, sg); box(1.5, 3.6, 0.14, MAT.gate, 0.75, 1.8, 1.0, sg);
     tag(sg, "sgate", "신라 성문");
     // 신라 사신 천막

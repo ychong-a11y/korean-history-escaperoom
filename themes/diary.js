@@ -34,7 +34,7 @@ CHAPTERS.push({
     wallSeg(5.1, -3.75, 5.9, 0); wallSeg(5.1, 3.75, 5.9, 0);
     const gate = group(0, 0, 5.9);
     cyl(0.16, 0.18, 3.2, MAT.wood, -1.25, 1.6, 0, 12, gate); cyl(0.16, 0.18, 3.2, MAT.wood, 1.25, 1.6, 0, 12, gate);
-    box(3.2, 0.25, 0.4, MAT.wood, 0, 3.05, 0, gate); box(3.8, 0.25, 1.4, MAT.roof, 0, 3.45, 0, gate);
+    box(3.2, 0.25, 0.4, MAT.wood, 0, 3.05, 0, gate); E.hanokRoof(0, 3.2, 0, 4.0, 1.8, 0.8, {}, gate);
     L.leftDoor = box(1.15, 2.8, 0.12, MAT.gate, -0.58, 1.5, 0.02, gate);
     L.rightDoor = box(1.15, 2.8, 0.12, MAT.gate, 0.58, 1.5, 0.02, gate);
     box(0.36, 0.26, 0.12, MAT.iron, 0, 1.35, -0.1, gate); box(1.5, 0.1, 0.1, MAT.iron, 0, 1.55, -0.1, gate);
@@ -175,7 +175,7 @@ CHAPTERS.push({
     [[-10, -9, MAT.red], [10, -9, MAT.blue], [-10, 9, MAT.white], [10, 9, MAT.red]].forEach(([x, z, m]) => { cyl(0.05, 0.05, 4, MAT.wood, x, 2, z, 6); box(0.9, 0.6, 0.02, m, x + 0.45, 3.6, z); });
     const gate = group(0, 0, 12);
     [-1.7, 1.7].forEach((x) => cyl(0.2, 0.22, 3.4, MAT.red, x, 1.7, 0, 10, gate));
-    box(4, 0.3, 0.4, MAT.red, 0, 3.3, 0, gate); box(4.6, 0.25, 1.2, MAT.roof, 0, 3.6, 0, gate);
+    box(4, 0.3, 0.4, MAT.red, 0, 3.3, 0, gate); E.hanokRoof(0, 3.45, 0, 4.8, 1.8, 0.85, {}, gate);
     box(1.6, 2.8, 0.1, MAT.gate, -0.8, 1.4, 0, gate); box(1.6, 2.8, 0.1, MAT.gate, 0.8, 1.4, 0, gate);
     box(0.4, 0.3, 0.12, MAT.iron, 0, 1.4, -0.1, gate);
     tag(gate, "gate", "훈련원 정문");
@@ -371,7 +371,7 @@ CHAPTERS.push({
     const pv = group(4, 0, 4);
     box(4.2, 0.5, 3.4, MAT.stone, 0, 0.25, 0, pv); box(4, 0.08, 3.2, MAT.plank, 0, 0.54, 0, pv);
     [[-1.8, -1.4], [1.8, -1.4], [-1.8, 1.4], [1.8, 1.4]].forEach(([a, b]) => cyl(0.12, 0.13, 3, MAT.red, a, 2, b, 10, pv));
-    const pr = box(5.2, 0.3, 4.4, MAT.roof, 0, 3.6, 0, pv);
+    E.hanokRoof(0, 3.5, 0, 5.4, 4.6, 1.3, {}, pv);
     const ds = lowTable(-0.6, 0.55, -0.4, 0, pv); paper(0.3, 0.22, 0, 0.4, 0, 0.2, ds); box(0.3, 0.05, 0.22, C(0x3a4a6b), -0.3, 0.42, 0, ds);
     tag(ds, "diary", "정자의 서안");
     const gj = board("간지표", 0.9, 0.5, 1.8, 2.1, 1.26, Math.PI, pv, { size: 60 }); tag(gj, "ganji", "기둥의 간지표");
@@ -590,7 +590,7 @@ CHAPTERS.push({
     const sail = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 6), MAT.sail); sail.position.set(0.1, 6, 0); sail.rotation.y = Math.PI / 2; E.ROOT.add(sail);
     // 지휘대
     box(3.6, 1.6, 5, MAT.woodLight, 6, 0.8, 0); box(3.8, 0.1, 5.2, MAT.plank, 6, 1.62, 0);
-    [-2.4, 2.4].forEach((z) => cyl(0.1, 0.1, 2.4, MAT.red, 4.4, 2.8, z, 8)); box(4.2, 0.2, 5.6, MAT.roof, 6, 4.0, 0);
+    [-2.4, 2.4].forEach((z) => cyl(0.1, 0.1, 2.4, MAT.red, 4.4, 2.8, z, 8)); E.hanokRoof(6, 3.95, 0, 4.4, 5.8, 1.1);
     const st = group(0, 0, 0); [[3.37, 0.42], [3.82, 0.84], [4.15, 1.26]].forEach(([x, h]) => box(0.45, h, 1.1, MAT.wood, x, h / 2, 0, st)); box(0.25, 0.25, 0.08, MAT.iron, 3.15, 0.7, 0.5, st);
     tag(st, "stairs", "지휘대 계단");
     const drum = group(4.9, 1.65, 1.6); const d = cyl(0.55, 0.55, 0.6, MAT.red, 0, 0.9, 0, 20, drum); d.rotation.z = Math.PI / 2; [-1, 1].forEach((s) => box(0.05, 1.0, 0.05, MAT.wood, 0, 0.5, s * 0.5, drum));

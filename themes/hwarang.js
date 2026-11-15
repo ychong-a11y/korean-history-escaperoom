@@ -64,7 +64,7 @@ function hanok(o = {}) {   // 한옥 안채 앞면 + 마당 담 (3장 · 6장)
   wallSeg(5.1, -3.75, 5.9, 0); wallSeg(5.1, 3.75, 5.9, 0);
   const gate = group(0, 0, 5.9);
   cyl(0.16, 0.18, 3.2, MAT.wood, -1.25, 1.6, 0, 12, gate); cyl(0.16, 0.18, 3.2, MAT.wood, 1.25, 1.6, 0, 12, gate);
-  box(3.2, 0.25, 0.4, MAT.wood, 0, 3.05, 0, gate); box(3.8, 0.25, 1.4, MAT.roof, 0, 3.45, 0, gate);
+  box(3.2, 0.25, 0.4, MAT.wood, 0, 3.05, 0, gate); E.hanokRoof(0, 3.2, 0, 4.0, 1.8, 0.8, {}, gate);
   L.leftDoor = box(1.15, 2.8, 0.12, MAT.gate, -0.58, 1.5, 0.02, gate);
   L.rightDoor = box(1.15, 2.8, 0.12, MAT.gate, 0.58, 1.5, 0.02, gate);
   box(0.36, 0.26, 0.12, MAT.iron, 0, 1.35, -0.1, gate);
@@ -100,7 +100,7 @@ CHAPTERS.push({
     // 수련터 문 (북쪽)
     const gate = group(0, 0, -12);
     [-1.5, 1.5].forEach((x) => cyl(0.18, 0.2, 3.4, MAT.red, x, 1.7, 0, 10, gate));
-    box(3.8, 0.3, 0.4, MAT.red, 0, 3.3, 0, gate); box(4.4, 0.25, 1.2, MAT.roof, 0, 3.6, 0, gate);
+    box(3.8, 0.3, 0.4, MAT.red, 0, 3.3, 0, gate); E.hanokRoof(0, 3.45, 0, 4.6, 1.8, 0.85, {}, gate);
     L.leftDoor = box(1.4, 2.7, 0.12, MAT.gate, -0.7, 1.35, 0, gate); L.rightDoor = box(1.4, 2.7, 0.12, MAT.gate, 0.7, 1.35, 0, gate);
     box(0.5, 0.3, 0.14, MAT.iron, 0, 1.35, 0.1, gate);
     tag(gate, "gate", "수련터 문");
@@ -109,7 +109,7 @@ CHAPTERS.push({
     const pv = group(-7, 0, -4);
     box(4.4, 0.55, 4.4, MAT.stone, 0, 0.275, 0, pv); box(4.2, 0.06, 4.2, MAT.plank, 0, 0.58, 0, pv);
     [[-1.9, -1.9], [1.9, -1.9], [-1.9, 1.9], [1.9, 1.9]].forEach(([a, b]) => cyl(0.13, 0.14, 3, MAT.red, a, 2.05, b, 10, pv));
-    box(5.4, 0.3, 5.4, MAT.roof, 0, 3.7, 0, pv); box(3.4, 0.5, 3.4, MAT.roof, 0, 4.05, 0, pv);
+    E.hanokRoof(0, 3.55, 0, 5.6, 5.6, 1.5, {}, pv);
     box(1.2, 0.27, 0.5, MAT.stone, 0, 0.135, 2.45, pv);
     const ds = lowTable(-0.8, 0.58, -0.8, 0, pv); paper(0.34, 0.24, 0, 0.4, 0, 0.2, ds); box(0.12, 0.06, 0.12, MAT.black, 0.3, 0.42, 0.1, ds);
     tag(ds, "desk", "정자의 서안");
@@ -283,7 +283,7 @@ CHAPTERS.push({
     L.door = group(5.95, 0, -4.2, -Math.PI / 2);
     box(1.7, 2.7, 0.35, C(0x5a544c), 0, 1.35, 0, L.door); box(0.9, 0.9, 0.05, C(0x6e675c), 0, 1.4, 0.19, L.door);
     tag(L.door, "door", "돌문");
-    if (A.has("h2_lit")) [0, 1, 2].forEach((i) => setTorch(i, true));
+    [0, 1, 2].forEach((i) => { if (A.has("h2_lit") || A.has("h2_t" + i)) setTorch(i, true); });   // 차례대로 붙인 불은 표시로 남김 (다시 짓기 · 협동)
     return {
       start: [0, 5.2, 0], bounds: [-6.5, 6.5, -8.8, 6.8],
       circles: [[-2.6, 5.6, 0.75], [3.4, 4.5, 0.2], [5.6, 1.4, 0.2], [-2.4, -7.2, 0.2]],
@@ -309,14 +309,16 @@ CHAPTERS.push({
       if (A.has("h2_lit")) return A.card("횃대", `<p>불이 힘차게 타오른다.</p>`);
       if (!A.needItem(id, "flint", "횃대", `<p>불이 꺼진 횃대. 기름 먹인 머리가 아직 축축하지 않다.</p>`, "부싯돌을 쳐서 불붙이기")) return;
       A.closeModal();
-      if (L.lit.includes(i)) return toast("이미 타고 있다.");
-      L.lit.push(i); setTorch(i, true); sfx("item");
-      if (L.lit.some((v, k) => v !== k)) {
-        E.miss(); const off = L.lit.slice(); L.lit = [];
-        setTimeout(() => off.forEach((k) => setTorch(k, false)), 600);
+      const lit = [0, 1, 2].filter((k) => A.has("h2_t" + k));   // 지금까지 차례대로 붙인 불
+      if (lit.includes(i)) return toast("이미 타고 있다.");
+      lit.push(i); setTorch(i, true); sfx("item");
+      if (lit.some((v, k) => v !== k)) {
+        E.miss(); E.S.flags = E.S.flags.filter((fl) => !/^h2_t\d$/.test(fl));
+        setTimeout(() => { if (L.torches && !A.has("h2_lit")) lit.forEach((k) => { if (!A.has("h2_t" + k)) setTorch(k, false); }); }, 600);
         return toast("훅— 차가운 바람이 불어 횃불이 모두 꺼졌다. 차례가 틀린 것 같다.", 3200);
       }
-      if (L.lit.length < 3) return toast(`🔥 불이 붙었다 (${L.lit.length}/3)`);
+      A.flag("h2_t" + i);
+      if (lit.length < 3) return toast(`🔥 불이 붙었다 (${lit.length}/3)`);
       A.flag("h2_lit"); L.carve.material.color.setHex(0xffffff);
       A.note("세 횃불을 낮은 것부터 차례로 밝혔다. 서쪽 바위 벽의 그림이 드러났다.");
       return A.card("세 불이 밝혀지다", `<p class="msg ok">세 번째 불이 붙자 굴 안이 환해졌다.</p><p>서쪽 바위 벽에 무언가 새겨져 있는 것이 보인다.</p>`);
@@ -811,7 +813,7 @@ CHAPTERS.push({
     const st = group(3.6, 0, 1.6, -0.4); box(1.4, 0.45, 1.0, MAT.stone, 0, 0.22, 0, st);
     box(0.4, 0.95, 0.13, plaqueMat("壬申誓記", { w: 128, h: 320, size: 60, bg: "#a8a090", color: "#4a4238", border: null }), 0, 0.92, 0, st);
     L.stoneLight = new THREE.PointLight(0xffc070, A.has("h6_order") ? 5 : 0, 5, 1.5); L.stoneLight.position.set(3.6, 1.6, 2.2); E.ROOT.add(L.stoneLight); tag(st, "stone", "맹세석");
-    const sh = group(-4.6, 0, 2.6, Math.PI / 2); box(1.6, 1.6, 1.2, MAT.wall, 0, 0.8, 0, sh); box(2.0, 0.25, 1.6, MAT.roof, 0, 1.75, 0, sh); box(0.3, 0.7, 0.04, plaqueMat("始祖神位", { w: 96, h: 320, size: 52 }), 0, 0.95, 0.62, sh); tag(sh, "shrine", "작은 사당");
+    const sh = group(-4.6, 0, 2.6, Math.PI / 2); box(1.6, 1.6, 1.2, MAT.wall, 0, 0.8, 0, sh); E.hanokRoof(0, 1.6, 0, 2.2, 1.8, 0.7, {}, sh); box(0.3, 0.7, 0.04, plaqueMat("始祖神位", { w: 96, h: 320, size: 52 }), 0, 0.95, 0.62, sh); tag(sh, "shrine", "작은 사당");
     const mp = lowTable(1.0, 0, 0.2, 0, E.ROOT, 1.4, 0.9); mp.scale.set(1, 1.8, 1); const mpp = paper(1.2, 0.75, 0, 0.4, 0, 0, mp); mpp.material = new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 0.9 }); tag(mp, "map", "지도를 펼친 상");
     tag(person(2.8, -2.4, -0.5, C(0x8aa0b8), E.ROOT, { bare: true }), "grandson", "어린 손자");
     tag(person(-1.6, 1.8, 0.6, C(0x8a8070)), "doctor", "늙은 의원");

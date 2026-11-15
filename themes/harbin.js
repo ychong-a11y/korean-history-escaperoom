@@ -190,7 +190,7 @@ CHAPTERS.push({
       tag(g, "star" + i, "밝은 별");
       return { g, core, halo };
     });
-    L.seq = [];
+    L.seq = STAR_ORDER.filter((k) => A.has("c1_s" + k)); L.seq.forEach((k) => lightStar(k));   // 차례대로 센 별은 표시로 남김 (다시 짓기 · 협동)
     if (A.has("c1_stars")) { L.stars.forEach((_, i) => lightStar(i)); dipperLines(); }
     return {
       start: [0, 5, 0],
@@ -219,11 +219,11 @@ CHAPTERS.push({
       if (A.has("c1_stars")) return starCard(A);
       if (L.seq.includes(i)) return toast("이미 센 별이다.");
       if (i !== STAR_ORDER[L.seq.length]) {
-        L.seq.forEach((k) => unlightStar(k)); const had = L.seq.length; L.seq = [];
+        L.seq.forEach((k) => unlightStar(k)); const had = L.seq.length; L.seq = []; E.S.flags = E.S.flags.filter((fl) => !/^c1_sd$/.test(fl));
         if (had) { E.miss(); sfx("wrong"); return toast("별빛이 흩어졌다… 세는 순서가 있는 것 같다."); }
         return toast("✦ 밝은 별이다. 그런데 어디서부터 세어야 할까?");
       }
-      L.seq.push(i); lightStar(i); sfx("item");
+      L.seq.push(i); lightStar(i); sfx("item"); A.flag("c1_s" + i);
       if (L.seq.length < 7) return toast(`✦ ${DIPPER_NAMES[i]} — ${L.seq.length}/7`);
       A.flag("c1_stars"); dipperLines();
       A.note("북두칠성을 노래 순서대로 세자 별빛이 한 글자를 그렸다: 應 (응할 응).");
@@ -809,7 +809,7 @@ CHAPTERS.push({
     const crowd = []; for (let i = 0; i < 30; i++) crowd.push([2 + E.rand() * 11, 0, 1 + E.rand() * 2.6, E.rand() * 6]);
     const cols = [0x2a2a30, 0x3a3428, 0x4a4a52, 0x5a4a3a, 0x222228];
     const b1 = inst(E.crowdBody, C(0xffffff), crowd.map(([x, y, z, r]) => [x, 0.62, z, r]), { colors: cols });
-    const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), MAT.skin, crowd.map(([x, y, z]) => [x, 1.42, z]));
+    const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), E.faceMat, crowd.map(([x, y, z, r]) => [x, 1.42, z, r]));
     const b3 = inst(new THREE.CylinderGeometry(0.16, 0.18, 0.14, 10), MAT.black, crowd.map(([x, y, z]) => [x, 1.58, z]));
     [b1, b2, b3].forEach((m) => tag(m, "crowd", "환영 인파"));
     // 찻집

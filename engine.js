@@ -961,7 +961,9 @@ function disposeRoot() {
   ROOT.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); if (m.material && m.userData.hl) m.material.dispose(); });
   scene.remove(ROOT);
 }
+let loadedCh = -1;   // 지금 지어진 장. 장 탈출이 두 번 불려도(협동: 친구의 탈출 + 내 연출 타이머) 한 장만 넘어가게
 function loadChapter(i, resumePos) {
+  loadedCh = i;
   disposeRoot();
   ROOT = new THREE.Group(); scene.add(ROOT);
   seed = 7 + i * 101;
@@ -1006,6 +1008,7 @@ function play() {
 }
 function progressBar(el, done) { $(el).innerHTML = CHAPTERS.map((_, i) => `<span class="${i < done ? "done" : ""}"></span>`).join(""); }
 function clearChapter() {
+  if (S.ch !== loadedCh) return;
   clearInterval(tickT); inputLocked = true;
   $("overlay").classList.remove("open"); showHUD(false);
   const c = CH.clear, took = S.elapsed - (S.chStart || 0);
@@ -1244,7 +1247,7 @@ const CORE = {
 /* 테마 파일에서 쓰는 도구 모음 */
 export const E = {
   THREE, TEX, MAT, M, MN, C, canvasTex, textTex, speckle, rand: () => rand(),
-  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, stoneBlocks, crowdBody: PG.crowd,
+  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, stoneBlocks, crowdBody: PG.crowd, faceMat: FACE_MAT,
   tag, collectClickables, toast, sfx, setAtmosphere, setMusic, formation, GANJI_TABLE, REACH, $,
   get S() { return S; }, get ROOT() { return ROOT; }, get CH() { return CH; }, get camera() { return camera; },
   lockInput() { inputLocked = true; },
