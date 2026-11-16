@@ -41,8 +41,8 @@ function thatch(x, z, w, d, rot = 0) {
 // 사람 무리 (list: [x, z, 회전])
 function crowd(list, cols = [0xf2efe6, 0xe8e4d8, 0xf6f3ea, 0x2a2a30, 0xdcd6c8]) {
   const a = inst(E.crowdBody, C(0xffffff, { roughness: 0.9 }), list.map(([x, z, r]) => [x, 0.62, z, r]), { colors: cols });
-  const b = inst(new THREE.SphereGeometry(0.15, 10, 8), MAT.skin, list.map(([x, z]) => [x, 1.42, z]));
-  const c = inst(new THREE.SphereGeometry(0.155, 10, 8), C(0x1a1612), list.map(([x, z]) => [x, 1.48, z + 0.02, 0, 1, 0.75, 1]));
+  const b = inst(E.crowdPart("head", { at: 1.42 }), MAT.skin, list.map(([x, z]) => [x, 1.42, z]));
+  const c = inst(E.crowdPart("cap", { at: 1.42 }), C(0x1a1612), list.map(([x, z, r]) => [x, 1.42, z, r]));
   return [a, b, c];
 }
 // 태극기 그림 (trig: 네 귀퉁이 괘를 그릴지)

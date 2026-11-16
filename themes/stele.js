@@ -91,22 +91,20 @@ function kaema(x, z, rot, rider = true) {
 }
 // 멀리 늘어선 기병 (InstancedMesh, 서쪽을 바라봄)
 function cavalry(x0, z0, rows, cols) {
-  const P = { body: [], neck: [], head: [], legs: [], rid: [], rhead: [], lance: [] };
+  const hs = [], rd = [], lance = [], W = Math.PI / 2, H = E.horseGeo(), o = { at: 0, rot: W };
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
     const X = x0 + r * 3.2, Z = z0 + c * 1.6;
-    P.body.push([X, 1.2, Z, Math.PI / 2]); P.neck.push([X - 0.75, 1.75, Z, Math.PI / 2, 1, 1, 1, 0.5]); P.head.push([X - 1.1, 2.07, Z, Math.PI / 2]);
-    [[-0.55, -0.2], [-0.55, 0.2], [0.55, -0.2], [0.55, 0.2]].forEach(([a, b]) => P.legs.push([X + a, 0.5, Z + b]));
-    P.rid.push([X + 0.05, 1.95, Z]); P.rhead.push([X + 0.05, 2.62, Z]); P.lance.push([X - 0.3, 2.6, Z + 0.35, Math.PI / 2, 1, 1, 1, -0.45]);
+    hs.push([X, 0, Z, W]); rd.push([X + 0.05, 0.86, Z, 0, 0.9, 0.82, 0.9]); lance.push([X - 0.3, 2.6, Z + 0.35, W, 1, 1, 1, -0.45]);
   }
-  inst(new THREE.BoxGeometry(0.74, 0.56, 1.64), MAT_SCALE, P.body); inst(new THREE.BoxGeometry(0.4, 0.8, 0.44), MAT_SCALE, P.neck); inst(new THREE.BoxGeometry(0.3, 0.3, 0.64), MAT.iron, P.head);
-  inst(new THREE.CylinderGeometry(0.06, 0.05, 1.0, 6), MAT.horse, P.legs); inst(new THREE.CylinderGeometry(0.17, 0.28, 0.9, 8), MAT_SCALE, P.rid);
-  inst(new THREE.SphereGeometry(0.16, 10, 8), MAT.iron, P.rhead); inst(new THREE.CylinderGeometry(0.02, 0.02, 3.4, 4), MAT.wood, P.lance);
+  inst(H.body, MAT_SCALE, hs); inst(H.dark, MAT.black, hs);
+  inst(E.crowdPart("soldier", o), MAT_SCALE, rd); inst(E.crowdPart("head", o), E.faceMat, rd); inst(E.crowdPart("helm", o), MAT.iron, rd);
+  inst(new THREE.CylinderGeometry(0.02, 0.02, 3.4, 4), MAT.wood, lance);
 }
 // 서 있는 군사 무리 (InstancedMesh)
 function troops(x0, z0, rows, cols, gap = 1.2) {
   const b = [], hd = [], sp = [];
   for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) { const x = x0 + c * gap, z = z0 + r * gap; b.push([x, 0.65, z]); hd.push([x, 1.5, z]); sp.push([x + 0.3, 1.4, z]); }
-  inst(new THREE.CylinderGeometry(0.2, 0.34, 1.3, 8), MAT_SCALE, b); inst(new THREE.SphereGeometry(0.17, 10, 8), MAT.iron, hd); inst(new THREE.CylinderGeometry(0.02, 0.02, 2.8, 4), MAT.wood, sp);
+  inst(E.crowdPart("soldier", { at: 0.65 }), MAT_SCALE, b); inst(E.crowdPart("head", { at: 1.5 }), E.faceMat, hd); inst(E.crowdPart("helm", { at: 1.5 }), MAT.iron, hd); inst(new THREE.CylinderGeometry(0.02, 0.02, 2.8, 4), MAT.wood, sp);
 }
 // 삼족오 깃발
 const CROW_TEX = canvasTex(256, 192, (g, w, h) => {
@@ -419,7 +417,7 @@ CHAPTERS.push({
     // 해 이름 달력판
     const cal = board("己丑  庚寅  辛卯  壬辰  癸巳", 1.8, 0.6, -7.98, 2.2, 6.2, Math.PI / 2, E.ROOT, { size: 28 });
     tag(cal, "calendar", "해 이름 달력판");
-    tag(gp(2.8, 5.6, Math.PI * 0.8, C(0x4a5a3a)), "minister", "늙은 신하");
+    tag(gp(2.8, 5.6, Math.PI * 0.8, C(0x4a5a3a), { old: true }), "minister", "늙은 신하");
     // 즉위 두루마리
     const st = group(-3, 0, 7);
     box(0.08, 1.6, 0.08, MAT.wood, -0.4, 0.8, 0, st); box(0.08, 1.6, 0.08, MAT.wood, 0.4, 0.8, 0, st); box(0.9, 0.06, 0.08, MAT.wood, 0, 1.62, 0, st);

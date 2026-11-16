@@ -11,7 +11,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 const $ = (id) => document.getElementById(id);
-document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n  <button class=\"chip\" id=\"btn-set\" aria-label=\"설정\">⚙️ <span class=\"key-hint\">Esc</span></button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\">\n  <button id=\"move-fwd\" class=\"f\" aria-label=\"앞으로\">▲</button>\n  <button id=\"move-left\" class=\"l\" aria-label=\"왼쪽으로\">◀</button>\n  <button id=\"move-right\" class=\"r\" aria-label=\"오른쪽으로\">▶</button>\n  <button id=\"move-back\" class=\"b\" aria-label=\"뒤로\">▼</button>\n</div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·여정 기록), <b>Esc</b> 설정. 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">👥 친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
+document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n  <button class=\"chip\" id=\"btn-set\" aria-label=\"설정\">⚙️ <span class=\"key-hint\">Esc</span></button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\" aria-label=\"걷기 조이스틱\"><i id=\"joy-knob\"></i></div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·여정 기록), <b>Esc</b> 설정. 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">👥 친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
 let THEME = null, CHAPTERS = [];
 
 /* ================================================================
@@ -362,6 +362,7 @@ const PG = (() => {
       dark = [shoe(1, -0.052), shoe(-1, -0.028), belt(0.21, sol ? 0.06 : 0.035)];
       if (sol) [1, -1].forEach((s) => dark.push(limb([s * 0.104, 0.33, -0.004 - s * 0.012], [s * 0.1, 0.05, 0.02 - s * 0.012], 0.096, 0.07)));   // 장화
     }
+    if (lite) robe = [...robe, ...white, ...(dark || []), new THREE.CylinderGeometry(0.047, 0.055, 0.09, 8).translate(0, 1.378, 0)];
     const out = { robe: mergeGeometries(robe), white: mergeGeometries(white), skin: mergeGeometries(skin), dark: dark && mergeGeometries(dark) };
     Object.values(out).forEach((x) => x && keepGeo(x));
     return (cache[key] = out);
@@ -391,10 +392,21 @@ const PG = (() => {
     new THREE.SphereGeometry(0.025, 8, 6).translate(0, HC + 0.195, 0),
   ]);
   const plume = new THREE.CylinderGeometry(0.01, 0.01, 0.22, 4).translate(0, HC + 0.31, 0);
+  const beard = new THREE.ConeGeometry(0.062, 0.2, 7).scale(1, 1, 0.5).rotateX(Math.PI).translate(0, HC - 0.2, -0.1);
+  const headLite = new THREE.SphereGeometry(0.14, 10, 8).scale(0.9, 1.06, 0.96).translate(0, HC, 0);
+  /* 테마의 InstancedMesh 무리용 조각. name: robe · legs · soldier · woman(몸통) / head · helm · hat · cap · top · bun(머리 쪽)
+     at: 그 조각을 놓는 높이(발바닥이 0인 사람 기준). 몸통을 y 0.62에 놓으려면 at: 0.62, 머리를 1.4에 놓으려면 at: 1.4. rot: 바라보는 쪽 */
+  const part = (name, o = {}) => {
+    const src = name === "head" ? headLite : name === "helm" ? helm : name === "hat" ? hat : hair[name];
+    const geo = src ? src.clone().translate(0, 1.385 - (o.at ?? 1.4), 0) : body(name, o.pose || "side", true).robe.clone().translate(0, -(o.at ?? 0.62), 0);
+    geo.userData = {};   // 복사본은 장이 바뀔 때 함께 지운다
+    if (o.rot) geo.rotateY(o.rot);
+    return geo;
+  };
   const crowd = body("robe", "front", true).robe.clone().translate(0, -0.62, 0);   // 테마의 InstancedMesh 군중용 몸통 (원기둥 0.62 높이 자리에 그대로)
-  const all = { head, hat, helm, plume, crowd, ...hair };
+  const all = { head, hat, helm, plume, crowd, beard, headLite, ...hair };
   Object.values(all).forEach(keepGeo);
-  return { body, head, hair, hat, helm, plume, crowd };
+  return { body, head, hair, hat, helm, plume, crowd, beard, part };
 })();
 // 얼굴: 머리 공의 -Z 쪽(u=0.75)에 눈썹 · 눈 · 입을 살짝 그린다
 const FACE_MAT = new THREE.MeshStandardMaterial({ roughness: 0.8, map: canvasTex(256, 128, (g, w, h) => {
@@ -408,8 +420,9 @@ const FACE_MAT = new THREE.MeshStandardMaterial({ roughness: 0.8, map: canvasTex
   g.strokeStyle = "#8a4a3a"; g.lineWidth = 2; g.beginPath(); g.moveTo(cx - 5, 82); g.quadraticCurveTo(cx, 84, cx + 5, 82); g.stroke();
 }) });
 const HAIR_MAT = new THREE.MeshStandardMaterial({ color: 0x17130f, roughness: 0.55 });
+const GRAY_MAT = new THREE.MeshStandardMaterial({ color: 0xd9d6ce, roughness: 0.7 });
 const PEOPLE = [];   // 지금 장의 사람들 (숨쉬기 · 고개 돌리기)
-/* o: helmet(군사) · bare(맨머리) · work(짧은 옷과 바지) · woman(치마저고리) · kid(땋은 머리) · bald(민머리) · plain(상투 없음) · long(군사 · 일꾼도 긴 옷으로: 앉은 사람용)
+/* o: helmet(군사) · bare(맨머리) · work(짧은 옷과 바지) · woman(치마저고리) · kid(땋은 머리) · bald(민머리) · old(흰 머리와 수염) · plain(상투 없음) · long(군사 · 일꾼도 긴 옷으로: 앉은 사람용)
       pose: "side" | "front"(두 손을 앞에 모음) | "back"(뒷짐) | "hold"(오른손을 앞으로). 안 주면 자리에 따라 정해진다. */
 function person(x, z, rot, robe = MAT.white, p = ROOT, o = {}) {
   const g = group(x, 0, z, rot, p);
@@ -427,10 +440,12 @@ function person(x, z, rot, robe = MAT.white, p = ROOT, o = {}) {
   else {
     const soft = o.woman || o.kid;
     const style = o.bald ? null : o.woman ? "bun" : o.kid ? "braid" : !o.bare ? "band" : (o.plain || THEME?.modern) ? "cap" : "top";
-    if (style) mk(PG.hair[style], HAIR_MAT, head);
+    if (style) mk(PG.hair[style], o.old ? GRAY_MAT : HAIR_MAT, head);
     if (!o.bare && !soft) mk(PG.hat, MAT.black, head);
   }
+  if (o.old && !o.woman) mk(PG.beard, GRAY_MAT, head);
   head.rotation.z = ((hsh % 7) - 3) * 0.012;
+  g.scale.setScalar(0.975 + (hsh % 5) * 0.0125);   // 키가 조금씩 다르게 (테마가 뒤에 scale을 정하면 그 값이 쓰인다)
   g.userData.person = { body, head, ph: x * 1.7 + z * 3.1, n: g.children.length };
   PEOPLE.push(g);
   return g;
@@ -443,32 +458,99 @@ function animPeople(t) {
     if (g.children.length === u.n) { const s = Math.sin(k * 0.37); u.head.rotation.y = 0.45 * s * s * s; }
   }
 }
-function horse(x, z, rot) {
-  const g = group(x, 0, z, rot);
-  box(0.55, 0.6, 1.5, MAT.horse, 0, 1.25, 0, g);
-  [[-0.2, -0.55], [0.2, -0.55], [-0.2, 0.55], [0.2, 0.55]].forEach(([a, b]) => cyl(0.06, 0.05, 1.0, MAT.horse, a, 0.5, b, 6, g));
-  const neck = box(0.3, 0.75, 0.35, MAT.horse, 0, 1.75, -0.75, g); neck.rotation.x = 0.5;
-  box(0.26, 0.28, 0.6, MAT.horse, 0, 2.05, -1.08, g);
-  box(0.08, 0.6, 0.08, MAT.black, 0, 1.2, 0.8, g).rotation.x = -0.4;
-  box(0.6, 0.12, 0.6, MAT.red, 0, 1.58, 0, g);   // 안장
+// a → b 를 잇는 굵기가 변하는 막대 · 찌그러뜨린 공 (말 · 나무용)
+function limbG(a, b, ra, rb, seg = 8) {
+  const A = new THREE.Vector3(a[0], a[1], a[2]), B = new THREE.Vector3(b[0], b[1], b[2]), d = B.clone().sub(A), len = d.length();
+  const geo = new THREE.CylinderGeometry(rb, ra, len, seg, 1);
+  geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()));
+  return geo.translate((A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2);
+}
+const ballG = (p, r, sx = 1, sy = 1, sz = 1) => new THREE.SphereGeometry(r, 8, 6).scale(sx, sy, sz).translate(p[0], p[1], p[2]);
+/* 말: 머리가 -Z 쪽. 등 높이 약 1.57, 머리 약 (0, 2.05, -1.1) — 예전 상자 말과 같은 자리라 테마의 갑옷 · 기수가 그대로 맞는다. */
+let HORSE_GEO = null;
+function horseGeo() {
+  if (HORSE_GEO) return HORSE_GEO;
+  const L = limbG, B = ballG, sx = (g, k) => g.scale(k, 1, 1);
+  const barrel = lathe([[0.001, -0.8], [0.16, -0.76], [0.265, -0.62], [0.3, -0.42], [0.29, -0.1], [0.3, 0.25], [0.315, 0.5], [0.27, 0.68], [0.15, 0.78], [0.001, 0.8]], 14).rotateX(Math.PI / 2).scale(0.86, 1, 1).translate(0, 1.27, 0);
+  const body = [barrel,
+    sx(L([0, 1.36, -0.54], [0, 2.02, -0.98], 0.23, 0.125, 10), 0.72),                 // 목
+    sx(L([0, 2.1, -0.9], [0, 1.93, -1.34], 0.125, 0.072, 10), 0.78),                 // 머리
+    B([0, 2.1, -0.9], 0.128, 0.78, 1, 1), B([0, 1.925, -1.35], 0.073, 0.8, 1, 1)];   // 뒤통수 · 주둥이
+  [1, -1].forEach((s) => {
+    body.push(new THREE.ConeGeometry(0.035, 0.13, 5).translate(s * 0.055, 2.26, -0.88));   // 귀
+    body.push(B([s * 0.12, 1.2, -0.5], 0.17, 0.7, 1, 1), B([s * 0.12, 1.22, 0.5], 0.2, 0.72, 1, 1.1));   // 어깨 · 엉덩이
+    body.push(L([s * 0.15, 1.12, -0.5], [s * 0.15, 0.6, -0.53], 0.095, 0.052), L([s * 0.15, 0.6, -0.53], [s * 0.15, 0.1, -0.5], 0.05, 0.04), B([s * 0.15, 0.6, -0.53], 0.056));      // 앞다리
+    body.push(L([s * 0.16, 1.18, 0.52], [s * 0.16, 0.62, 0.68], 0.125, 0.058), L([s * 0.16, 0.62, 0.68], [s * 0.16, 0.1, 0.6], 0.052, 0.042), B([s * 0.16, 0.62, 0.68], 0.06));     // 뒷다리
+  });
+  const dark = [sx(L([0, 2.21, -0.87], [0, 1.54, -0.42], 0.06, 0.05, 6), 0.45), B([0, 2.2, -0.96], 0.05, 0.6, 0.8, 1.3),   // 갈기 · 앞머리
+    sx(L([0, 1.5, 0.76], [0, 1.1, 0.93], 0.035, 0.05, 6), 0.7), sx(L([0, 1.1, 0.93], [0, 0.6, 0.97], 0.05, 0.015, 6), 0.7)];                   // 꼬리
+  [1, -1].forEach((s) => {
+    dark.push(new THREE.CylinderGeometry(0.048, 0.06, 0.1, 8).translate(s * 0.15, 0.05, -0.5), new THREE.CylinderGeometry(0.05, 0.062, 0.1, 8).translate(s * 0.16, 0.05, 0.6));   // 발굽
+    dark.push(B([s * 0.085, 2.07, -1.0], 0.018));   // 눈
+  });
+  const saddle = [new THREE.CylinderGeometry(0.325, 0.325, 0.62, 12, 1, true, Math.PI - 1.25, 2.5).rotateX(Math.PI / 2).scale(0.87, 1, 1).translate(0, 1.27, 0.02),
+    B([0, 1.585, 0.02], 0.2, 0.9, 0.22, 1.25)];
+  HORSE_GEO = { body: keepGeo(mergeGeometries(body)), dark: keepGeo(mergeGeometries(dark)), saddle: keepGeo(mergeGeometries(saddle)) };
+  return HORSE_GEO;
+}
+// o: mat(털 색 재질) · bare(안장 없음)
+function horse(x, z, rot, o = {}) {
+  const g = group(x, 0, z, rot), G = horseGeo();
+  const mk = (geo, mat) => { const m = new THREE.Mesh(geo, mat); m.castShadow = m.receiveShadow = true; g.add(m); return m; };
+  mk(G.body, o.mat || MAT.horse); mk(G.dark, MAT.black);
+  if (!o.bare) mk(G.saddle, MAT.red);
   return g;
+}
+/* 나무: 밑동이 퍼지고 살짝 휜 줄기 + 가지 + 울퉁불퉁한 잎 덩어리 여럿. 자리(x, z)에 따라 모양이 조금씩 다르다.
+   o: h(줄기 높이) · s(잎 크기) · mat(잎 재질) · willow(버드나무) */
+function leafBlob(r, c, sy, seed) {
+  const geo = new THREE.IcosahedronGeometry(r, 2), p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const ux = p.getX(i) / r, uy = p.getY(i) / r, uz = p.getZ(i) / r;
+    const k = 1 + 0.13 * Math.sin(ux * 4.1 + seed) * Math.cos(uy * 3.7 + seed * 1.7) + 0.09 * Math.sin(uz * 5.3 + ux * 2.2 + seed * 0.6);
+    p.setXYZ(i, p.getX(i) * k, p.getY(i) * k, p.getZ(i) * k);
+  }
+  return geo.scale(1, sy, 1).translate(c[0], c[1], c[2]);
 }
 function tree(x, z, o = {}) {
   const g = group(x, 0, z);
-  cyl(0.18, 0.3, o.h || 3.2, MAT.bark, 0, (o.h || 3.2) / 2, 0, 10, g);
+  let sd = (Math.abs(Math.round(x * 131 + z * 517)) % 9973) + 7;
+  const rnd = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+  const s = o.s || 1, h = o.h || 3.2, H = o.willow ? h : Math.max(h, 3.0 * s);
+  const lean = [(rnd() - 0.5) * 0.5, (rnd() - 0.5) * 0.5], thick = (0.9 + rnd() * 0.3) * (s > 1.2 ? 1.25 : 1), wob = rnd() * 6;
+  const at = (y) => { const t = y / H; return [lean[0] * t * t + Math.sin(t * 3.1 + wob) * 0.07 * t, lean[1] * t * t + Math.cos(t * 2.6 + wob) * 0.07 * t]; };   // 그 높이에서 줄기가 비켜난 만큼
+  const trunk = lathe([[0.36, 0], [0.26, 0.12], [0.2, 0.42], [0.175, H * 0.6], [0.13, H]].map(([r, y]) => [r * thick, y]), 9), tp = trunk.attributes.position;
+  for (let i = 0; i < tp.count; i++) { const [ox, oz] = at(tp.getY(i)), a = Math.atan2(tp.getZ(i), tp.getX(i)), k = 1 + 0.07 * Math.sin(a * 3 + wob) * (1 - tp.getY(i) / H); tp.setX(i, tp.getX(i) * k + ox); tp.setZ(i, tp.getZ(i) * k + oz); }
+  trunk.computeVertexNormals();
+  const wood = [trunk], top = at(H);
   if (o.willow) {
     for (let i = 0; i < 26; i++) {
       const a = (i / 26) * Math.PI * 2, r = 0.6 + rand() * 0.9;
-      const s = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 2.4 + rand()), MAT.willow);
-      s.position.set(Math.cos(a) * r, 2.6 + rand() * 0.5, Math.sin(a) * r); s.rotation.y = -a; s.castShadow = true; g.add(s);
+      const sp = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 2.4 + rand()), MAT.willow);
+      sp.position.set(top[0] + Math.cos(a) * r, 2.6 + rand() * 0.5, top[1] + Math.sin(a) * r); sp.rotation.y = -a; sp.castShadow = true; g.add(sp);
     }
-    sphere(1.1, MAT.willow, 0, 3.6, 0, g).scale.y = 0.6;
+    const cap = new THREE.Mesh(leafBlob(1.1, [top[0], 3.6, top[1]], 0.6, wob), MAT.willow); cap.castShadow = true; g.add(cap);
   } else {
-    [[0, 3.6, 0, 1.5], [0.8, 3.2, 0.4, 1.0], [-0.7, 3.3, -0.3, 1.1], [0.2, 4.3, -0.2, 1.0]].forEach(([a, b, c, r]) => {
-      const l = new THREE.Mesh(new THREE.IcosahedronGeometry(r * (o.s || 1), 1), o.mat || MAT.leaves); l.position.set(a, b * (o.s || 1), c); l.castShadow = true; g.add(l);
-    });
+    const cy = 3.6 * s, blobs = [leafBlob(1.3 * s, [top[0], cy, top[1]], 0.82, wob)], n = 5;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + wob, d = (0.85 + rnd() * 0.35) * s, r = (0.72 + rnd() * 0.3) * s, c = [top[0] + Math.cos(a) * d, cy - (0.15 + rnd() * 0.5) * s, top[1] + Math.sin(a) * d];
+      blobs.push(leafBlob(r, c, 0.85, wob + i * 2.3));
+      if (i % 2 === 0) { const y0 = H * (0.62 + rnd() * 0.15), [bx, bz] = at(y0); wood.push(limbG([bx, y0, bz], [c[0] * 0.8 + top[0] * 0.2, c[1] - r * 0.25, c[2] * 0.8 + top[1] * 0.2], 0.075 * thick, 0.035, 6)); }
+    }
+    blobs.push(leafBlob(0.82 * s, [top[0] + (rnd() - 0.5) * 0.5 * s, cy + 0.75 * s, top[1] + (rnd() - 0.5) * 0.5 * s], 0.85, wob + 9));
+    const lv = new THREE.Mesh(mergeGeometries(blobs), o.mat || MAT.leaves); lv.castShadow = lv.receiveShadow = true; g.add(lv);
   }
+  const tk = new THREE.Mesh(mergeGeometries(wood), MAT.bark); tk.castShadow = tk.receiveShadow = true; g.add(tk);
   return g;
+}
+function firCone(r, h) {
+  const geo = new THREE.ConeGeometry(r, h, 12, 3), p = geo.attributes.position;
+  for (let i = 0; i < p.count; i++) {
+    const x = p.getX(i), y = p.getY(i), z = p.getZ(i); if (!x && !z) continue;
+    const t = (h / 2 - y) / h, w = Math.sin(Math.atan2(z, x) * 6 + 1), k = 1 + 0.15 * t * w;
+    p.setXYZ(i, x * k, y - 0.1 * h * t * (0.5 + 0.5 * w), z * k);
+  }
+  geo.computeVertexNormals(); return geo;
 }
 function postLine(x1, z1, x2, z2, h = 2.4, gapFrom = null, gapTo = null, mat = MAT.wood) {
   const len = Math.hypot(x2 - x1, z2 - z1), n = Math.ceil(len / 0.36), pts = [];
@@ -740,8 +822,8 @@ renderer.domElement.addEventListener("pointerdown", (e) => {
 renderer.domElement.addEventListener("pointermove", (e) => {
   if (!drag || drag.id !== e.pointerId || inputLocked) return;
   if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 8) drag.moved = true;
-  targetYaw += (e.clientX - drag.x) * 0.004;
-  pitch = Math.max(-1.2, Math.min(1.0, pitch + (e.clientY - drag.y) * 0.003));
+  targetYaw += (e.clientX - drag.x) * 0.004 * sens;
+  pitch = Math.max(-1.2, Math.min(1.0, pitch + (e.clientY - drag.y) * 0.003 * sens));
   drag.x = e.clientX; drag.y = e.clientY;
 });
 renderer.domElement.addEventListener("pointercancel", (e) => { if (drag && drag.id === e.pointerId) drag = null; });
@@ -797,18 +879,27 @@ function makeWorld({ bounds, circles = [], rects = [], extra, water }) {
     },
   };
 }
-const held = { fwd: 0, back: 0, left: 0, right: 0 };
-function holdBtn(id, k) {
-  const b = $(id);
-  const on = (e) => { e.preventDefault(); held[k] = 1; }, off = () => { held[k] = 0; };
-  b.addEventListener("pointerdown", on); ["pointerup", "pointerleave", "pointercancel"].forEach((ev) => b.addEventListener(ev, off));
+// 휴대폰 조이스틱: 밀어낸 방향과 세기(-1~1)
+const joy = { x: 0, y: 0, id: null };
+{
+  const base = $("move"), knob = $("joy-knob");
+  const set = (ev) => {
+    const r = base.getBoundingClientRect(), R = (r.width / 2) * 0.6;
+    let dx = (ev.clientX - (r.left + r.width / 2)) / R, dy = (ev.clientY - (r.top + r.height / 2)) / R;
+    const n = Math.hypot(dx, dy); if (n > 1) { dx /= n; dy /= n; }
+    joy.x = dx; joy.y = dy;
+    knob.style.transform = "translate(" + (dx * R).toFixed(1) + "px," + (dy * R).toFixed(1) + "px)";
+  };
+  const end = (ev) => { if (joy.id !== ev.pointerId) return; joy.id = null; joy.x = joy.y = 0; knob.style.transform = ""; base.classList.remove("on"); };
+  base.addEventListener("pointerdown", (ev) => { ev.preventDefault(); if (joy.id !== null) return; joy.id = ev.pointerId; try { base.setPointerCapture(ev.pointerId); } catch (er) {} base.classList.add("on"); set(ev); });
+  base.addEventListener("pointermove", (ev) => { if (joy.id === ev.pointerId) set(ev); });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach((n) => base.addEventListener(n, end));
 }
 function doJump() { if (inputLocked || $("overlay").classList.contains("open")) return; if (swimming) climbOut(); else if (onGround()) { vy = 5.0; hideGuide(); sfx("jump"); } }
 $("btn-jump").addEventListener("pointerdown", (e) => { e.preventDefault(); doJump(); });
 $("btn-run").addEventListener("pointerdown", (e) => { e.preventDefault(); running = !running; $("btn-run").classList.toggle("on", running); });
 $("rotate-skip").onclick = () => document.body.classList.add("portrait-ok");
 if (isTouch) document.querySelectorAll(".k-up").forEach((el) => (el.textContent = "점프 버튼"));
-holdBtn("move-fwd", "fwd"); holdBtn("move-back", "back"); holdBtn("move-left", "left"); holdBtn("move-right", "right");
 const KEYMAP = { arrowup: "fwd", w: "fwd", arrowdown: "back", s: "back", arrowleft: "left", a: "left", arrowright: "right", d: "right" };
 const keys = { fwd: 0, back: 0, left: 0, right: 0 };
 let bagOpen = false;
@@ -834,7 +925,7 @@ addEventListener("keydown", (e) => {
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
 });
 addEventListener("keyup", (e) => { const k = KEYMAP[e.key.toLowerCase()]; if (k) keys[k] = 0; });
-addEventListener("blur", () => { for (const k in keys) keys[k] = 0; for (const k in held) held[k] = 0; running = false; });
+addEventListener("blur", () => { for (const k in keys) keys[k] = 0; joy.x = joy.y = 0; running = false; });
 const WALK_FWD = 3.6, WALK_SIDE = 3.0;
 let running = false;   // Shift를 누르고 있는 동안 달리기
 addEventListener("keydown", (e) => { if (e.key === "Shift") running = true; });
@@ -872,9 +963,10 @@ function animate() {
 }
 function frame(dt) {
   ELAPSED_T += dt;
-  const f = (keys.fwd || held.fwd) - (keys.back || held.back), s = (keys.right || held.right) - (keys.left || held.left);
+  const jOn = Math.hypot(joy.x, joy.y) > 0.18;   // 조이스틱은 살짝 밀면 천천히, 끝까지 밀면 보통 걸음
+  const f = (keys.fwd || 0) - (keys.back || 0) - (jOn ? joy.y : 0), s = (keys.right || 0) - (keys.left || 0) + (jOn ? joy.x : 0);
   // 걷기 속도 (기본 3.6m/초, Shift를 누르면 달리기 1.8배)
-  if (f || s) { const n = Math.hypot(f, s), run = (running ? 1.8 : 1) * (swimming ? 0.5 : 1); walk((f / n) * WALK_FWD * run * dt, (s / n) * WALK_SIDE * run * dt); }
+  if (f || s) { const n = Math.hypot(f, s), run = (running ? 1.8 : 1) * (swimming ? 0.5 : 1) * Math.min(1, n * 1.15); walk((f / n) * WALK_FWD * run * dt, (s / n) * WALK_SIDE * run * dt); }
   const bx = camera.position.x, bz = camera.position.z;
   camera.position.x += (targetPos.x - camera.position.x) * 0.18;
   camera.position.z += (targetPos.z - camera.position.z) * 0.18;
@@ -1134,7 +1226,7 @@ function openSettings() {
     <h3 style="margin:6px 0 6px">🔊 소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
     <h3 style="margin:18px 0 6px">🎨 그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
-    ${isTouch ? "" : `<h3 style="margin:18px 0 6px">🖱️ 마우스 감도</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
+    ${`<h3 style="margin:18px 0 6px">${isTouch ? "👆 화면 돌리는 감도" : "🖱️ 마우스 감도"}</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
     <p class="note" style="margin-top:14px">Tab 가방 · Esc 설정 · M 소리 · 숫자 키 손에 들기</p>`}`,
     `<a class="btn ghost" href="index.html">← 문 고르는 곳으로</a>`);
   $("modal-body").querySelector("[data-close]").textContent = "계속하기";
@@ -1214,7 +1306,7 @@ function showHUD(on) {
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
   showHUD(true);
-  $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 버튼으로 걷기 · 오른쪽 아래 점프·달리기 · 가까이 가서 물건 누르기"
+  $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 조이스틱으로 걷기 · 오른쪽 아래 점프·달리기 · 가까이 가서 물건 누르기"
     : lockFailed ? "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방"
     : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 설정";
   $("guide").style.opacity = 0.85;
@@ -1443,13 +1535,13 @@ const CTL_TOUCH = `<div class="phone"><div class="phone-screen">
     <span class="ph-chip">🎒 가방 &nbsp; 💡 힌트</span>
     <span class="ph-swipe">👆<i>↔</i></span>
     <span class="ph-obj">📦</span>
-    <div class="ph-pad"><i>▲</i><i>◀</i><i>▶</i><i>▼</i></div>
+    <div class="ph-pad"><i></i></div>
     <div class="ph-act"><i>🏃</i><i>⤒</i></div>
     <b class="n n1">1</b><b class="n n2">2</b><b class="n n3">3</b><b class="n n4">4</b><b class="n n5">5</b>
   </div></div>
 <ol class="ph-list">
   <li><b>둘러보기</b> — 화면을 손가락으로 끌어요</li>
-  <li><b>걷기</b> — 왼쪽 아래 화살표를 눌러요</li>
+  <li><b>걷기</b> — 왼쪽 아래 조이스틱을 가고 싶은 쪽으로 밀어요</li>
   <li><b>조사하기</b> — 가까이 가서 물건을 직접 눌러요</li>
   <li><b>달리기 · 점프</b> — 오른쪽 아래 버튼</li>
   <li><b>가방 · 힌트</b> — 위쪽 버튼 (모은 물건과 단서)</li>
@@ -1508,7 +1600,7 @@ function startCoach() {
   const K = (t, c = "") => `<kbd class="${c}">${t}</kbd>`;
   const steps = isTouch ? [
     ["👆", "화면을 <b>끌어서</b> 주위를 둘러보세요", "look"],
-    ["▲", "왼쪽 아래 <b>화살표</b>로 걸어 보세요", "walk"],
+    ["🕹️", "왼쪽 아래 <b>조이스틱</b>을 밀어 걸어 보세요", "walk"],
     ["📦", "물건에 <b>가까이 가서 눌러</b> 조사해 보세요", "inspect"],
     ["🎒", "위쪽 <b>가방</b>을 눌러 소지품을 살펴보세요", "bag"],
   ] : [
@@ -1595,7 +1687,7 @@ const CORE = {
 /* 테마 파일에서 쓰는 도구 모음 */
 export const E = {
   THREE, TEX, MAT, M, MN, C, canvasTex, textTex, speckle, rand: () => rand(),
-  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, photoMat, coop: COOP_API, stoneBlocks, crowdBody: PG.crowd, faceMat: FACE_MAT,
+  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, photoMat, coop: COOP_API, stoneBlocks, crowdBody: PG.crowd, crowdPart: PG.part, firCone, horseGeo, faceMat: FACE_MAT,
   tag, collectClickables, toast, sfx, setAtmosphere, setMusic, formation, GANJI_TABLE, REACH, $,
   get S() { return S; }, get ROOT() { return ROOT; }, get CH() { return CH; }, get camera() { return camera; },
   lockInput() { inputLocked = true; },

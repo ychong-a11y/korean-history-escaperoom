@@ -29,8 +29,8 @@ function plane(w, d, mat, x, y, z) { const m = new THREE.Mesh(new THREE.PlaneGeo
 function pines(list) {
   const leaf = C(0x2e4630, { roughness: 0.9 });
   inst(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), MAT.bark, list.map(([x, z, s]) => [x, 0.9 * s, z, 0, s, 1.8 * s, s]));
-  inst(new THREE.ConeGeometry(1.4, 2.6, 8), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]));
-  inst(new THREE.ConeGeometry(1.0, 2.1, 8), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]));
+  inst(E.firCone(1.4, 2.6), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]));
+  inst(E.firCone(1.0, 2.1), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]));
 }
 // 군막(네모뿔 천막) 여러 채
 function tentField(list, mat, id, label) {
@@ -53,9 +53,9 @@ function rm(o) { if (o && o.parent) o.parent.remove(o); }
 // 사람 무리 (몸통 · 머리 · 투구)
 function crowd(list, robeCols, helmet, id, label) {
   const b1 = inst(E.crowdBody, C(0xffffff), list.map(([x, z, r]) => [x, 0.6, z, r || 0]), { colors: robeCols });
-  const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), E.faceMat, list.map(([x, z, r]) => [x, 1.38, z, r || 0]));   // 얼굴이 몸과 같은 쪽을 봄
+  const b2 = inst(E.crowdPart("head", { at: 1.38 }), E.faceMat, list.map(([x, z, r]) => [x, 1.38, z, r || 0]));   // 얼굴이 몸과 같은 쪽을 봄
   const ms = [b1, b2];
-  if (helmet) ms.push(inst(new THREE.SphereGeometry(0.17, 10, 6), MAT.iron, list.map(([x, z]) => [x, 1.46, z, 0, 1, 0.7, 1])));
+  if (helmet) ms.push(inst(E.crowdPart("helm", { at: 1.38 }), MAT.iron, list.map(([x, z, r]) => [x, 1.38, z, r || 0])));
   ms.forEach((m) => (id ? tag(m, id, label) : (m.userData.noPick = true)));
   return ms;
 }
@@ -878,11 +878,12 @@ CHAPTERS.push({
     // 강을 건너는 적의 네모난 진 여덟
     L.s = 0; L.fled = A.has("c6_strike");
     const n = BLK * PER;
-    L.body = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.17, 0.27, 1.1, 7), C(0x6a3a30), n);
-    L.head = new THREE.InstancedMesh(new THREE.SphereGeometry(0.16, 8, 6), MAT.iron, n);
+    L.body = new THREE.InstancedMesh(E.crowdPart("soldier", { at: 0.55 }), C(0x6a3a30), n);
+    L.head = new THREE.InstancedMesh(E.crowdPart("helm", { at: 1.24 }), MAT.iron, n);
+    L.face = new THREE.InstancedMesh(E.crowdPart("head", { at: 1.24 }), E.faceMat, n); L.face.instanceMatrix = L.head.instanceMatrix;
     L.pole = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.05, 0.05, 3.6, 5), MAT.wood, BLK);
     L.flagM = new THREE.InstancedMesh(new THREE.BoxGeometry(1.1, 0.75, 0.04), C(0xb3271f), BLK);
-    [L.body, L.head, L.pole, L.flagM].forEach((m) => { m.castShadow = true; m.frustumCulled = false; E.ROOT.add(m); tag(m, "army", "강을 건너는 적의 진"); });
+    [L.body, L.head, L.face, L.pole, L.flagM].forEach((m) => { m.castShadow = true; m.frustumCulled = false; E.ROOT.add(m); tag(m, "army", "강을 건너는 적의 진"); });
     L.bz = []; for (let i = 0; i < BLK; i++) L.bz.push(armyTarget(i));
     armyPlace();
     if (A.has("c6_strike")) { setAtmosphere(SUNSET6); addBaggage(); }
@@ -1015,7 +1016,7 @@ function spawnIsland() {
   box(0.8, 1.3, 0.25, C(0x7a7468, { roughness: 1 }), 0, 0.65, 0, st); box(0.9, 0.2, 0.35, C(0x6a645a), 0, 1.35, 0, st);
   cyl(0.04, 0.04, 1.1, MAT.wood, 0.8, 0.55, 0.2, 5, st); box(0.5, 0.35, 0.04, MAT.paper, 0.8, 1.1, 0.24, st);
   tag(st, "stone", "모래톱의 옛 비석");
-  const fm = person(4.2, -2.6, PI, C(0x8a8a7a), E.ROOT, { bare: true, work: true }); tag(fm, "ferryman", "늙은 뱃사공");
+  const fm = person(4.2, -2.6, PI, C(0x8a8a7a), E.ROOT, { bare: true, work: true, old: true }); tag(fm, "ferryman", "늙은 뱃사공");
   const bt = group(5.6, -0.95, -5.4, 0.3); box(0.9, 0.35, 2.6, MAT.hull, 0, 0.17, 0, bt);
 }
 

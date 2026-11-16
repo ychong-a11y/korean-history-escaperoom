@@ -29,8 +29,8 @@ function hipRoof(x, y, z, w, d, h, mat) {
 function pines(list, snowy) {
   const leaf = C(snowy ? 0x47594f : 0x2e4630, { roughness: 0.9 });
   inst(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), MAT.bark, list.map(([x, z, s]) => [x, 0.9 * s, z, 0, s, 1.8 * s, s]));
-  inst(new THREE.ConeGeometry(1.4, 2.6, 8), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]));
-  inst(new THREE.ConeGeometry(1.0, 2.1, 8), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]));
+  inst(E.firCone(1.4, 2.6), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]));
+  inst(E.firCone(1.0, 2.1), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]));
   if (snowy) {
     const sn = C(0xf4f6fa, { roughness: 0.95 });
     inst(new THREE.ConeGeometry(0.89, 1.56, 8), sn, list.map(([x, z, s]) => [x, 3.03 * s, z, 0, s]), { shadow: false });
@@ -809,8 +809,8 @@ CHAPTERS.push({
     const crowd = []; for (let i = 0; i < 30; i++) crowd.push([2 + E.rand() * 11, 0, 1 + E.rand() * 2.6, E.rand() * 6]);
     const cols = [0x2a2a30, 0x3a3428, 0x4a4a52, 0x5a4a3a, 0x222228];
     const b1 = inst(E.crowdBody, C(0xffffff), crowd.map(([x, y, z, r]) => [x, 0.62, z, r]), { colors: cols });
-    const b2 = inst(new THREE.SphereGeometry(0.15, 10, 8), E.faceMat, crowd.map(([x, y, z, r]) => [x, 1.42, z, r]));
-    const b3 = inst(new THREE.CylinderGeometry(0.16, 0.18, 0.14, 10), MAT.black, crowd.map(([x, y, z]) => [x, 1.58, z]));
+    const b2 = inst(E.crowdPart("head", { at: 1.42 }), E.faceMat, crowd.map(([x, y, z, r]) => [x, 1.42, z, r]));
+    const b3 = inst(new THREE.CylinderGeometry(0.16, 0.18, 0.14, 10), MAT.black, crowd.map(([x, y, z]) => [x, 1.7, z]));
     [b1, b2, b3].forEach((m) => tag(m, "crowd", "환영 인파"));
     // 찻집
     const kio = group(-17.2, 0, 7.2);

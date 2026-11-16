@@ -72,8 +72,8 @@ function pines(list, snowy = true) {
   const leaf = C(snowy ? 0x41544a : 0x2e4630, { roughness: 0.9 });
   const ms = [
     inst(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), MAT.bark, list.map(([x, z, s]) => [x, 0.9 * s, z, 0, s, 1.8 * s, s]), { noPick: true }),
-    inst(new THREE.ConeGeometry(1.4, 2.6, 8), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]), { noPick: true }),
-    inst(new THREE.ConeGeometry(1.0, 2.1, 8), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]), { noPick: true }),
+    inst(E.firCone(1.4, 2.6), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]), { noPick: true }),
+    inst(E.firCone(1.0, 2.1), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]), { noPick: true }),
   ];
   if (snowy) {
     ms.push(inst(new THREE.ConeGeometry(0.89, 1.56, 8), SNOWCAP, list.map(([x, z, s]) => [x, 3.03 * s, z, 0, s]), { shadow: false, noPick: true }));
@@ -849,7 +849,7 @@ CHAPTERS.push({
     const win = new THREE.Mesh(new THREE.PlaneGeometry(1.4, 1.0), new THREE.MeshBasicMaterial({ color: 0x8a9ab8 })); win.position.set(4.96, 1.8, -1.6); win.rotation.y = -PI / 2; E.ROOT.add(win);
     const dr = box(1.6, 2.2, 0.08, MAT.door, 0, 1.1, 4.0); tag(dr, "door", "방문");
     // 백발의 대감
-    tag(seated(-3.8, -2.5, PI / 4, C(0xe8e4da)), "elder", "백발의 대감");
+    tag(seated(-3.8, -2.5, PI / 4, C(0xe8e4da), { old: true }), "elder", "백발의 대감");
     box(0.8, 0.08, 0.8, C(0x7a3a2a), -3.8, 0.05, -2.5);
     // 찢긴 조각
     PIECE_POS.forEach(([x, z], i) => { if (A.has("c5_p" + (i + 1))) return; const p = box(0.3, 0.012, 0.2, MAT.paper, x, 0.05, z); p.rotation.y = trand() * PI; tag(p, "p" + (i + 1), "찢긴 종이 조각"); L["p" + (i + 1)] = p; });
@@ -978,7 +978,7 @@ CHAPTERS.push({
     inst(new THREE.CylinderGeometry(0.03, 0.03, 2.6, 6), MAT.wood, [...bars(0.7, 2.4), ...bars(4.2, 6.9)]);
     box(1.8, 0.08, 0.08, MAT.wood, 1.55, 0.3, -3.0); box(1.8, 0.08, 0.08, MAT.wood, 1.55, 2.5, -3.0); box(2.8, 0.08, 0.08, MAT.wood, 5.55, 0.3, -3.0); box(2.8, 0.08, 0.08, MAT.wood, 5.55, 2.5, -3.0);
     box(0.06, 2.4, 1.6, MAT.wood, 4.15, 1.3, -3.9);
-    tag(seated(-3.6, -5.6, 0, C(0xe8e4da)), "elder", "옆 칸의 백발 노인");
+    tag(seated(-3.6, -5.6, 0, C(0xe8e4da), { old: true }), "elder", "옆 칸의 백발 노인");
     addLight(0xffb060, 1.6, 6, -3.6, 2.2, -6.5);
     // 내 방
     const dk = lowTable(4.8, 0, -7.1, 0, E.ROOT, 1.4, 0.6); paper(0.5, 0.3, -0.2, 0.4, 0.05, 0.1, dk); paper(0.3, 0.2, 0.15, 0.401, 0.12, -0.3, dk);

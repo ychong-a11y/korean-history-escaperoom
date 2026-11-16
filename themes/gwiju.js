@@ -42,8 +42,8 @@ function seated(x, z, rot, robe, o = {}) { const g = person(x, z, rot, robe, E.R
 function pines(list, leafCol = 0x2e4630) {
   const leaf = C(leafCol, { roughness: 0.9 });
   inst(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), MAT.bark, list.map(([x, z, s]) => [x, 0.9 * s, z, 0, s, 1.8 * s, s]), { noPick: true });
-  inst(new THREE.ConeGeometry(1.4, 2.6, 8), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]), { noPick: true });
-  inst(new THREE.ConeGeometry(1.0, 2.1, 8), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]), { noPick: true });
+  inst(E.firCone(1.4, 2.6), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s]), { noPick: true });
+  inst(E.firCone(1.0, 2.1), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s]), { noPick: true });
 }
 function ring(n, r1, r2, cx = 0, cz = 0, skip) { const P = []; for (let i = 0; i < n; i++) { const a = trand() * PI * 2, r = r1 + trand() * (r2 - r1), x = cx + Math.cos(a) * r, z = cz + Math.sin(a) * r; if (skip && skip(x, z)) continue; P.push([x, z, 0.9 + trand() * 0.6]); } return P; }
 function campfire(x, z, base = 6, y = 0) {
@@ -65,8 +65,8 @@ function glow(x, y, z, s = 2, color = 0xffffff) {
 // 사람 무리 (list: [x, z, 회전])
 function crowd(list, robeCols, helmet, id, label, y = 0) {
   const ms = [inst(E.crowdBody, C(0xffffff), list.map(([x, z, r]) => [x, y + 0.6, z, r || 0]), { colors: robeCols }),
-    inst(new THREE.SphereGeometry(0.15, 10, 8), E.faceMat, list.map(([x, z, r]) => [x, y + 1.38, z, r || 0]))];
-  if (helmet) ms.push(inst(new THREE.SphereGeometry(0.17, 10, 6), MAT.iron, list.map(([x, z]) => [x, y + 1.46, z, 0, 1, 0.7, 1])));
+    inst(E.crowdPart("head", { at: 1.38 }), E.faceMat, list.map(([x, z, r]) => [x, y + 1.38, z, r || 0]))];
+  if (helmet) ms.push(inst(E.crowdPart("helm", { at: 1.38 }), MAT.iron, list.map(([x, z, r]) => [x, y + 1.38, z, r || 0])));
   ms.forEach((m) => (id ? tag(m, id, label) : (m.userData.noPick = true)));
   return ms;
 }
@@ -237,7 +237,7 @@ CHAPTERS.push({
     // 마을 사람들 · 우물 · 느티나무
     tag(person(-6.2, 0.4, -0.9, C(0x6a5a40), E.ROOT, { bare: true, work: true }), "woodcutter", "나무꾼");
     const fw = group(-7.1, 0, 1.0); for (let i = 0; i < 6; i++) { const l = cyl(0.06, 0.06, 1.1, MAT.bark, (i % 3) * 0.13 - 0.13, 0.5 + Math.floor(i / 3) * 0.13, 0, 6, fw); l.rotation.x = PI / 2; } tag(fw, "woodcutter", "나무꾼");
-    tag(person(6.6, -1.2, 0.9, C(0x9a9484), E.ROOT, { bare: true, woman: true }), "granny", "할머니");
+    tag(person(6.6, -1.2, 0.9, C(0x9a9484), E.ROOT, { bare: true, woman: true, old: true }), "granny", "할머니");
     const kid = person(1.6, -3.6, PI, C(0xc8b078), E.ROOT, { bare: true, kid: true }); kid.scale.setScalar(0.72); tag(kid, "child", "아이");
     const wl = group(-1.2, 0, 2.2);
     cyl(0.75, 0.8, 0.8, MAT.stone, 0, 0.4, 0, 16, wl); cyl(0.6, 0.6, 0.02, C(0x0a0e18), 0, 0.81, 0, 16, wl);
@@ -719,7 +719,7 @@ CHAPTERS.push({
     noPick(tent(-13.2, -5, PI / 2, 3.4, 4));
     L.fire = campfire(-8, 0.8, 5);
     standBoard("川幅\n六十尺", 1.0, 0.8, -5.4, -2.6, -PI / 2, "stake", "물가의 푯말", { size: 120, y: 1.3 });
-    tag(person(-7.4, -8.8, 0.4, C(0x7a6a52), E.ROOT, { bare: true, work: true }), "engineer", "늙은 목수");
+    tag(person(-7.4, -8.8, 0.4, C(0x7a6a52), E.ROOT, { bare: true, work: true, old: true }), "engineer", "늙은 목수");
     const wg = group(-11.5, 0, 6);
     box(1.7, 0.12, 2.6, MAT.wood, 0, 0.7, 0, wg); [-0.95, 0.95].forEach((x) => { cyl(0.5, 0.5, 0.1, MAT.wood, x, 0.5, 0, 14, wg).rotation.z = PI / 2; });
     for (let i = 0; i < 7; i++) box(1.5, 0.09, 2.2, C([0x6a4a30, 0x7a5a3a, 0x5a3e28][i % 3], { roughness: 1 }), (i % 2) * 0.06, 0.82 + i * 0.09, 0, wg);
@@ -869,7 +869,7 @@ CHAPTERS.push({
     standBoard("十二時\n子 丑 寅 卯 辰 巳\n午 未 申 酉 戌 亥", 2.3, 1.2, -7, -5.8, 0, "hours", "열두 때 판", { size: 44 });
     tag(seated(4.6, 6.4, 0.3, C(0x5a4a3a), { helmet: true }), "scout", "달려온 척후");
     noPick(horse(6.4, 7.6, 2.2));
-    tag(person(-6.6, 8.4, 0.2, C(0x7a6a52), E.ROOT, { bare: true }), "windman", "늙은 군사");
+    tag(person(-6.6, 8.4, 0.2, C(0x7a6a52), E.ROOT, { bare: true, old: true }), "windman", "늙은 군사");
     const sp = group(-8.6, 0, 9.2);
     cyl(0.05, 0.06, 4.2, MAT.wood, 0, 2.1, 0, 6, sp);
     const rb = new THREE.Mesh(new THREE.PlaneGeometry(2.2, 0.3), new THREE.MeshStandardMaterial({ color: 0xf0e8d0, roughness: 0.9, side: THREE.DoubleSide })); rb.rotation.y = PI / 2; rb.position.set(0, 4.0, wdir * 1.15); sp.add(rb);
@@ -1042,11 +1042,11 @@ CHAPTERS.push({
     }
     L.marks = ord && rig && !cap ? SPOT6.map((s) => marker(...s)) : [];
     // 사람들
-    tag(person(3.4, 1.4, 0.8, C(0x7a6a52), E.ROOT, { bare: true, work: true }), "mason", "늙은 석수");
+    tag(person(3.4, 1.4, 0.8, C(0x7a6a52), E.ROOT, { bare: true, work: true, old: true }), "mason", "늙은 석수");
     tag(seated(-7.6, 3.8, -PI / 2, C(0x4a5a6a)), "dict", "훈장과 옥편");
     tag(lowTable(-6.6, 0, 3.8, 0, E.ROOT, 0.9, 0.7), "dict", "훈장과 옥편");
     [-0.14, 0.14].forEach((s) => tag(box(0.26, 0.05, 0.4, C(0x2a3a5a), -6.6 + s, 0.415, 3.8), "dict", "훈장과 옥편"));
-    tag(person(6.8, 6.4, 0.6, C(0x9a9484)), "elder", "지팡이 짚은 노인");
+    tag(person(6.8, 6.4, 0.6, C(0x9a9484), E.ROOT, { old: true }), "elder", "지팡이 짚은 노인");
     noPick(cyl(0.025, 0.03, 1.3, MAT.wood, 6.45, 0.65, 6.15, 6));
     standBoard("羅城\n大門 四\n中門 八\n小門 十三", 1.7, 1.6, 8.6, 3.4, -PI / 2, "plan", "바깥 성 그림판", { size: 74, y: 1.5 });
     const tbx = group(6.2, 0, -4.2);

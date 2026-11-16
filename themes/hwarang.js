@@ -21,13 +21,15 @@ function pines(pts) {   // 소나무 숲 [x, z, 크기]
   const tr = [], c1 = [], c2 = [];
   pts.forEach(([x, z, s]) => { tr.push([x, 1.2 * s, z, s]); c1.push([x, 2.9 * s, z, s]); c2.push([x, 4.0 * s, z, s * 0.72]); });
   inst(new THREE.CylinderGeometry(0.14, 0.22, 2.4, 7), MAT.bark, tr, { noPick: true });
-  inst(new THREE.ConeGeometry(1.4, 2.6, 8), PINE, c1, { noPick: true });
-  inst(new THREE.ConeGeometry(1.4, 2.6, 8), PINE, c2, { noPick: true });
+  inst(E.firCone(1.4, 2.6), PINE, c1, { noPick: true });
+  inst(E.firCone(1.4, 2.6), PINE, c2, { noPick: true });
 }
 function ring(n, r0, r1, cx = 0, cz = 0) { const a = []; for (let i = 0; i < n; i++) { const t = (i / n) * Math.PI * 2 + rnd() * 0.2, r = r0 + rnd() * (r1 - r0); a.push([cx + Math.cos(t) * r, cz + Math.sin(t) * r, 0.8 + rnd() * 0.6]); } return a; }
-function soldiers(list, robe, helmet = MAT.iron) {   // 군사 무리 [x, z]
-  inst(new THREE.CylinderGeometry(0.2, 0.34, 1.25, 8), robe, list.map(([x, z]) => [x, 0.62, z]), { noPick: true });
-  inst(new THREE.SphereGeometry(0.17, 8, 6), helmet, list.map(([x, z]) => [x, 1.45, z]), { noPick: true });
+function soldiers(list, robe, helmet = MAT.iron, rot = 0) {   // 군사 무리 [x, z] · rot: 바라보는 쪽 (0이면 북쪽)
+  const at = list.map(([x, z]) => [x, 0, z]), o = { at: 0, rot };
+  inst(E.crowdPart("soldier", o), robe, at, { noPick: true });
+  inst(E.crowdPart("head", o), E.faceMat, at, { noPick: true });
+  inst(E.crowdPart("helm", o), helmet, at, { noPick: true });
 }
 function flame(x, y, z, p = E.ROOT, s = 1) {
   const g = group(x, y, z, 0, p);
@@ -690,7 +692,7 @@ CHAPTERS.push({
     L.bflags = [];
     for (let i = 0; i < 9; i++) { const g = group(-16 + i * 4, 0, -46); cyl(0.07, 0.07, 5, MAT.wood, 0, 2.5, 0, 6, g); box(1.3, 0.9, 0.03, MAT.black, 0.65, 4.4, 0, g); L.bflags.push(g); if (A.has("h5_won")) g.rotation.z = 1.4; }
     const bj = []; for (let i = 0; i < 27; i++) bj.push([-14 + (i % 9) * 3.5, -42 + Math.floor(i / 9) * 1.4]);
-    soldiers(bj, MAT.black);
+    soldiers(bj, MAT.black, MAT.iron, Math.PI);
     // 군사 수 판 · 장부 · 북 · 북채 상자
     tag(board("우리 : 적\n? 명 : 1 명", 1.3, 0.8, 2.6, 1.5, 7.1, Math.PI, E.ROOT, { size: 52 }), "board", "군사 수 판"); cyl(0.05, 0.05, 1.2, MAT.wood, 2.6, 0.6, 7.15, 6);
     const lg = lowTable(-1.2, 0, 8.4, 0, E.ROOT, 1.2, 0.6); lg.scale.set(1, 2, 1); paper(0.4, 0.3, 0, 0.4, 0, 0.1, lg); box(0.3, 0.05, 0.22, C(0x5a3a2a), -0.35, 0.41, 0, lg); tag(lg, "ledger", "군량 장부");
@@ -700,7 +702,7 @@ CHAPTERS.push({
     tag(person(10.5, -3.5, -Math.PI / 2, C(0x6a5a40), E.ROOT, { bare: true, work: true }), "scout", "척후병");
     if (!A.has("h5_gone")) {
       L.gw = person(-4.2, -2.6, 0.2, C(0xd8c8a8), E.ROOT, { helmet: true }); tag(L.gw, "gwanchang", "어린 화랑");
-      L.hs = horse(-5.4, -2.8, 0.1); tag(L.hs, "horse", "흰 말");
+      L.hs = horse(-5.4, -2.8, 0.1, { mat: C(0xe6e2d8, { roughness: 0.7 }) }); tag(L.hs, "horse", "흰 말");
     } else makeHelmet();
     const rd = group(0, 0, -10); cyl(0.07, 0.07, 1.8, MAT.wood, 0, 0.9, 0, 6, rd); board("사비 →", 1.0, 0.4, 0.3, 1.6, 0, 0, rd, { size: 60 }); tag(rd, "road", "사비로 가는 길");
     return {
@@ -816,7 +818,7 @@ CHAPTERS.push({
     const sh = group(-4.6, 0, 2.6, Math.PI / 2); box(1.6, 1.6, 1.2, MAT.wall, 0, 0.8, 0, sh); E.hanokRoof(0, 1.6, 0, 2.2, 1.8, 0.7, {}, sh); box(0.3, 0.7, 0.04, plaqueMat("始祖神位", { w: 96, h: 320, size: 52 }), 0, 0.95, 0.62, sh); tag(sh, "shrine", "작은 사당");
     const mp = lowTable(1.0, 0, 0.2, 0, E.ROOT, 1.4, 0.9); mp.scale.set(1, 1.8, 1); const mpp = paper(1.2, 0.75, 0, 0.4, 0, 0, mp); mpp.material = new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 0.9 }); tag(mp, "map", "지도를 펼친 상");
     tag(person(2.8, -2.4, -0.5, C(0x8aa0b8), E.ROOT, { bare: true, kid: true }), "grandson", "어린 손자");
-    tag(person(-1.6, 1.8, 0.6, C(0x8a8070)), "doctor", "늙은 의원");
+    tag(person(-1.6, 1.8, 0.6, C(0x8a8070), E.ROOT, { old: true }), "doctor", "늙은 의원");
     tree(-4.8, -2.5, { h: 3 }); tree(4.9, 4.2, { h: 3.4 });
     return {
       start: [0, 4.2, 0], bounds: [-5.6, 5.6, -6.45, 5.4],

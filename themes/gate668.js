@@ -88,8 +88,8 @@ function pines(list, snowy) {
   const leaf = C(snowy ? 0x47594f : 0x2e4630, { roughness: 0.9 });
   const ms = [
     inst(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), MAT.bark, list.map(([x, z, s]) => [x, 0.9 * s, z, 0, s, 1.8 * s, s])),
-    inst(new THREE.ConeGeometry(1.4, 2.6, 8), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s])),
-    inst(new THREE.ConeGeometry(1.0, 2.1, 8), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s])),
+    inst(E.firCone(1.4, 2.6), leaf, list.map(([x, z, s]) => [x, 2.5 * s, z, 0, s])),
+    inst(E.firCone(1.0, 2.1), leaf, list.map(([x, z, s]) => [x, 3.7 * s, z, 0, s])),
   ];
   if (snowy) {
     const sn = C(0xf4f6fa, { roughness: 0.95 });
@@ -109,7 +109,7 @@ function crowd(list, cols, parent) {
   const body = list.map(([x, z, sit]) => [x, sit ? 0.35 : 0.62, z, 0, 1, sit ? 0.56 : 1, 1]);
   const head = list.map(([x, z, sit]) => [x, sit ? 0.86 : 1.42, z]);
   const a = inst(E.crowdBody, C(0xffffff), body, { colors: cols, parent });
-  const b = inst(new THREE.SphereGeometry(0.15, 10, 8), MAT.skin, head, { parent });
+  const b = inst(E.crowdPart("head", { at: 1.42 }), MAT.skin, head, { parent });
   return [a, b];
 }
 // 모닥불
@@ -385,7 +385,7 @@ CHAPTERS.push({
       box(0.9, 1.8, 0.08, MAT.door, 0, 0.9, 1.52, h);
       if (!i) tag(h, "house", "구들 놓은 집");
     });
-    tag(gp(9.2, 1.4, PI / 2, C(0xe8e2d4), { plain: true, woman: true }), "halmeoni", "고구려 할머니");
+    tag(gp(9.2, 1.4, PI / 2, C(0xe8e2d4), { plain: true, woman: true, old: true }), "halmeoni", "고구려 할머니");
     const st = group(12.4, 0, 12.4);
     [[-1.4, -1.2], [1.4, -1.2], [-1.4, 1.2], [1.4, 1.2]].forEach(([a, b]) => cyl(0.08, 0.09, 2.4, MAT.wood, a, 1.2, b, 6, st));
     box(3.4, 0.15, 3, MAT.straw, 0, 2.45, 0, st);
@@ -398,7 +398,7 @@ CHAPTERS.push({
     tag(yurt(-11.5, -5.5, 1.25), "ctent", "거란 추장의 천막");
     yurt(-12, 5, 1); yurt(-8.8, 10, 0.9);
     horse(-13.6, 0.5, 0.2); horse(-13.8, -1.6, -0.1);
-    tag(person(-8.6, 1.0, -PI / 2, C(0x8a6a4a), E.ROOT, { bare: true }), "kelder", "거란 노인");
+    tag(person(-8.6, 1.0, -PI / 2, C(0x8a6a4a), E.ROOT, { bare: true, old: true }), "kelder", "거란 노인");
     // 북쪽: 말갈 마을
     tent(-4, -12.4, 0, 3, 2.6, cloth(0x9a8a6a)); L.ntent = tent(4, -12.4, 0, 3, 2.6, cloth(0x8a7a5a));
     const rk = group(0.4, 0, -13.6); [-0.6, 0.6].forEach((x) => cyl(0.05, 0.05, 1.6, MAT.wood, x, 0.8, 0, 6, rk)); box(1.4, 0.06, 0.08, MAT.wood, 0, 1.3, 0, rk);
@@ -790,8 +790,8 @@ CHAPTERS.push({
       tag(m, `m${i}${j}`, "흙더미"); L.mounds[`m${i}${j}`] = m;
     }
     // 노인 · 일꾼 · 서기 · 설계도
-    tag(gp(4, -2, -PI / 2, C(0xe0dacb)), "elder", "고구려 노인");
-    tag(person(-3, 8, PI / 2, C(0x6a5a40), E.ROOT, { bare: true }), "melder", "말갈 노인");
+    tag(gp(4, -2, -PI / 2, C(0xe0dacb), { old: true }), "elder", "고구려 노인");
+    tag(person(-3, 8, PI / 2, C(0x6a5a40), E.ROOT, { bare: true, old: true }), "melder", "말갈 노인");
     const pl = group(2.2, 0, -9); [-0.8, 0.8].forEach((x) => cyl(0.06, 0.06, 2.2, MAT.wood, x, 1.1, 0, 6, pl)); board("새 성 설계도\n↑ 北\n城門 → 南", 1.6, 1.1, 0, 1.7, 0.05, 0, pl, { size: 46 });
     tag(pl, "plan", "새 성 설계도");
     const sc = lowTable(-5.5, 0, 5.5, 0, E.ROOT, 1.3, 0.6); paper(0.4, 0.3, 0.2, 0.4, 0, 0.1, sc);
