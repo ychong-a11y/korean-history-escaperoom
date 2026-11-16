@@ -282,24 +282,119 @@ const keepGeo = (g) => { g.userData.keep = true; return g; };
 const lathe = (pts, seg) => new THREE.LatheGeometry(pts.map(([r, y]) => new THREE.Vector2(r, y)), seg);
 const flatZ = (geo, f) => { const p = geo.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, p.getZ(i) * f(p.getY(i))); geo.computeVertexNormals(); return geo; };
 const PG = (() => {
-  const skirt = flatZ(lathe([[0.335, 0.03], [0.315, 0.18], [0.27, 0.48], [0.222, 0.78], [0.21, 0.9]], 14), (y) => 0.86 - y * 0.12);
-  const torso = flatZ(lathe([[0.21, 0.88], [0.218, 1.0], [0.222, 1.14], [0.205, 1.26], [0.16, 1.335], [0.075, 1.38], [0.001, 1.39]], 12), () => 0.75);
-  const sleeve = (s) => new THREE.CylinderGeometry(0.062, 0.105, 0.5, 8).rotateZ(s * 0.2).translate(s * 0.255, 1.06, 0);
-  const robe = mergeGeometries([skirt, torso, sleeve(1), sleeve(-1)]);
-  const hand = (s) => new THREE.SphereGeometry(0.052, 8, 6).translate(s * 0.31, 0.77, -0.01);
-  const skin = mergeGeometries([new THREE.CylinderGeometry(0.055, 0.062, 0.1, 8).translate(0, 1.4, 0), hand(1), hand(-1)]);
-  const shoe = (s) => new THREE.SphereGeometry(0.075, 8, 6).scale(0.85, 0.5, 1.5).translate(s * 0.1, 0.035, -0.2);
-  const belt = flatZ(new THREE.CylinderGeometry(0.218, 0.218, 0.06, 14, 1, true), () => 0.77).translate(0, 0.89, 0);
-  const dark = mergeGeometries([shoe(1), shoe(-1), belt]);
-  const head = new THREE.SphereGeometry(0.15, 16, 12).scale(0.95, 1.04, 1).translate(0, 0.135, 0);
-  const hair = new THREE.SphereGeometry(0.158, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.56).rotateX(0.75).translate(0, 0.14, 0);
-  const hat = mergeGeometries([new THREE.CylinderGeometry(0.3, 0.3, 0.02, 18).translate(0, 0.255, 0), new THREE.CylinderGeometry(0.09, 0.11, 0.17, 12).translate(0, 0.355, 0)]);
-  const helm = new THREE.SphereGeometry(0.17, 14, 10).scale(1, 0.7, 1).translate(0, 0.215, 0);
-  const plume = new THREE.CylinderGeometry(0.01, 0.01, 0.25, 4).translate(0, 0.395, 0);
-  const crowd = robe.clone().translate(0, -0.62, 0);   // 테마의 InstancedMesh 군중용 몸통 (원기둥 0.62 높이 자리에 그대로)
-  const all = { robe, skin, dark, head, hair, hat, helm, plume, crowd };
+  const V = (a) => new THREE.Vector3(a[0], a[1], a[2]);
+  // a → b 를 잇는 팔다리 (a 쪽 반지름 ra, b 쪽 반지름 rb)
+  const limb = (a, b, ra, rb, seg = 8) => {
+    const A = V(a), B = V(b), d = B.clone().sub(A), len = d.length();
+    const geo = new THREE.CylinderGeometry(rb, ra, len, seg, 1);
+    geo.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize()));
+    return geo.translate((A.x + B.x) / 2, (A.y + B.y) / 2, (A.z + B.z) / 2);
+  };
+  const ball = (p, r, sx = 1, sy = 1, sz = 1) => new THREE.SphereGeometry(r, 8, 6).scale(sx, sy, sz).translate(p[0], p[1], p[2]);
+  const strip = (w, h, x, y, z, rz) => new THREE.BoxGeometry(w, h, 0.012).rotateZ(rz).translate(x, y, z);
+  // 옷 주름: 아래(y0)로 갈수록 깊어지는 세로 주름 n개
+  const pleat = (geo, n, amp, y0, y1) => {
+    const p = geo.attributes.position;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i), z = p.getZ(i), a = Math.atan2(z, x), t = Math.min(1, Math.max(0, (y1 - p.getY(i)) / (y1 - y0)));
+      const k = 1 + amp * t * Math.sin(a * n + Math.sin(a * 3) * 1.3);
+      p.setX(i, x * k); p.setZ(i, z * k);
+    }
+    geo.computeVertexNormals(); return geo;
+  };
+  const plainUV = (geo) => { const u = geo.attributes.uv; for (let i = 0; i < u.count; i++) u.setXY(i, 0.25, 0.5); return geo; };   // 얼굴 그림의 맨살 자리
+  const bodyFlat = (y) => (y < 1.2 ? 0.73 - ((y - 0.9) / 0.3) * 0.09 : 0.64);
+  const torso = (pts) => flatZ(lathe(pts, 14), bodyFlat);
+  const TORSO = [[0.203, 0.9], [0.208, 1.02], [0.22, 1.16], [0.217, 1.25], [0.18, 1.308], [0.07, 1.348], [0.001, 1.358]];
+  const SH = (s) => [s * 0.19, 1.262, 0];   // 어깨
+  // 팔 자세: [팔꿈치, 손목] (오른팔 기준 · 왼팔은 x를 뒤집는다). 얼굴이 -Z 쪽이므로 오른손은 +X.
+  const ARM = {
+    side: [[0.275, 1.03, 0.02], [0.288, 0.8, -0.05]],
+    front: [[0.288, 1.045, 0.0], [0.07, 0.975, -0.2]],
+    back: [[0.288, 1.045, 0.03], [0.08, 0.9, 0.17]],
+    hold: [[0.268, 1.05, -0.03], [0.215, 1.03, -0.25]],
+  };
+  const POSES = { side: ["side", "side"], front: ["front", "front"], back: ["back", "back"], hold: ["hold", "side"] };
+  const arm = (s, [el, wr], r, lite) => {
+    const E = [s * el[0], el[1], el[2]], W = [s * wr[0], wr[1], wr[2]];
+    const parts = [limb(SH(s), E, r[0], r[1]), limb(E, W, r[1], r[2])];
+    if (!lite) parts.push(ball(SH(s), r[0] * 0.98), ball(E, r[1]));
+    return parts;
+  };
+  const hand = (s, [el, wr]) => {
+    const d = V(wr).sub(V(el)).normalize().multiplyScalar(0.045);
+    return ball([s * (wr[0] + d.x), wr[1] + d.y, wr[2] + d.z], 0.047, 0.85, 1, 0.85);
+  };
+  const shoe = (s, z = -0.06) => new THREE.SphereGeometry(0.075, 8, 6).scale(0.82, 0.5, 1.5).translate(s * 0.1, 0.036, z);
+  const belt = (r, h) => flatZ(new THREE.CylinderGeometry(r, r, h, 14, 1, true), () => 0.745).translate(0, 0.915, 0);
+  const collar = () => [strip(0.036, 0.27, -0.028, 1.232, -0.139, 0.4), strip(0.036, 0.19, 0.04, 1.262, -0.135, -0.42)];
+  const leg = (s) => {
+    const hip = [s * 0.095, 0.72, 0], knee = [s * 0.108, 0.41, -0.012 - s * 0.012], ankle = [s * 0.1, 0.08, 0.02 - s * 0.012];
+    return [limb(hip, knee, 0.102, 0.088), limb(knee, ankle, 0.088, 0.056), ball(knee, 0.088)];
+  };
+  const cache = {};
+  // kind: robe(긴 겉옷) · legs(짧은 저고리와 바지) · soldier(갑옷과 장화) · woman(치마저고리)
+  const body = (kind, pose, lite = false) => {
+    const key = kind + pose + (lite ? "L" : "");
+    if (cache[key]) return cache[key];
+    const [pr, pl] = POSES[pose] || POSES.side;
+    const sl = kind === "robe" ? [0.07, 0.082, 0.1] : kind === "woman" ? [0.063, 0.072, 0.052] : [0.062, 0.056, 0.046];
+    const arms = [...arm(1, ARM[pr], sl, lite), ...arm(-1, ARM[pl], sl, lite)];
+    const skin = [new THREE.CylinderGeometry(0.047, 0.055, 0.09, 8).translate(0, 1.378, 0), hand(1, ARM[pr]), hand(-1, ARM[pl])];
+    let robe, white, dark;
+    if (kind === "woman") {
+      const chima = pleat(flatZ(lathe([[0.36, 0.03], [0.352, 0.2], [0.315, 0.55], [0.255, 0.9], [0.207, 1.1], [0.2, 1.18]], 28), (y) => 0.92 - y * 0.2), 9, 0.07, 0.03, 1.18);
+      robe = [chima, ...collar(), strip(0.03, 0.32, 0.05, 1.03, -0.172, 0.07), strip(0.03, 0.24, 0.09, 1.07, -0.166, -0.16)];
+      white = [flatZ(lathe([[0.2, 1.1], [0.222, 1.17], [0.217, 1.25], [0.18, 1.308], [0.07, 1.348], [0.001, 1.358]], 14), () => 0.66), ...arms];
+      dark = null;
+    } else if (kind === "robe") {
+      const seg = lite ? 14 : 28;
+      const skirt = pleat(flatZ(lathe([[0.3, 0.09], [0.287, 0.24], [0.252, 0.5], [0.215, 0.78], [0.203, 0.92]], seg), (y) => 0.84 - y * 0.12), lite ? 4 : 7, 0.065, 0.09, 0.92);
+      robe = [skirt, torso(TORSO), ...arms];
+      white = [...collar(), limb([0.1, 0.3, 0], [0.1, 0.05, 0], 0.07, 0.055), limb([-0.1, 0.3, 0], [-0.1, 0.05, 0], 0.07, 0.055)];
+      dark = [shoe(1), shoe(-1), belt(0.208, 0.028), limb([0.035, 0.915, -0.155], [0.05, 0.62, -0.19], 0.011, 0.011, 5), ball([0.05, 0.6, -0.19], 0.02, 1, 1.6, 1)];
+    } else {
+      const sol = kind === "soldier";
+      const tunic = pleat(flatZ(lathe([[0.275, 0.56], [0.25, 0.7], [0.213, 0.86], [0.203, 0.92]], 20), (y) => 0.8 - (y - 0.56) * 0.2), 5, 0.04, 0.56, 0.92);
+      robe = [tunic, torso(TORSO), ...arms];
+      if (sol) robe.push(ball(SH(1), 0.092, 1.05, 0.6, 1), ball(SH(-1), 0.092, 1.05, 0.6, 1));   // 어깨 가리개
+      white = [...collar(), ...leg(1), ...leg(-1)];
+      dark = [shoe(1, -0.052), shoe(-1, -0.028), belt(0.21, sol ? 0.06 : 0.035)];
+      if (sol) [1, -1].forEach((s) => dark.push(limb([s * 0.104, 0.33, -0.004 - s * 0.012], [s * 0.1, 0.05, 0.02 - s * 0.012], 0.096, 0.07)));   // 장화
+    }
+    const out = { robe: mergeGeometries(robe), white: mergeGeometries(white), skin: mergeGeometries(skin), dark: dark && mergeGeometries(dark) };
+    Object.values(out).forEach((x) => x && keepGeo(x));
+    return (cache[key] = out);
+  };
+  // 머리 (머리 그룹 원점 = 목 위 · y 1.385). 가운데 +0.15, 꼭대기 약 +0.3
+  const HC = 0.15;
+  const skull = new THREE.SphereGeometry(0.14, 16, 12).scale(0.9, 1.06, 0.96);
+  { const p = skull.attributes.position;   // 턱 쪽을 살짝 좁힌다
+    for (let i = 0; i < p.count; i++) { const y = p.getY(i); if (y < 0) { const k = 1 - 0.22 * Math.min(1, -y / 0.148) ** 1.5; p.setX(i, p.getX(i) * k); p.setZ(i, p.getZ(i) * (k + (1 - k) * 0.4)); } }
+    skull.computeVertexNormals(); }
+  skull.translate(0, HC, 0);
+  const head = mergeGeometries([skull, plainUV(ball([0.122, HC - 0.005, 0.012], 0.032, 0.4, 1, 0.7)), plainUV(ball([-0.122, HC - 0.005, 0.012], 0.032, 0.4, 1, 0.7)), plainUV(ball([0, HC - 0.022, -0.128], 0.02, 0.8, 1.15, 0.9))]);
+  const cap = () => new THREE.SphereGeometry(0.15, 14, 8, 0, Math.PI * 2, 0, Math.PI * 0.55).scale(0.9, 1.05, 0.97).rotateX(0.7).translate(0, HC + 0.002, 0.004);
+  const band = () => new THREE.CylinderGeometry(0.113, 0.121, 0.032, 14, 1, true).scale(1, 1, 1.07).translate(0, HC + 0.072, 0.002);   // 이마 띠 (망건)
+  const hair = {
+    cap: cap(),
+    top: mergeGeometries([cap(), band(), ball([0, HC + 0.165, 0.012], 0.044, 1, 1.25, 1)]),   // 상투
+    band: mergeGeometries([cap(), band()]),   // 갓 아래
+    bun: mergeGeometries([cap(), ball([0, HC - 0.075, 0.125], 0.055, 1.15, 0.85, 0.9), limb([-0.1, HC - 0.07, 0.15], [0.1, HC - 0.07, 0.15], 0.008, 0.008, 5)]),   // 쪽 찐 머리와 비녀
+    braid: mergeGeometries([cap(), limb([0, HC - 0.02, 0.125], [0, HC - 0.36, 0.14], 0.03, 0.02, 6), ball([0, HC - 0.38, 0.14], 0.028)]),   // 땋은 머리
+  };
+  const hat = mergeGeometries([new THREE.CylinderGeometry(0.3, 0.3, 0.014, 20).translate(0, 0.262, 0), new THREE.CylinderGeometry(0.085, 0.108, 0.17, 12).translate(0, 0.352, 0)]);
+  const helm = mergeGeometries([
+    new THREE.SphereGeometry(0.152, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2).scale(0.96, 0.95, 1.02).translate(0, HC + 0.045, 0),
+    new THREE.CylinderGeometry(0.158, 0.166, 0.024, 14).scale(0.96, 1, 1.02).translate(0, HC + 0.045, 0),
+    new THREE.CylinderGeometry(0.156, 0.185, 0.2, 12, 1, true, -1.95, 3.9).translate(0, HC - 0.06, 0.004),   // 목 가리개 (뒤와 옆)
+    new THREE.SphereGeometry(0.025, 8, 6).translate(0, HC + 0.195, 0),
+  ]);
+  const plume = new THREE.CylinderGeometry(0.01, 0.01, 0.22, 4).translate(0, HC + 0.31, 0);
+  const crowd = body("robe", "front", true).robe.clone().translate(0, -0.62, 0);   // 테마의 InstancedMesh 군중용 몸통 (원기둥 0.62 높이 자리에 그대로)
+  const all = { head, hat, helm, plume, crowd, ...hair };
   Object.values(all).forEach(keepGeo);
-  return all;
+  return { body, head, hair, hat, helm, plume, crowd };
 })();
 // 얼굴: 머리 공의 -Z 쪽(u=0.75)에 눈썹 · 눈 · 입을 살짝 그린다
 const FACE_MAT = new THREE.MeshStandardMaterial({ roughness: 0.8, map: canvasTex(256, 128, (g, w, h) => {
@@ -314,17 +409,28 @@ const FACE_MAT = new THREE.MeshStandardMaterial({ roughness: 0.8, map: canvasTex
 }) });
 const HAIR_MAT = new THREE.MeshStandardMaterial({ color: 0x17130f, roughness: 0.55 });
 const PEOPLE = [];   // 지금 장의 사람들 (숨쉬기 · 고개 돌리기)
+/* o: helmet(군사) · bare(맨머리) · work(짧은 옷과 바지) · woman(치마저고리) · kid(땋은 머리) · bald(민머리) · plain(상투 없음) · long(군사 · 일꾼도 긴 옷으로: 앉은 사람용)
+      pose: "side" | "front"(두 손을 앞에 모음) | "back"(뒷짐) | "hold"(오른손을 앞으로). 안 주면 자리에 따라 정해진다. */
 function person(x, z, rot, robe = MAT.white, p = ROOT, o = {}) {
   const g = group(x, 0, z, rot, p);
   const mk = (geo, mat, par, shadow = true) => { const m = new THREE.Mesh(geo, mat); m.castShadow = shadow; m.receiveShadow = true; par.add(m); return m; };
-  mk(PG.dark, MAT.black, g);
+  const hsh = Math.abs(Math.round(x * 7.31 + z * 13.17 + rot * 3));
+  const kind = o.woman ? "woman" : o.long ? "robe" : o.helmet ? "soldier" : o.work ? "legs" : "robe";
+  const pose = o.pose || (kind === "soldier" ? "side" : kind === "woman" ? ["front", "front", "side"][hsh % 3] : kind === "legs" ? ["side", "hold", "side", "back"][hsh % 4] : ["front", "side", "back", "front", "hold"][hsh % 5]);
+  const B = PG.body(kind, pose);
+  if (B.dark) mk(B.dark, MAT.black, g);
   const body = new THREE.Group(); g.add(body);
-  mk(PG.robe, robe, body); mk(PG.skin, MAT.skin, body);
+  mk(B.robe, robe, body); mk(B.white, MAT.white, body); mk(B.skin, MAT.skin, body);
   const head = new THREE.Group(); head.position.y = 1.385; body.add(head);
   mk(PG.head, FACE_MAT, head);
   if (o.helmet) { mk(PG.helm, MAT.iron, head); mk(PG.plume, MAT.red, head, false); }
-  else if (!o.bare) mk(PG.hat, MAT.black, head);
-  else mk(PG.hair, HAIR_MAT, head);
+  else {
+    const soft = o.woman || o.kid;
+    const style = o.bald ? null : o.woman ? "bun" : o.kid ? "braid" : !o.bare ? "band" : (o.plain || THEME?.modern) ? "cap" : "top";
+    if (style) mk(PG.hair[style], HAIR_MAT, head);
+    if (!o.bare && !soft) mk(PG.hat, MAT.black, head);
+  }
+  head.rotation.z = ((hsh % 7) - 3) * 0.012;
   g.userData.person = { body, head, ph: x * 1.7 + z * 3.1, n: g.children.length };
   PEOPLE.push(g);
   return g;

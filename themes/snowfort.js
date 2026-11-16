@@ -28,7 +28,7 @@ function hipRoof(x, y, z, w, d, h, mat) {
 function plane(w, d, mat, x, y, z) { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), mat); m.rotation.x = -PI / 2; m.position.set(x, y, z); m.receiveShadow = true; E.ROOT.add(m); return m; }
 function rm(o) { if (o && o.parent) o.parent.remove(o); }
 // 앉은 사람 (몸 아래쪽을 바닥에 묻는다)
-function seated(x, z, rot, robe, o = {}) { const g = person(x, z, rot, robe, E.ROOT, o); g.position.y = -0.45; return g; }
+function seated(x, z, rot, robe, o = {}) { const g = person(x, z, rot, robe, E.ROOT, { ...o, long: true }); g.position.y = -0.45; return g; }
 const FONT_SVG = `font-family="Gowun Batang,serif" font-weight="700"`;
 
 /* 눈 재질: 캔버스로 그린 흰 바탕 + 흙바닥 사진의 요철(normal)만 빌려 와 하얗게 */
@@ -227,7 +227,7 @@ CHAPTERS.push({
     const sc = new THREE.Mesh(new THREE.PlaneGeometry(0.5, 1.5), new THREE.MeshStandardMaterial({ map: textTex("知行合一", { w: 128, h: 384, size: 64, bg: "#efe6cc" }), roughness: 0.9 }));
     sc.position.set(-4.28, 1.9, -4.3); sc.rotation.y = PI / 2; E.ROOT.add(sc); tag(sc, "scroll", "족자");
     // 마당
-    tag(person(-3.2, 1.6, PI / 2, C(0x8a7a62), E.ROOT, { bare: true }), "servant", "청지기");
+    tag(person(-3.2, 1.6, PI / 2, C(0x8a7a62), E.ROOT, { bare: true, work: true }), "servant", "청지기");
     tag(person(2.2, 5.5, PI, C(0x4a5068)), "youth", "대문 앞의 젊은 선비");
     tag(tree(4.9, 3.0, { mat: C(0xeec6d0, { roughness: 0.8 }), s: 0.8, h: 2.6 }), "plum", "매화나무");
     const wl = group(-4.8, 0, 4.2);
@@ -365,7 +365,7 @@ CHAPTERS.push({
     // 나루
     box(1.8, 0.25, 8, MAT.plank, 4, -0.15, -9.5); [[3.2, -6], [4.8, -6], [3.2, -12.8], [4.8, -12.8]].forEach(([x, z]) => cyl(0.1, 0.1, 1.6, MAT.wood, x, -0.6, z, 6));
     const bt = group(6.2, -0.5, -10, 0.2); box(1.3, 0.5, 4, MAT.hull, 0, 0, 0, bt);
-    tag(person(4, -4.7, 0, C(0x7a6a52), E.ROOT, { bare: true }), "ferryman", "나루의 사공");
+    tag(person(4, -4.7, 0, C(0x7a6a52), E.ROOT, { bare: true, work: true }), "ferryman", "나루의 사공");
     // 제단과 열두 때 판
     const al = group(0, 0, 10);
     box(3, 0.4, 2, MAT.stone, 0, 0.2, 0, al); box(1.2, 0.5, 0.6, C(0x6a2a20), 0, 0.65, 0, al);
@@ -674,7 +674,7 @@ CHAPTERS.push({
     for (let i = 1; i <= 8; i++) { const h = 0.4 * i, z1 = -9.5 + (8 - i) * 0.55; sbox(2, h, 0.55, -13, h / 2, z1 + 0.275); steps.push([-14, z1, -12, z1 + 0.55, h]); }
     // 암문과 결사대
     box(1.1, 1.8, 0.1, C(0x14110e), 3, 0.9, -9.45); box(1.4, 0.2, 0.14, MAT_BLOCK, 3, 1.9, -9.42);
-    tag(person(3, -8.5, 0, C(0x34363a), E.ROOT, { bare: true }), "runner", "암문 앞의 결사대");
+    tag(person(3, -8.5, 0, C(0x34363a), E.ROOT, { bare: true, work: true }), "runner", "암문 앞의 결사대");
     // 성벽 위 군사들
     [[-6, -10.3], [0, -10.6], [6, -10.3]].forEach(([x, z]) => { const p = person(x, z, PI, C(0x4a5068), E.ROOT, { helmet: true }); p.position.y = 3.2; tag(p, "soldiers", "성벽 위의 군사들"); });
     // 성 밖 적의 진영
@@ -712,7 +712,7 @@ CHAPTERS.push({
     L.fire = campfire(-3, -3, 5);
     const pot = group(-3, 0, -3); cyl(0.75, 0.55, 0.7, MAT.iron, 0, 1.05, 0, 16, pot); [0, 2.1, 4.2].forEach((a) => cyl(0.05, 0.05, 1.0, MAT.iron, Math.cos(a) * 0.7, 0.5, Math.sin(a) * 0.7, 5, pot));
     tag(pot, "cook", "취사병과 큰 솥"); tag(L.fire.g, "cook", "취사병과 큰 솥");
-    tag(person(-4.4, -2.0, -PI / 3, C(0x6a5a4a), E.ROOT, { bare: true }), "cook", "취사병과 큰 솥");
+    tag(person(-4.4, -2.0, -PI / 3, C(0x6a5a4a), E.ROOT, { bare: true, work: true }), "cook", "취사병과 큰 솥");
     // 행궁 앞 방과 군적
     [[-2, "roll", "군적(軍籍) 판", "軍籍"], [2, "notice", "행궁의 명(命)", "命"]].forEach(([x, id, lb, t]) => {
       [-0.75, 0.75].forEach((dx) => cyl(0.06, 0.06, 2.0, MAT.wood, x + dx, 1.0, 6.8, 6));

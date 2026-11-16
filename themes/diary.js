@@ -282,7 +282,7 @@ CHAPTERS.push({
     [-1.6, 1.6].forEach((x) => cyl(0.05, 0.05, 2, MAT.wood, x, 1, 0, 6, ln)); box(3.2, 0.015, 0.015, MAT.black, 0, 1.9, 0, ln);
     [[MAT.red, -1.1], [MAT.blue, -0.35], [MAT.black, 0.4], [MAT.white, 1.15]].forEach(([m, x]) => { const c = box(0.6, 0.9, 0.02, m, x, 1.42, 0, ln); c.castShadow = true; });
     tag(ln, "line", "빨랫줄");
-    tag(person(4.5, 3, -2.4, C(0xa89a7a), E.ROOT, { bare: true }), "farmer", "농부");
+    tag(person(4.5, 3, -2.4, C(0xa89a7a), E.ROOT, { bare: true, work: true }), "farmer", "농부");
     cyl(0.06, 0.06, 1.6, MAT.wood, 7.4, 0.8, -4.65, 6);
     tag(board("글공부 판\n白 紅 靑 黑\n國 軍 從 衣", 1.1, 0.9, 7.4, 1.5, -4.6, 0, E.ROOT, { size: 46 }), "study", "글공부 판");
     const gate = group(0, 0, 9);

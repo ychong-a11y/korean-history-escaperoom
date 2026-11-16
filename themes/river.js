@@ -162,7 +162,7 @@ CHAPTERS.push({
     tag(sh, "lacquer", "옻칠한 서함");
     tag(person(-6.2, -8.6, PI / 2, C(0xd8d0c0)), "scribe", "사관");
     // 마당
-    tag(person(3, 3, PI, C(0x8a6a4a), E.ROOT, { bare: true }), "messenger", "전령");
+    tag(person(3, 3, PI, C(0x8a6a4a), E.ROOT, { bare: true, work: true }), "messenger", "전령");
     horse(4.6, 3.5, PI);
     const dr = group(-4, 0, 4);
     [-0.5, 0.5].forEach((x) => box(0.08, 1.4, 0.08, MAT.wood, x, 0.7, 0, dr));
@@ -298,7 +298,7 @@ CHAPTERS.push({
     for (let i = 0; i < 14; i++) { const s = box(0.4 + E.rand() * 0.3, 0.3 + E.rand() * 0.2, 0.4 + E.rand() * 0.3, wallMat, (E.rand() - 0.5) * 2.2, 0.15 + (i % 3) * 0.25, (E.rand() - 0.5) * 0.9, br); s.rotation.y = E.rand() * 2; }
     tag(br, "breach", "무너진 성벽 돌무더기");
     box(2.6, 1.4, 0.1, C(0x5a5248), 6.1, 2.5, -7.98);
-    tag(person(8.1, -6.4, -0.6, C(0xb0a080), E.ROOT, { bare: true }), "worker", "성벽 고치는 인부");
+    tag(person(8.1, -6.4, -0.6, C(0xb0a080), E.ROOT, { bare: true, work: true }), "worker", "성벽 고치는 인부");
     // 해자에 뜬 전령 주머니
     if (!A.has("c2_bag")) { L.bag = group(6.2, -0.62, -14); sphere(0.22, C(0x6a4a2a), 0, 0, 0, L.bag).scale.set(1.2, 0.6, 1); box(0.05, 0.2, 0.05, MAT.black, 0, 0.12, 0, L.bag); tag(L.bag, "bag", "해자에 뜬 주머니"); }
     // 마당
@@ -308,7 +308,7 @@ CHAPTERS.push({
     const gr = group(10, 0, 4);
     box(4, 2.6, 3.4, MAT.wall, 0, 1.3, 0, gr); tag(gr, "granary", "창고");
     hipRoof(10, 2.6, 4, 4.6, 4.0, 1.2, MAT.roof);
-    tag(person(3, 5.6, PI, C(0x8a6a4a), E.ROOT, { bare: true }), "courier", "평양으로 갈 전령");
+    tag(person(3, 5.6, PI, C(0x8a6a4a), E.ROOT, { bare: true, work: true }), "courier", "평양으로 갈 전령");
     tag(horse(4.6, 5.8, PI), "courier", "평양으로 갈 전령");
     tree(-10, 8); tree(12, 9);
     // 성 밖: 적의 진영과 떠나는 깃발
@@ -740,7 +740,7 @@ CHAPTERS.push({
     const cb = lowTable(-2.6, 0, 1.6, 0, E.ROOT, 1.0, 0.5); paper(0.4, 0.3, 0, 0.4, 0, 0.1, cb); tag(cb, "copybook", "천자문 연습장");
     tag(board("평양 둘레 지도", 1.4, 1.0, 4.85, 1.7, 1.0, -PI / 2, E.ROOT, { size: 50 }), "map", "벽의 지도");
     tag(person(3.2, 2.2, PI * 0.8, C(0x3a4a7a), E.ROOT, { helmet: true }), "deputy", "부장");
-    tag(person(-1.6, 3.3, PI, C(0x8a6a4a), E.ROOT, { bare: true }), "courier", "전령");
+    tag(person(-1.6, 3.3, PI, C(0x8a6a4a), E.ROOT, { bare: true, work: true }), "courier", "전령");
     // 바깥
     const F = campfire(0, 7, 5); L.fire = F;
     [[-6, 8], [6, 9], [-9, 2], [9, -2]].forEach(([x, z]) => tent(x, z, x > 0 ? -PI / 2 : PI / 2, 3, 2.6, C(0xcfc3a5, { side: THREE.DoubleSide })));
@@ -1015,7 +1015,7 @@ function spawnIsland() {
   box(0.8, 1.3, 0.25, C(0x7a7468, { roughness: 1 }), 0, 0.65, 0, st); box(0.9, 0.2, 0.35, C(0x6a645a), 0, 1.35, 0, st);
   cyl(0.04, 0.04, 1.1, MAT.wood, 0.8, 0.55, 0.2, 5, st); box(0.5, 0.35, 0.04, MAT.paper, 0.8, 1.1, 0.24, st);
   tag(st, "stone", "모래톱의 옛 비석");
-  const fm = person(4.2, -2.6, PI, C(0x8a8a7a), E.ROOT, { bare: true }); tag(fm, "ferryman", "늙은 뱃사공");
+  const fm = person(4.2, -2.6, PI, C(0x8a8a7a), E.ROOT, { bare: true, work: true }); tag(fm, "ferryman", "늙은 뱃사공");
   const bt = group(5.6, -0.95, -5.4, 0.3); box(0.9, 0.35, 2.6, MAT.hull, 0, 0.17, 0, bt);
 }
 

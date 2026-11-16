@@ -65,7 +65,7 @@ function stepWall(cx, cz, len, rot, h = 3.6, tiers = 4) {
 }
 // 고구려 사람: 맨머리 위에 깃털 꽂은 관(조우관) / 왕관 / 투구
 function gp(x, z, rot, robe = MAT.white, o = {}) {
-  const g = person(x, z, rot, robe, E.ROOT, { bare: !o.helmet, helmet: o.helmet });
+  const g = person(x, z, rot, robe, E.ROOT, { ...o, bare: !o.helmet, helmet: o.helmet });
   if (o.helmet) return g;
   cyl(0.1, 0.15, 0.16, o.crown ? MAT.brass : MAT.black, 0, 1.69, 0, 10, g);
   if (o.crown) for (let i = 0; i < 5; i++) { const a = (i / 5) * Math.PI * 2; box(0.05, 0.14, 0.02, MAT.brass, Math.cos(a) * 0.12, 1.82, Math.sin(a) * 0.12, g).rotation.y = -a; }
@@ -829,7 +829,7 @@ CHAPTERS.push({
     box(1.4, 0.9, 1.0, MAT.stone, 0, 0.45, 0, fg); sphere(0.3, new THREE.MeshBasicMaterial({ color: 0xff7a30 }), 0, 0.95, 0, fg).scale.y = 0.4;
     box(0.5, 0.35, 0.3, MAT.iron, 1.4, 0.55, 0.3, fg); cyl(0.12, 0.12, 0.4, MAT.wood, 1.4, 0.2, 0.3, 8, fg);
     const fl = new THREE.PointLight(0xff8a40, 6, 8, 1.6); fl.position.set(9, 1.6, -4.5); E.ROOT.add(fl);
-    tag(gp(10.4, -3.2, Math.PI * 0.75, C(0x5a4a3a)), "smith", "대장장이");
+    tag(gp(10.4, -3.2, Math.PI * 0.75, C(0x5a4a3a), { work: true }), "smith", "대장장이");
     // 고분 벽화 조각
     const muralTex = canvasTex(512, 320, (g, w, h) => {
       g.fillStyle = "#d9c9a3"; g.fillRect(0, 0, w, h); E.speckle(g, w, h, 1200, ["#cbb994", "#e2d4b0", "#bfae8a"], 4);

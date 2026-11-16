@@ -1033,6 +1033,7 @@ function sealCard(A, fresh) {
 }
 
 export default {
+  modern: true,   // 사람: 맨머리에 상투를 올리지 않는다
   id: "harbin",
   saveKey: "harbin-v1",
   title: "아침 아홉 시 반",

@@ -160,7 +160,7 @@ CHAPTERS.push({
     [[5.8, -2.15], [7.0, -2.15], [8.2, -2.15]].forEach(([x, z]) => { const j = jar(x, z, 0.48); j.position.y = 0.3; jarsG.push(j); });
     [[9.1, -3.4], [8.95, -2.4]].forEach(([x, z]) => jarsG.push(cyl(0.21, 0.23, 0.06, MAT.jar, x, 0.03, z, 24)));
     jarsG.forEach((j) => tag(j, "jars", "장독대"));
-    tag(person(4.3, -2.6, -PI / 2, C(0xe8e0d0), E.ROOT, { bare: true }), "mother", "어머니");
+    tag(person(4.3, -2.6, -PI / 2, C(0xe8e0d0), E.ROOT, { bare: true, woman: true }), "mother", "어머니");
     // 예배당 (서쪽, 동쪽으로 트임)
     box(4, 0.1, 4, MAT.plank, -8.4, 0.05, -4.5);
     box(0.2, 2.6, 4, MAT.wall, -10.3, 1.3, -4.5); box(4, 2.6, 0.2, MAT.wall, -8.4, 1.3, -6.4); box(4, 2.6, 0.2, MAT.wall, -8.4, 1.3, -2.6);
@@ -631,7 +631,7 @@ CHAPTERS.push({
     box(1.6, 0.45, 0.5, MAT.wood, 5.5, 0.225, 5);
     const lf = paper(0.3, 0.22, 5.3, 0.455, 5, 0.3); tag(lf, "leaflet", "벤치 위의 전단");
     tag(person(3.6, 6.4, PI / 2, C(0x1e1e26), E.ROOT, { bare: true }), "organizer", "학생 대표");
-    tag(person(-3, 8.6, -PI / 2, C(0xf2efe6), E.ROOT, { bare: true }), "cousin", "사촌 언니");
+    tag(person(-3, 8.6, -PI / 2, C(0xf2efe6), E.ROOT, { bare: true, woman: true }), "cousin", "사촌 언니");
     // 나무
     [[-12, -2], [-12, 6], [12, 3], [12, -2], [-6, 10], [7, 10], [-12.5, -12], [12.5, -12]].forEach(([x, z]) => tree(x, z, { s: 0.9 }));
     // 군중 (팔각정 둘레)
@@ -956,7 +956,7 @@ CHAPTERS.push({
     const bd = group(-0.4, 0, -2.5);
     const bl = sphere(1, MAT.paper, 0, 0.1, 0, bd); bl.scale.set(0.2, 0.1, 0.15); box(0.04, 0.02, 0.32, MAT.red, 0, 0.19, 0, bd);
     tag(bd, "bundle6", "붉은 댕기로 묶은 종이 뭉치");
-    [[1.7, 1.2], [1.9, 2.1]].forEach(([x, z]) => { const p = person(x, z, -PI / 2, C(0xd8d2c4), E.ROOT, { bare: true }); p.scale.y = 0.62; tag(p, "cellmates", "감방 동지들"); });
+    [[1.7, 1.2], [1.9, 2.1]].forEach(([x, z]) => { const p = person(x, z, -PI / 2, C(0xd8d2c4), E.ROOT, { bare: true, woman: true }); p.scale.y = 0.62; tag(p, "cellmates", "감방 동지들"); });
     return {
       start: [-0.3, 1.2, 0],
       bounds: [-2.5, 2.5, -2.9, 2.9],
@@ -1008,6 +1008,7 @@ CHAPTERS.push({
 });
 
 export default {
+  modern: true,   // 사람: 맨머리에 상투를 올리지 않는다
   id: "paper",
   saveKey: "paper-v1",
   title: "숨겨진 종이 뭉치",

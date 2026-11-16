@@ -38,7 +38,7 @@ function rod(a, b, r, mat, p = E.ROOT) {
   m.position.copy(va).add(vb).multiplyScalar(0.5); m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), d.normalize());
   m.castShadow = true; p.add(m); return m;
 }
-function seated(x, z, rot, robe, o = {}) { const g = person(x, z, rot, robe, E.ROOT, o); g.position.y = (o.y || 0) - 0.45; return g; }
+function seated(x, z, rot, robe, o = {}) { const g = person(x, z, rot, robe, E.ROOT, { ...o, long: true }); g.position.y = (o.y || 0) - 0.45; return g; }
 function pines(list, leafCol = 0x2e4630) {
   const leaf = C(leafCol, { roughness: 0.9 });
   inst(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), MAT.bark, list.map(([x, z, s]) => [x, 0.9 * s, z, 0, s, 1.8 * s, s]), { noPick: true });
@@ -228,17 +228,17 @@ CHAPTERS.push({
     box(0.62, 0.36, 0.42, C(0x5a2a1e, { roughness: 0.35 }), 0, 0.18, 0, cb); box(0.64, 0.04, 0.44, MAT.brass, 0, 0.36, 0, cb); box(0.14, 0.12, 0.04, MAT.brass, 0, 0.2, -0.22, cb);
     tag(cb, "chartbox", "천문도 함");
     tag(box(0.34, 0.07, 0.44, C(0x2a3a5a), 4.65, 0.85, 8.9), "almanac", "수레 위의 책력");
-    tag(person(5.9, 7.0, 0.6, C(0x8a7a62), E.ROOT, { bare: true }), "attendant", "사신의 종자");
+    tag(person(5.9, 7.0, 0.6, C(0x8a7a62), E.ROOT, { bare: true, work: true }), "attendant", "사신의 종자");
     // 일관과 별 그림
     tag(person(-8, 6.9, 0, C(0x3a4a6a)), "stargazer", "일관과 별 그림");
     box(1.9, 0.25, 1.4, MAT.plank, -8, 0.125, 5.5).userData.noPick = true;
     tag(lowTable(-8, 0.25, 5.5, 0, E.ROOT, 1.3, 0.8), "stargazer", "일관과 별 그림");
     const sk = paper(0.9, 0.6, -8, 0.648, 5.5); sk.material = C(0x16204a, { roughness: 0.9 }); tag(sk, "stargazer", "일관과 별 그림");
     // 마을 사람들 · 우물 · 느티나무
-    tag(person(-6.2, 0.4, -0.9, C(0x6a5a40), E.ROOT, { bare: true }), "woodcutter", "나무꾼");
+    tag(person(-6.2, 0.4, -0.9, C(0x6a5a40), E.ROOT, { bare: true, work: true }), "woodcutter", "나무꾼");
     const fw = group(-7.1, 0, 1.0); for (let i = 0; i < 6; i++) { const l = cyl(0.06, 0.06, 1.1, MAT.bark, (i % 3) * 0.13 - 0.13, 0.5 + Math.floor(i / 3) * 0.13, 0, 6, fw); l.rotation.x = PI / 2; } tag(fw, "woodcutter", "나무꾼");
-    tag(person(6.6, -1.2, 0.9, C(0x9a9484), E.ROOT, { bare: true }), "granny", "할머니");
-    const kid = person(1.6, -3.6, PI, C(0xc8b078), E.ROOT, { bare: true }); kid.scale.setScalar(0.72); tag(kid, "child", "아이");
+    tag(person(6.6, -1.2, 0.9, C(0x9a9484), E.ROOT, { bare: true, woman: true }), "granny", "할머니");
+    const kid = person(1.6, -3.6, PI, C(0xc8b078), E.ROOT, { bare: true, kid: true }); kid.scale.setScalar(0.72); tag(kid, "child", "아이");
     const wl = group(-1.2, 0, 2.2);
     cyl(0.75, 0.8, 0.8, MAT.stone, 0, 0.4, 0, 16, wl); cyl(0.6, 0.6, 0.02, C(0x0a0e18), 0, 0.81, 0, 16, wl);
     [-0.6, 0.6].forEach((x) => cyl(0.05, 0.05, 1.6, MAT.wood, x, 1.2, 0, 6, wl)); box(1.4, 0.08, 0.08, MAT.wood, 0, 2.0, 0, wl);
@@ -719,7 +719,7 @@ CHAPTERS.push({
     noPick(tent(-13.2, -5, PI / 2, 3.4, 4));
     L.fire = campfire(-8, 0.8, 5);
     standBoard("川幅\n六十尺", 1.0, 0.8, -5.4, -2.6, -PI / 2, "stake", "물가의 푯말", { size: 120, y: 1.3 });
-    tag(person(-7.4, -8.8, 0.4, C(0x7a6a52), E.ROOT, { bare: true }), "engineer", "늙은 목수");
+    tag(person(-7.4, -8.8, 0.4, C(0x7a6a52), E.ROOT, { bare: true, work: true }), "engineer", "늙은 목수");
     const wg = group(-11.5, 0, 6);
     box(1.7, 0.12, 2.6, MAT.wood, 0, 0.7, 0, wg); [-0.95, 0.95].forEach((x) => { cyl(0.5, 0.5, 0.1, MAT.wood, x, 0.5, 0, 14, wg).rotation.z = PI / 2; });
     for (let i = 0; i < 7; i++) box(1.5, 0.09, 2.2, C([0x6a4a30, 0x7a5a3a, 0x5a3e28][i % 3], { roughness: 1 }), (i % 2) * 0.06, 0.82 + i * 0.09, 0, wg);
@@ -1042,7 +1042,7 @@ CHAPTERS.push({
     }
     L.marks = ord && rig && !cap ? SPOT6.map((s) => marker(...s)) : [];
     // 사람들
-    tag(person(3.4, 1.4, 0.8, C(0x7a6a52), E.ROOT, { bare: true }), "mason", "늙은 석수");
+    tag(person(3.4, 1.4, 0.8, C(0x7a6a52), E.ROOT, { bare: true, work: true }), "mason", "늙은 석수");
     tag(seated(-7.6, 3.8, -PI / 2, C(0x4a5a6a)), "dict", "훈장과 옥편");
     tag(lowTable(-6.6, 0, 3.8, 0, E.ROOT, 0.9, 0.7), "dict", "훈장과 옥편");
     [-0.14, 0.14].forEach((s) => tag(box(0.26, 0.05, 0.4, C(0x2a3a5a), -6.6 + s, 0.415, 3.8), "dict", "훈장과 옥편"));

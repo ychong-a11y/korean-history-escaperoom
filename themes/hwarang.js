@@ -399,8 +399,8 @@ CHAPTERS.push({
     [-0.7, 0.7].forEach((x) => cyl(0.05, 0.05, 1.8, MAT.wood, x, 0.9, 0, 6, wl)); box(1.6, 0.08, 0.08, MAT.wood, 0, 1.8, 0, wl);
     tag(wl, "well", "우물");
     // 사람들
-    tag(person(-3.0, 0.4, -0.5, C(0xd88a9a), E.ROOT, { bare: true }), "bohui", "언니 보희");
-    tag(person(2.8, -3.4, 0.4, C(0x7aa07a), E.ROOT, { bare: true }), "munhui", "동생 문희");
+    tag(person(-3.0, 0.4, -0.5, C(0xd88a9a), E.ROOT, { bare: true, woman: true }), "bohui", "언니 보희");
+    tag(person(2.8, -3.4, 0.4, C(0x7aa07a), E.ROOT, { bare: true, woman: true }), "munhui", "동생 문희");
     tag(person(-0.6, -2.2, 0.2, PURPLE), "chunchu", "김춘추");
     L.ball = sphere(0.16, C(0xa07040), 1.2, 0.16, 1.8); tag(L.ball, "ball", "축국 공");
     if (A.has("h3_kick")) L.ball.position.set(-0.2, 0.16, -1.2);
@@ -697,7 +697,7 @@ CHAPTERS.push({
     const dbx = group(4.2, 0, 6.2); box(0.8, 0.45, 0.5, MAT.wood, 0, 0.22, 0, dbx); box(0.82, 0.04, 0.52, MAT.brass, 0, 0.46, 0, dbx); tag(dbx, "drumbox", "북채 상자");
     const dr = group(6, 0, 6.4); const d = cyl(0.65, 0.65, 0.7, MAT.red, 0, 1.4, 0, 20, dr); d.rotation.z = Math.PI / 2; [-0.45, 0.45].forEach((x) => box(0.08, 1.4, 0.08, MAT.wood, x, 0.7, 0, dr)); tag(dr, "drum", "진격의 북");
     tag(person(-2.6, 4.8, Math.PI - 0.3, MAT.red, E.ROOT, { helmet: true }), "deputy", "부장");
-    tag(person(10.5, -3.5, -Math.PI / 2, C(0x6a5a40), E.ROOT, { bare: true }), "scout", "척후병");
+    tag(person(10.5, -3.5, -Math.PI / 2, C(0x6a5a40), E.ROOT, { bare: true, work: true }), "scout", "척후병");
     if (!A.has("h5_gone")) {
       L.gw = person(-4.2, -2.6, 0.2, C(0xd8c8a8), E.ROOT, { helmet: true }); tag(L.gw, "gwanchang", "어린 화랑");
       L.hs = horse(-5.4, -2.8, 0.1); tag(L.hs, "horse", "흰 말");
@@ -815,7 +815,7 @@ CHAPTERS.push({
     L.stoneLight = new THREE.PointLight(0xffc070, A.has("h6_order") ? 5 : 0, 5, 1.5); L.stoneLight.position.set(3.6, 1.6, 2.2); E.ROOT.add(L.stoneLight); tag(st, "stone", "맹세석");
     const sh = group(-4.6, 0, 2.6, Math.PI / 2); box(1.6, 1.6, 1.2, MAT.wall, 0, 0.8, 0, sh); E.hanokRoof(0, 1.6, 0, 2.2, 1.8, 0.7, {}, sh); box(0.3, 0.7, 0.04, plaqueMat("始祖神位", { w: 96, h: 320, size: 52 }), 0, 0.95, 0.62, sh); tag(sh, "shrine", "작은 사당");
     const mp = lowTable(1.0, 0, 0.2, 0, E.ROOT, 1.4, 0.9); mp.scale.set(1, 1.8, 1); const mpp = paper(1.2, 0.75, 0, 0.4, 0, 0, mp); mpp.material = new THREE.MeshStandardMaterial({ color: 0xd8c8a0, roughness: 0.9 }); tag(mp, "map", "지도를 펼친 상");
-    tag(person(2.8, -2.4, -0.5, C(0x8aa0b8), E.ROOT, { bare: true }), "grandson", "어린 손자");
+    tag(person(2.8, -2.4, -0.5, C(0x8aa0b8), E.ROOT, { bare: true, kid: true }), "grandson", "어린 손자");
     tag(person(-1.6, 1.8, 0.6, C(0x8a8070)), "doctor", "늙은 의원");
     tree(-4.8, -2.5, { h: 3 }); tree(4.9, 4.2, { h: 3.4 });
     return {

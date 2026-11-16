@@ -251,7 +251,7 @@ function upsertOther(id, d) {
   let o = others.get(id);
   const nick = clean(String(d.nick || "친구").slice(0, NICK_MAX)), color = Number.isInteger(d.color) ? d.color : 0;
   if (!o) {
-    const g = core.person(0, 0, 0, core.C(COLORS[color % COLORS.length]), coopRoot, { bare: true });
+    const g = core.person(0, 0, 0, core.C(COLORS[color % COLORS.length]), coopRoot, { bare: true, plain: true, pose: "side" });
     g.traverse((m) => { m.userData.noPick = true; });
     const label = labelSprite(core.THREE, nick, CSS_COLOR(color)); g.add(label);
     o = { g, nick, color, tx: 0, tz: 0, ty: 0, tyaw: 0, fresh: true };

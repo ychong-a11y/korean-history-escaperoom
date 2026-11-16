@@ -60,7 +60,7 @@ function stepWall(cx, cz, len, rot, h = 3.6, tiers = 4, merlons = true) {
 }
 // 고구려 사람: 깃털 꽂은 관(조우관)
 function gp(x, z, rot, robe = MAT.white, o = {}) {
-  const g = person(x, z, rot, robe, E.ROOT, { bare: !o.helmet, helmet: o.helmet });
+  const g = person(x, z, rot, robe, E.ROOT, { ...o, bare: !o.helmet, helmet: o.helmet });
   if (o.helmet || o.plain) return g;
   cyl(0.1, 0.15, 0.16, MAT.black, 0, 1.69, 0, 10, g);
   [-1, 1].forEach((s) => { const f = box(0.025, 0.32, 0.07, MAT.white, s * 0.07, 1.88, 0, g); f.rotation.z = -s * 0.3; });
@@ -189,7 +189,7 @@ CHAPTERS.push({
     cyl(0.48, 0.55, 0.32, MAT.stone, 0, 0.16, 0, 12, pg); cyl(0.13, 0.13, 0.02, MAT.dark, 0, 0.33, 0, 12, pg);
     tag(pg, "pivot", "문지도리 돌");
     tag(gp(3.6, -11, PI, MAT.red), "messenger", "왕궁에서 온 전령");
-    tag(person(-4.6, -11.6, 0.3, C(0x6a6866), E.ROOT, { bare: true }), "monk", "성문 앞의 승려");
+    tag(person(-4.6, -11.6, 0.3, C(0x6a6866), E.ROOT, { bare: true, bald: true }), "monk", "성문 앞의 승려");
     flag(-6.5, -13.6, MAT_CROW, 4.6); flag(6.5, -13.6, MAT_CROW, 4.6); flag(-13.6, 8, MAT_CROW, 4.4);
     L.braziers = [-5.2, 5.2].map((x) => { const f = campfire(x, -12.2, 4); return f; });
     // 서쪽 관청
@@ -238,8 +238,8 @@ CHAPTERS.push({
     for (let i = 0; i < 34; i++) { const x = -11 + trand() * 22, z = 9.6 + trand() * 3.6; if (Math.abs(x - 1.8) < 1.2 && z < 10.6) continue; ppl.push([x, z, trand() < 0.7]); }
     crowd(ppl, [0xd8d2c4, 0xc8bea8, 0x8a7a64, 0xe4ded0, 0x6a6052]).forEach((m) => tag(m, "people", "피란민"));
     inst(new THREE.BoxGeometry(0.5, 0.35, 0.4), C(0x7a6a50), ppl.slice(0, 16).map(([x, z]) => [x + 0.45, 0.18, z + 0.2, trand() * 3]));
-    const ch = person(1.6, 8.7, PI, C(0xe0d8c4), E.ROOT, { bare: true }); ch.scale.setScalar(0.66); tag(ch, "child", "피란민 아이");
-    person(2.4, 9.3, PI, C(0xcfc6b2), E.ROOT, { bare: true });
+    const ch = person(1.6, 8.7, PI, C(0xe0d8c4), E.ROOT, { bare: true, kid: true }); ch.scale.setScalar(0.66); tag(ch, "child", "피란민 아이");
+    person(2.4, 9.3, PI, C(0xcfc6b2), E.ROOT, { bare: true, woman: true });
     return {
       start: [0, 6, 0],
       bounds: [-14, 14, -13.8, 13.8],
@@ -385,7 +385,7 @@ CHAPTERS.push({
       box(0.9, 1.8, 0.08, MAT.door, 0, 0.9, 1.52, h);
       if (!i) tag(h, "house", "구들 놓은 집");
     });
-    tag(gp(9.2, 1.4, PI / 2, C(0xe8e2d4), { plain: true }), "halmeoni", "고구려 할머니");
+    tag(gp(9.2, 1.4, PI / 2, C(0xe8e2d4), { plain: true, woman: true }), "halmeoni", "고구려 할머니");
     const st = group(12.4, 0, 12.4);
     [[-1.4, -1.2], [1.4, -1.2], [-1.4, 1.2], [1.4, 1.2]].forEach(([a, b]) => cyl(0.08, 0.09, 2.4, MAT.wood, a, 1.2, b, 6, st));
     box(3.4, 0.15, 3, MAT.straw, 0, 2.45, 0, st);
@@ -551,7 +551,7 @@ CHAPTERS.push({
     // 배 (사신이 타고 온)
     const bt = group(-14.5, -0.35, 3, 0.2); box(1.4, 0.4, 4, MAT.hull, 0, 0, 0, bt); box(1.0, 0.1, 3.4, MAT.plank, 0, 0.21, 0, bt); tag(bt, "boat", "사신의 배");
     // 동쪽: 척후병, 지도, 길잡이 돌
-    tag(person(9.2, 1.6, -PI / 2, C(0x6a5a40), E.ROOT, { bare: true }), "scout", "척후병");
+    tag(person(9.2, 1.6, -PI / 2, C(0x6a5a40), E.ROOT, { bare: true, work: true }), "scout", "척후병");
     const mt = group(5.6, 0, 1.2); box(1.3, 0.06, 0.9, MAT.wood, 0, 0.8, 0, mt); [[-0.55, -0.38], [0.55, -0.38], [-0.55, 0.38], [0.55, 0.38]].forEach(([a, b]) => box(0.06, 0.8, 0.06, MAT.wood, a, 0.4, b, mt));
     paper(1.0, 0.7, 0, 0.84, 0, 0, mt);
     tag(mt, "map", "길 지도");
@@ -672,7 +672,7 @@ CHAPTERS.push({
     const patches = []; for (let i = 0; i < 18; i++) patches.push([-11 + trand() * 22, 0.02, -9 + trand() * 14, trand() * 3, 0.6 + trand() * 1.2, 1, 0.6 + trand()]);
     inst(new THREE.CylinderGeometry(1, 1, 0.03, 12), snowC, patches, { noPick: true, shadow: false });
     flag(-10, -8.5, cloth(0x2a3a5a), 4.6); flag(10, -8.5, cloth(0x2a3a5a), 4.6); flag(0, -9.3, MAT_CROW, 5.0);
-    tag(person(-8.5, 5.2, PI, C(0x5a5040), E.ROOT, { bare: true }), "scout", "척후병");
+    tag(person(-8.5, 5.2, PI, C(0x5a5040), E.ROOT, { bare: true, work: true }), "scout", "척후병");
     const wt = group(0, 0, -4); box(2.2, 0.08, 1.2, MAT.wood, 0, 0.85, 0, wt); [[-1, -0.5], [1, -0.5], [-1, 0.5], [1, 0.5]].forEach(([a, b]) => box(0.07, 0.85, 0.07, MAT.wood, a, 0.42, b, wt));
     box(1.6, 0.12, 0.8, C(0xb8a070), 0, 0.95, 0, wt);
     tag(wt, "table", "작전 탁자");
@@ -799,7 +799,7 @@ CHAPTERS.push({
     tag(sc, "ganji", "서기의 간지 셈판"); tag(gb, "ganji", "서기의 간지 셈판");
     const sp = []; for (let i = 0; i < 14; i++) sp.push([6.4 + (i % 4) * 0.7, 0.25 + Math.floor(i / 4) * 0.45, 4 + (i % 3) * 0.5, trand()]);
     inst(new THREE.BoxGeometry(0.65, 0.45, 0.45), MAT_BLOCK, sp);
-    tag(person(8.6, 2.6, PI / 2, C(0x8a7a5a), E.ROOT, { bare: true }), "worker", "돌 나르는 일꾼");
+    tag(person(8.6, 2.6, PI / 2, C(0x8a7a5a), E.ROOT, { bare: true, work: true }), "worker", "돌 나르는 일꾼");
     crowd([[10, -10, 0], [11, -9.2, 0], [-11, -10, 0], [-11.4, 9, 0], [9.8, 10.2, 0], [6, 9.6, 1]], [0xd8d0bc, 0x8a7a5a, 0x6a5a40]);
     // 빈 깃대
     const fp = group(0, 0, 3); cyl(0.08, 0.1, 7, MAT.wood, 0, 3.5, 0, 8, fp); sphere(0.14, MAT.brass, 0, 7.05, 0, fp);
