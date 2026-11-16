@@ -13,7 +13,7 @@ const COLORS = [0x2f6fb5, 0xc0392b, 0x2e8b57, 0xd4a017, 0x8e44ad, 0xe67e22, 0x16
 const CSS_COLOR = (i) => "#" + COLORS[i % COLORS.length].toString(16).padStart(6, "0");
 const LOCAL = new URLSearchParams(location.search).get("local") === "1";
 const VOICE_OK = !!window.RTCPeerConnection && (LOCAL || VOICE === true);   // 음성 대화: 데이터베이스 규칙에 rtc 칸이 생긴 뒤 net-config.js에서 켠다
-const FAKE_MIC = LOCAL && new URLSearchParams(location.search).get("fakemic") === "1";   // 시험용: 마이크 대신 삐 소리
+const FAKE_MIC = (LOCAL || location.hostname === "localhost") && new URLSearchParams(location.search).get("fakemic") === "1";   // 시험용: 마이크 대신 삐 소리
 const rid = () => Math.random().toString(36).slice(2, 10);
 // 이미 방에 있는 사람들과 겹치지 않는 옷 색 고르기
 const pickColor = (peerColors) => { const used = new Set(peerColors); return [...COLORS.keys()].find((i) => !used.has(i)) ?? peerColors.length % COLORS.length; };

@@ -13,5 +13,5 @@ export const FIREBASE_CONFIG = {
   appId: "1:658708366725:web:9645140676ead9bb25b0ec",
 };
 
-// 음성 대화: database.rules.json 의 rtc 규칙을 Firebase 콘솔에 올린 뒤에 true 로 바꾼다 (그 전에는 버튼이 보이지 않는다)
-export const VOICE = false;
+// 음성 대화: database.rules.json 의 rtc 규칙이 Firebase 콘솔에 올라가 있어야 한다 (2026-11-16 게시). false 로 바꾸면 버튼이 사라진다
+export const VOICE = true;
