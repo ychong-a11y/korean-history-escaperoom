@@ -11,7 +11,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 const $ = (id) => document.getElementById(id);
-document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\">\n  <button id=\"move-fwd\" class=\"f\" aria-label=\"앞으로\">▲</button>\n  <button id=\"move-left\" class=\"l\" aria-label=\"왼쪽으로\">◀</button>\n  <button id=\"move-right\" class=\"r\" aria-label=\"오른쪽으로\">▶</button>\n  <button id=\"move-back\" class=\"b\" aria-label=\"뒤로\">▼</button>\n</div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·수첩). 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요. Esc를 누르면 마우스가 풀려요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">👥 친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
+document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n  <button class=\"chip\" id=\"btn-set\" aria-label=\"설정\">⚙️ <span class=\"key-hint\">Esc</span></button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\">\n  <button id=\"move-fwd\" class=\"f\" aria-label=\"앞으로\">▲</button>\n  <button id=\"move-left\" class=\"l\" aria-label=\"왼쪽으로\">◀</button>\n  <button id=\"move-right\" class=\"r\" aria-label=\"오른쪽으로\">▶</button>\n  <button id=\"move-back\" class=\"b\" aria-label=\"뒤로\">▼</button>\n</div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·여정 기록), <b>Esc</b> 설정. 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">👥 친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
 let THEME = null, CHAPTERS = [];
 
 /* ================================================================
@@ -87,7 +87,7 @@ function textTex(text, o = {}) {
 /* ================================================================
    2. 렌더러 · 하늘 · 빛
    ================================================================ */
-// 그래픽 품질: high = 물 반사 · 후처리(구석 그림자 · 빛번짐) / low = 가볍게. 가방(Tab)에서 바꿀 수 있음.
+// 그래픽 품질: high = 물 반사 · 후처리(구석 그림자 · 빛번짐) / low = 가볍게. 설정(Esc)에서 바꿀 수 있음.
 const GFX_KEY = "diary-gfx";
 // high = 물 반사(선명) + 구석 그림자 + 빛번짐 / mid(기본) = 물 반사(가볍게) / low = 반사 없음, 그림자 가볍게
 const GFX_LEVEL = (() => { try { const v = localStorage.getItem(GFX_KEY); if (v === "high" || v === "mid" || v === "low") return v; } catch (e) {} return matchMedia("(pointer: coarse)").matches ? "low" : "mid"; })();
@@ -612,6 +612,9 @@ document.addEventListener("pointerlockchange", () => {
   crossEl.classList.toggle("hidden", !on);
   $("lockhint").classList.toggle("hidden", on || inputLocked || isTouch || lockFailed);
   if (!on) { tipEl.classList.add("hidden"); setHover(null); }
+  // Esc로 마우스가 풀렸을 때: 설정 창을 연다 (브라우저가 Esc 키 입력을 넘겨주지 않는 경우가 있어 여기서 처리)
+  if (!on && lockWorked && S && !inputLocked && document.body.classList.contains("playing") && !$("overlay").classList.contains("open")
+    && document.hasFocus() && !/^(INPUT|TEXTAREA)$/.test(document.activeElement?.tagName || "")) openSettings();
 });
 $("lockhint").onclick = requestLock;
 const SENS_KEY = "diary-sens";
@@ -714,8 +717,13 @@ function climbOut() {
 addEventListener("keydown", (e) => {
   const open = $("overlay").classList.contains("open");
   if (e.key === "Tab") { e.preventDefault(); if (open) { if (bagOpen) closeModal(); } else if (!inputLocked && S) openBag(); return; }
-  if (e.key === "Escape" && open) { closeModal(); return; }
+  if (e.key === "Escape") {
+    if (open) { if (performance.now() - escAt > 400) closeModal(); }
+    else if (!inputLocked && S && document.body.classList.contains("playing")) openSettings();
+    return;
+  }
   if (open) return;
+  if (!inputLocked && S && /^[1-9]$/.test(e.key)) { const k = S.inv.filter((x) => !S.used.includes(x))[+e.key - 1]; if (k) hold(k); return; }
   if (e.code === "Space" && !e.repeat) { e.preventDefault(); doJump(); return; }
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
 });
@@ -799,6 +807,7 @@ function toast(t, ms = 2800) { const el = $("toast"); el.textContent = t; el.cla
 function hideGuide() { $("guide").style.opacity = 0; }
 function openModal(html) {
   $("modal-body").innerHTML = html; $("overlay").classList.add("open"); inputLocked = true; bagOpen = false; sfx("page");
+  $("overlay").querySelector(".modal").classList.remove("wide");
   for (const k in keys) keys[k] = 0;
   if (document.pointerLockElement) document.exitPointerLock();
   $("lockhint").classList.add("hidden"); tipEl.classList.add("hidden");
@@ -912,33 +921,95 @@ const A = {
   flag: (f) => { if (!S.flags.includes(f)) S.flags.push(f); save(); },
   owns: (k) => S.inv.includes(k),
   used: (k) => S.used.includes(k),
-  give: (k) => { if (!S.inv.includes(k)) S.inv.push(k); save(); renderInv(); sfx("item"); const n = ITEMS[k].name, c = n.charCodeAt(n.length - 1) - 0xac00; toast(`${ITEMS[k].icon} ${n}${c >= 0 && c % 28 ? "을" : "를"} 얻었다`); },
+  give: (k) => { if (!S.inv.includes(k)) S.inv.push(k); save(); renderInv(); sfx("item"); toast(`${ITEMS[k].icon} ${eul(ITEMS[k].name)} 얻었다 · Tab으로 가방 열기`); },
   use: (k) => { if (!S.used.includes(k)) S.used.push(k); save(); renderInv(); },
   note: (t) => { if (!S.journal.some((j) => j.t === t)) S.journal.push({ ch: S.ch, t }); save(); },
-  // 물건이 필요한 곳: 이미 썼으면 true, 아니면 사용 버튼이 있는 창을 띄우고 false
+  // 물건이 필요한 곳: 이미 썼으면 true. 알맞은 물건을 손에 들고 있으면 바로 쓰고 true.
+  // 아니면 가방 속 물건 가운데 무엇을 쓸지 고르는 창을 띄우고 false. (useLabel은 예전 호환용 · 쓰지 않음)
   needItem(id, item, title, lockedHtml, useLabel) {
     if (S.used.includes(item)) return true;
-    const it = ITEMS[item];
-    if (S.inv.includes(item)) { card(title, lockedHtml, `<button class="btn gold" id="use-btn">${it.icon} ${useLabel || it.name + " 사용하기"}</button>`); $("use-btn").onclick = () => { A.use(item); CH.interact(id, A); }; }
-    else card(title, lockedHtml);
+    const it = ITEMS[item], mine = S.inv.filter((k) => !S.used.includes(k));
+    if (HELD === item) { A.use(item); toast(`${it.icon} ${eul(it.name)} 썼다`); return true; }
+    if (!mine.length) { card(title, lockedHtml); return false; }
+    const wrongHeld = HELD && mine.includes(HELD) ? HELD : null;
+    card(title, `${lockedHtml}<div class="usebox"><b>🎒 가방에서 무엇을 꺼내 쓸까?</b><div class="use-grid">${mine.map((k) => `<button class="btn ghost" data-use="${k}"${k === item ? ' id="use-btn"' : ""}>${ITEMS[k].icon} ${ITEMS[k].name}</button>`).join("")}</div></div>`);
+    const miss = (k) => { $("msg").textContent = `${ITEMS[k].icon} ${ITEMS[k].name}${josa(ITEMS[k].name, "은", "는")} 여기에 맞지 않는 것 같다.`; sfx("wrong"); };
+    $("modal-body").querySelectorAll("[data-use]").forEach((btn) => (btn.onclick = () => { const k = btn.dataset.use; if (k === item) { A.use(item); CH.interact(id, A); } else miss(k); }));
+    if (wrongHeld) miss(wrongHeld);
     return false;
   },
   clearChapter: () => setTimeout(clearChapter, 50),
   endGame: () => setTimeout(endGame, 50),
 };
+/* ── 가방(Tab): 8×4칸 소지품 · 여정 기록 / 설정(Esc) ── */
+const josa = (n, x, y) => { const c = n.charCodeAt(n.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 ? x : y; };
+const eul = (n) => n + josa(n, "을", "를");
+let HELD = null;      // 손에 든 물건 (알맞은 곳을 누르면 바로 쓴다)
+let bagSel = 0, escAt = 0;
+const BAG_SLOTS = 32;
+const JOURNEY = { icon: "📖", name: "여정 기록", desc: "지나온 곳과 찾아낸 단서를 적어 둔 수첩. 펼치면 언제든 다시 읽을 수 있다. 앞 장의 단서가 뒤에서 다시 쓰이기도 한다." };
+function hold(k) {
+  if (!S || !S.inv.includes(k) || S.used.includes(k)) return;
+  HELD = HELD === k ? null : k; renderInv(); sfx("item");
+  toast(HELD ? `✋ ${ITEMS[k].icon} ${eul(ITEMS[k].name)} 손에 들었다. 쓸 곳을 눌러 보자.` : "손에 든 것을 가방에 넣었다.");
+}
 function renderInv() {
   if (!S) return;
-  $("inv").innerHTML = S.inv.length ? S.inv.map((k) => `<span class="item ${S.used.includes(k) ? "used" : ""}">${ITEMS[k].icon} ${ITEMS[k].name}</span>`).join(" ") : `<span class="inv-label">없음</span>`;
+  if (HELD && (!S.inv.includes(HELD) || S.used.includes(HELD))) HELD = null;
+  let n = 0;
+  $("inv").innerHTML = S.inv.length ? S.inv.map((k) => { const u = S.used.includes(k); return `<span class="item ${u ? "used" : ""} ${HELD === k ? "held" : ""}" data-k="${k}">${u || isTouch ? "" : `<i class="num">${++n}</i>`}${HELD === k ? "✋ " : ""}${ITEMS[k].icon} ${ITEMS[k].name}</span>`; }).join(" ") : `<span class="inv-label">없음</span>`;
 }
-function openBag() {
-  const items = S.inv.length ? `<ul class="timeline">${S.inv.map((k) => `<li><b>${ITEMS[k].icon} ${ITEMS[k].name}</b>${S.used.includes(k) ? ' <span class="note">(사용함)</span>' : ""}<br><span class="note">${ITEMS[k].desc || ""}</span></li>`).join("")}</ul>` : `<p class="note">아직 아무것도 없다.</p>`;
-  const groups = CHAPTERS.map((c, i) => { const js = S.journal.filter((j) => j.ch === i); return js.length ? `<h3 style="margin:12px 0 4px;font-size:15px">제${i + 1}장 · ${c.place}</h3><ul class="timeline">${js.map((j) => `<li>${j.t}</li>`).join("")}</ul>` : ""; }).join("");
-  card("🎒 가방", `<h3 style="margin:0 0 6px">소지품</h3>${items}<h3 style="margin:18px 0 0">📖 수첩</h3>${groups || '<p class="note">아직 찾은 단서가 없다.</p>'}
-    <h3 style="margin:18px 0 6px">🔊 소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
+$("inv").addEventListener("click", (e) => { const el = e.target.closest("[data-k]"); if (el && !inputLocked) hold(el.dataset.k); });
+function bagSlots() {
+  const cur = [], used = [], past = [];
+  for (const k of S.inv) (S.used.includes(k) ? used : cur).push({ k, it: ITEMS[k], type: S.used.includes(k) ? "used" : "cur" });
+  for (let c = S.ch - 1; c >= 0; c--) for (const k in (CHAPTERS[c].items || {})) past.push({ k, it: CHAPTERS[c].items[k], type: "past", ch: c });   // 지나온 장의 물건
+  return [{ k: "__journey", it: JOURNEY, type: "journey" }, ...cur, ...used, ...past].slice(0, BAG_SLOTS);
+}
+function openBag(sel) {
+  const slots = bagSlots();
+  bagSel = sel ?? (bagSel < slots.length ? bagSel : 0);
+  const cells = Array.from({ length: BAG_SLOTS }, (_, i) => {
+    const s = slots[i]; if (!s) return `<div class="slot empty"></div>`;
+    const held = s.type === "cur" && HELD === s.k;
+    const bd = held ? "✋" : s.type === "used" ? "✔" : s.type === "past" ? `${s.ch + 1}장` : s.type === "journey" && S.journal.length ? S.journal.length : "";
+    return `<button class="slot ${s.type} ${i === bagSel ? "on" : ""} ${held ? "held" : ""}" data-i="${i}" aria-label="${s.it.name}"><span class="ic">${s.it.icon}</span>${bd ? `<i class="bd">${bd}</i>` : ""}</button>`;
+  }).join("");
+  const s = slots[bagSel], it = s.it;
+  const status = s.type === "cur" ? "지금 쓸 수 있는 물건" : s.type === "used" ? "이미 쓴 물건" : s.type === "past" ? `제${s.ch + 1}장 · ${CHAPTERS[s.ch].place}에서 지녔던 물건` : `적어 둔 단서 ${S.journal.length}개`;
+  const act = s.type === "journey" ? `<button class="btn gold" id="bag-act">📖 펼쳐 보기</button>`
+    : s.type === "cur" ? `<button class="btn gold" id="bag-act">${HELD === s.k ? "가방에 넣기" : "✋ 손에 들기"}</button> <span class="note">손에 들고 알맞은 곳을 누르면 바로 써요.</span>` : "";
+  openModal(`<h2>🎒 가방 <span class="note" style="font-size:13px">${slots.length} / ${BAG_SLOTS}칸</span></h2>
+    <div class="bag-wrap"><div class="bag-grid">${cells}</div>
+    <div class="bag-detail"><div class="big">${it.icon}</div><div class="txt"><b>${it.name}</b> <span class="note">· ${status}</span><p>${it.desc || ""}</p>${s.type !== "journey" && it.look ? `<div class="doc">${it.look}</div>` : ""}${act}</div></div></div>
+    <div class="msg" id="msg"></div><div class="actions">${CLOSE}</div>
+    <p class="note" style="margin:10px 0 0">물건을 누르면 살펴볼 수 있어요.${isTouch ? "" : " · 숫자 키(1~9)로 가방을 열지 않고도 손에 들 수 있어요 · Tab으로 닫기"}</p>`);
+  $("overlay").querySelector(".modal").classList.add("wide");
+  bagOpen = true;
+  const primary = () => { if (s.type === "journey") openJourney(); else if (s.type === "cur") { hold(s.k); openBag(bagSel); } };
+  $("modal-body").querySelectorAll(".slot[data-i]").forEach((el) => (el.onclick = () => { const i = +el.dataset.i; if (i === bagSel) primary(); else openBag(i); }));
+  if ($("bag-act")) $("bag-act").onclick = primary;
+}
+function openJourney() {
+  const groups = [];
+  for (let i = Math.min(S.ch, CHAPTERS.length - 1); i >= 0; i--) {
+    const c = CHAPTERS[i], js = S.journal.filter((j) => j.ch === i);
+    groups.push(`<h3 style="margin:14px 0 4px;font-size:15px">제${i + 1}장 · ${c.place} <span class="note">${i < S.ch ? "✔ " + c.clear.title : "· 지금 여기"}</span></h3>${js.length ? `<ul class="timeline">${js.map((j) => `<li>${j.t}</li>`).join("")}</ul>` : '<p class="note">아직 적은 것이 없다.</p>'}`);
+  }
+  card("📖 여정 기록", `<p class="note">지나온 곳과 찾은 단서. 가장 최근 장이 맨 위에 있어요.</p>${groups.join("")}`, `<button class="btn gold" id="back-bag">🎒 가방으로</button>`);
+  bagOpen = true;
+  $("back-bag").onclick = () => openBag(0);
+}
+function openSettings() {
+  escAt = performance.now();
+  card("⚙️ 설정", `<p class="note">게임이 잠시 멈췄어요. 닫으면 이어서 할 수 있어요.</p>
+    <h3 style="margin:6px 0 6px">🔊 소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
     <h3 style="margin:18px 0 6px">🎨 그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
-    ${isTouch ? "" : `<h3 style="margin:18px 0 6px">⚙️ 마우스 감도</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div><p class="note" style="margin-top:12px">Tab을 다시 누르면 닫혀요.</p>`}`);
-  bagOpen = true;
+    ${isTouch ? "" : `<h3 style="margin:18px 0 6px">🖱️ 마우스 감도</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
+    <p class="note" style="margin-top:14px">Tab 가방 · Esc 설정 · M 소리 · 숫자 키 손에 들기</p>`}`,
+    `<a class="btn ghost" href="index.html">← 문 고르는 곳으로</a>`);
+  $("modal-body").querySelector("[data-close]").textContent = "계속하기";
   $("vol-music").oninput = (e) => { AU.music = +e.target.value; saveSound(); if (AU.ctx) BUS.music.gain.value = AU.music * 0.5; };
   $("vol-fx").oninput = (e) => { AU.fx = +e.target.value; saveSound(); if (AU.ctx) { BUS.fx.gain.value = AU.fx; BUS.amb.gain.value = AU.fx * 0.6; } };
   $("gfx").onclick = (e) => {
@@ -949,12 +1020,13 @@ function openBag() {
   };
   const sl = $("sens"); if (sl) sl.oninput = () => { sens = parseFloat(sl.value); $("sens-v").textContent = sens.toFixed(1); try { localStorage.setItem(SENS_KEY, String(sens)); } catch (e) {} };
 }
+$("btn-set").onclick = () => S && openSettings();
 $("btn-bag").onclick = () => S && openBag();
 function openHint() {
   const H = CH.hints, idx = S.hintIdx[S.ch] ?? 0;
   const shown = H.slice(0, idx).map((h, i) => `<div class="doc">힌트 ${i + 1}. ${h}</div>`).join("");
   const more = idx < H.length ? `<button class="btn gold" id="more">${idx ? "다음 힌트" : "힌트 보기"} (+1분)</button>` : "";
-  card("💡 힌트", shown || `<p>정말 막혔을 때만 써 보세요. 가방(Tab)의 수첩을 다시 읽어 보는 것도 방법이에요.</p><p class="note">힌트를 볼 때마다 기록에 1분이 더해져요.</p>`, more);
+  card("💡 힌트", shown || `<p>정말 막혔을 때만 써 보세요. 가방(Tab)의 📖 여정 기록을 다시 읽어 보는 것도 방법이에요.</p><p class="note">힌트를 볼 때마다 기록에 1분이 더해져요.</p>`, more);
   if (more) $("more").onclick = () => { S.hintIdx[S.ch] = idx + 1; S.hints++; S.elapsed += 60; save(); openHint(); };
 }
 $("btn-hint").onclick = () => S && openHint();
@@ -1016,7 +1088,7 @@ function play() {
   showHUD(true);
   $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 버튼으로 걷기 · 오른쪽 아래 점프·달리기 · 가까이 가서 물건 누르기"
     : lockFailed ? "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방"
-    : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 마우스 풀기";
+    : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 설정";
   $("guide").style.opacity = 0.85;
   renderInv(); inputLocked = false; startTimer(); startCoach();
   if (CH.onEnter) setTimeout(() => CH.onEnter(A), 400);
@@ -1034,7 +1106,7 @@ function clearChapter(force) {
   $("clear-text").innerHTML = `<p class="serif">${c.text}</p>${c.next ? `<div class="letter">${THEME.nextLabel ?? "다음 장면이 떠오른다."}<br>${c.next}</div>` : ""}`;
   progressBar("clear-progress", S.ch + 1);
   $("clear-stats").textContent = `이번 장 ${fmt(took)} · 전체 ${fmt(S.elapsed)} · 힌트 ${S.hints}개`;
-  S.ch++; S.inv = []; S.used = []; S.chStart = S.elapsed; delete S.pos; save();
+  S.ch++; S.inv = []; S.used = []; HELD = null; S.chStart = S.elapsed; delete S.pos; save();
   $("fade").style.opacity = 1;
   setTimeout(() => { $("clear").classList.remove("hidden"); $("fade").style.opacity = 0; }, 800);
 }
@@ -1236,9 +1308,9 @@ const CTL_PC = `<div class="ctl-grid">
   <div class="ctl"><div class="pic"><span class="aim">+</span>${mouseSvg("click")}</div><b>조사하기</b><span><b>+</b>를 물건에 맞추고 클릭<br>(가까이 가야 해요)</span></div>
   <div class="ctl"><div class="pic"><kbd class="w2">Shift</kbd></div><b>달리기</b><span>누르고 있는 동안</span></div>
   <div class="ctl"><div class="pic"><kbd class="w3">Space</kbd></div><b>점프</b><span>물에서는 뭍으로 올라가기</span></div>
-  <div class="ctl"><div class="pic"><kbd class="w2">Tab</kbd></div><b>가방 · 수첩</b><span>모은 물건과 단서 보기</span></div>
+  <div class="ctl"><div class="pic"><kbd class="w2">Tab</kbd></div><b>가방</b><span>소지품 · 여정 기록 보기</span></div>
 </div>
-<p class="ctl-foot"><kbd>Esc</kbd> 마우스 풀기 &nbsp;·&nbsp; <kbd>M</kbd> 소리 켜고 끄기</p>`;
+<p class="ctl-foot"><kbd>Esc</kbd> 설정(소리 · 그래픽) &nbsp;·&nbsp; <kbd>M</kbd> 소리 켜고 끄기</p>`;
 const CTL_TOUCH = `<div class="phone"><div class="phone-screen">
     <span class="ph-chip">🎒 가방 &nbsp; 💡 힌트</span>
     <span class="ph-swipe">👆<i>↔</i></span>
@@ -1257,11 +1329,11 @@ const CTL_TOUCH = `<div class="phone"><div class="phone-screen">
 <p class="ctl-foot">📱 휴대폰은 <b>가로로</b> 돌리면 훨씬 넓게 보여요.</p>`;
 const TIPS = `<div class="tip-grid">
   <div><i>🔍</i><b>보이는 건 전부 조사</b><span>벽의 글, 상자, 사람까지. 가까이 가면 이름이 떠요.</span></div>
-  <div><i>📖</i><b>단서는 수첩에 자동 기록</b><span>외울 필요 없어요. 가방을 열면 언제든 다시 볼 수 있어요.</span></div>
+  <div><i>📖</i><b>단서는 여정 기록에 자동으로</b><span>외울 필요 없어요. 가방(Tab) 속 📖 여정 기록을 펼치면 언제든 다시 볼 수 있어요.</span></div>
   <div><i>🔢</i><b>숫자 · 방향 · 순서를 눈여겨보기</b><span>자물쇠의 답은 늘 주변 단서 안에 있어요. 찍지 말고 이유를 찾아요.</span></div>
-  <div><i>🔗</i><b>앞 장의 단서가 다시 쓰여요</b><span>지나간 장의 기록도 수첩에 남아 있어요.</span></div>
+  <div><i>🔗</i><b>앞 장의 단서가 다시 쓰여요</b><span>지나간 장의 기록도 여정 기록에 남아 있어요.</span></div>
   <div><i>💡</i><b>5분 넘게 막히면 힌트</b><span>힌트는 조금씩만 알려 줘요. 하나에 기록 +1분.</span></div>
-  <div><i>👥</i><b>친구와 나눠 맡기</b><span>한 명은 조사, 한 명은 수첩 정리. 함께하기에서는 진행이 같이 열려요.</span></div>
+  <div><i>👥</i><b>친구와 나눠 맡기</b><span>한 명은 조사, 한 명은 여정 기록 읽기. 함께하기에서는 진행이 같이 열려요.</span></div>
 </div>
 <p class="ctl-foot">💾 진행 상황은 이 기기에 자동으로 저장돼요. 한 장(약 10분)씩 끊어서 해도 좋아요.</p>`;
 let introPage = 0, SOLO_OK = true;   // SOLO_OK: 혼자서도 시작할 수 있는 테마인가 (theme.minPlayers)
@@ -1310,12 +1382,12 @@ function startCoach() {
     ["👆", "화면을 <b>끌어서</b> 주위를 둘러보세요", "look"],
     ["▲", "왼쪽 아래 <b>화살표</b>로 걸어 보세요", "walk"],
     ["📦", "물건에 <b>가까이 가서 눌러</b> 조사해 보세요", "inspect"],
-    ["🎒", "위쪽 <b>가방</b>을 눌러 수첩을 열어 보세요", "bag"],
+    ["🎒", "위쪽 <b>가방</b>을 눌러 소지품을 살펴보세요", "bag"],
   ] : [
     ["🖱️", "화면을 <b>클릭</b>하고 마우스를 움직여 둘러보세요", "look"],
     [K("W") + K("A") + K("S") + K("D"), "<b>WASD</b>나 방향키로 걸어 보세요", "walk"],
     [`<span class="aim">+</span>`, "가운데 <b>+</b>를 물건에 맞추고 <b>클릭</b>해 조사해 보세요", "inspect"],
-    [K("Tab", "w2"), "<b>Tab</b>을 눌러 가방과 수첩을 열어 보세요", "bag"],
+    [K("Tab", "w2"), "<b>Tab</b>을 눌러 가방을 열어 보세요", "bag"],
   ];
   document.body.insertAdjacentHTML("beforeend", `<div id="coach" class="coach"><span class="c-n"></span><span class="c-ic"></span><span class="c-t"></span><button id="coach-x" aria-label="연습 건너뛰기">건너뛰기</button></div>`);
   document.body.classList.add("coaching");
