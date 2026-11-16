@@ -66,6 +66,17 @@ button { font: inherit; cursor: pointer; color: inherit; }
 .badge { font-size: 12px; border-radius: 999px; padding: 3px 9px; background: var(--paper-2); }
 .badge.play { background: var(--red); color: var(--paper); font-weight: 700; }
 .badge.cleared { background: var(--green); color: var(--paper); }
+.theme .role { font-size: 13px; line-height: 1.5; background: var(--paper-2); border-radius: 8px; padding: 6px 9px; }
+.theme .tags { display: flex; gap: 5px; flex-wrap: wrap; }
+.theme .tags span { font-size: 12px; border: 1px solid rgba(0,0,0,.15); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.theme .cover .stamp { position: absolute; right: 12px; top: 12px; transform: rotate(8deg); border: 2px solid #ffd9d0; color: #ffd9d0; font-family: "Gowun Batang", serif; font-weight: 700; padding: 2px 10px; border-radius: 8px; font-size: 15px; background: rgba(158,43,37,.55); }
+.era { display: flex; align-items: center; gap: 12px; margin: 26px 0 12px; color: var(--gold); font-family: "Gowun Batang", serif; font-weight: 700; font-size: 20px; }
+.era:first-child { margin-top: 0; }
+.era::before, .era::after { content: ""; flex: 1; height: 1px; background: rgba(176,138,58,.45); }
+.how3 { display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap; margin: 16px 0 0; font-size: 13px; }
+.how3 span { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.08); border-radius: 999px; padding: 6px 12px; }
+.how3 i { font-style: normal; font-size: 16px; } .how3 em { font-style: normal; opacity: .5; }
+.hub-progress { margin-top: 12px; font-size: 13px; opacity: .85; } .hub-progress b { color: var(--gold); font-size: 16px; }
 .theme.soon { opacity: .55; cursor: default; }
 .theme.soon .cover { filter: grayscale(1); }
 
@@ -208,9 +219,16 @@ input.text-answer { width: 100%; padding: 12px; font-size: 18px; border-radius: 
     <div class="hub-head">
       <div class="tag">한국사 방탈출</div>
       <h1>시간의 문</h1>
-      <p>사건 하나를 골라 그 시대 속으로 들어가세요.<br>단서를 모아 문을 열면 역사가 보입니다.</p>
+      <p>문 하나를 골라 그 시대 속으로 들어가세요.<br>누구의 이야기인지는 <b>끝까지 풀어야</b> 알 수 있어요.</p>
+      <div class="how3">
+        <span><i>🚪</i>문을 고르고</span><em>›</em>
+        <span><i>🔍</i>단서를 찾아</span><em>›</em>
+        <span><i>🔐</i>자물쇠를 풀면</span><em>›</em>
+        <span><i>👤</i>주인공이 밝혀져요</span>
+      </div>
+      <div class="hub-progress" id="hub-progress"></div>
     </div>
-    <div class="themes" id="themes"></div>
+    <div id="themes"></div>
   </section>
 
   <!-- 테마 소개 -->
@@ -325,27 +343,39 @@ function save() { if (T && S) store.set(saveKey(), S); }
 /* ===================== 테마 선택 ===================== */
 function renderHub() {
   $("themes").innerHTML = "";
-  THEMES.forEach((t) => {
+  const raw = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+  let era = null, grid = null, nCleared = 0;
+  THEMES.forEach((t, idx) => {
+    if (t.era !== era) {   // 시대가 바뀌면 새 묶음 (목록은 시대 순서)
+      era = t.era;
+      $("themes").insertAdjacentHTML("beforeend", `<div class="era"><span>${era || ""}</span></div><div class="themes"></div>`);
+      grid = $("themes").lastElementChild;
+    }
     const b = document.createElement("button");
-    const cleared = store.get(clearKey(t.id));
-    const inProgress = t.available && store.get("escape-save-" + t.id);
+    const cleared = t.save ? raw("escape-cleared-" + t.save) : store.get(clearKey(t.id));
+    const saved = t.available && store.get(t.save || "escape-save-" + t.id);
+    if (cleared) nCleared++;
     b.className = "theme" + (t.available ? "" : " soon");
     b.innerHTML = `
-      <div class="cover" style="background:${t.cover}"><span>${t.icon}</span><span class="year">${t.year}</span></div>
+      <div class="cover" style="background:${t.cover}"><span>${t.icon}</span><span class="year">${t.era ? `${idx + 1}번째 문` : t.year}</span>${cleared ? `<span class="stamp">탈출!</span>` : ""}</div>
       <div class="info">
         <h2>${t.title}</h2>
         <p>${t.summary}</p>
+        ${t.role ? `<div class="role">🎭 이번에 따라갈 사람 — <b>${t.role}</b></div>` : ""}
+        ${t.tags ? `<div class="tags">${t.tags.map((x) => `<span>${x}</span>`).join("")}</div>` : ""}
         <div class="meta">
-          ${t.available ? `<span class="badge play">${inProgress ? "이어서 하기" : "플레이"}</span>` : `<span class="badge">준비 중</span>`}
-          ${t.available ? `<span class="badge">⏱ ${t.playtime}</span><span class="badge">🧩 ${t.level}</span>` : ""}
-          ${cleared ? `<span class="badge cleared">탈출 성공 · ${cleared}</span>` : ""}
+          ${t.available ? `<span class="badge play">${saved ? `이어서 하기${typeof saved.ch === "number" ? ` · 제${saved.ch + 1}장` : ""}` : cleared ? "다시 하기" : "들어가기"}</span>` : `<span class="badge">준비 중</span>`}
+          ${t.available ? `<span class="badge">⏱ ${t.playtime}</span>` : ""}
+          ${cleared ? `<span class="badge cleared">탈출 성공 · ${String(cleared).replace(/"/g, "")}</span>` : ""}
         </div>
       </div>`;
     if (t.available && t.href) b.onclick = () => { location.href = t.href; };
     else if (t.available) b.onclick = () => openIntro(t);
     else b.setAttribute("aria-disabled", "true");
-    $("themes").appendChild(b);
+    grid.appendChild(b);
   });
+  const total = THEMES.filter((t) => t.available).length;
+  $("hub-progress").innerHTML = `<b>${nCleared}</b> / ${total} 탈출` + (nCleared === total ? " · 🎉 모든 문을 열었어요!" : nCleared ? " · 다음 문으로!" : "");
   show("hub");
 }
 

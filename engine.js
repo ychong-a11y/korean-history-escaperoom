@@ -1007,7 +1007,7 @@ function play() {
     : lockFailed ? "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방"
     : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 마우스 풀기";
   $("guide").style.opacity = 0.85;
-  renderInv(); inputLocked = false; startTimer();
+  renderInv(); inputLocked = false; startTimer(); startCoach();
   if (CH.onEnter) setTimeout(() => CH.onEnter(A), 400);
 }
 function progressBar(el, done) { $(el).innerHTML = CHAPTERS.map((_, i) => `<span class="${i < done ? "done" : ""}"></span>`).join(""); }
@@ -1032,6 +1032,7 @@ function endGame() {
   $("overlay").classList.remove("open"); showHUD(false);
   sfx("clear"); setMusic("ending");
   $("end-time").textContent = fmt(S.elapsed); $("end-hints").textContent = S.hints + "개"; $("end-wrong").textContent = S.wrong + "번";
+  lsSet("escape-cleared-" + SAVE, fmt(S.elapsed));   // 테마 고르는 화면의 '탈출 성공' 표시용
   if (COOP) COOP.onEnd(); else store.del();
   $("fade").style.opacity = 1;
   setTimeout(() => { $("ending").classList.remove("hidden"); $("fade").style.opacity = 0; }, 1200);
@@ -1205,9 +1206,133 @@ function sfx(name, o = {}) {
    9. 시작 — 테마를 받아 게임을 연다
    ================================================================ */
 animate();
+/* ================================================================
+   8.5 처음 화면(이야기 → 조작법 → 잘 푸는 법) · 첫 판 연습 안내
+   ================================================================ */
+const SEEN_KEY = "escape-howto-seen", COACH_KEY = "escape-coach-done";
+const lsGet = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+const mouseSvg = (mode) => `<svg class="mouse" viewBox="0 0 64 72" aria-hidden="true">
+  ${mode === "look" ? `<path d="M6 36h10M48 36h10M32 4v8" stroke="#b08a3a" stroke-width="3" stroke-linecap="round"/><path d="M9 31l-5 5 5 5M55 31l5 5-5 5M27 8l5-5 5 5" fill="none" stroke="#b08a3a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>` : ""}
+  <rect x="19" y="16" width="26" height="42" rx="13" fill="#fffaf0" stroke="#2b2118" stroke-width="2.5"/>
+  ${mode === "click" ? `<path d="M32 17.5c-6.5 0-11.7 5-11.7 11.5v4H32z" fill="#9e2b25"/>` : ""}
+  <path d="M32 17v16M20 33h24" stroke="#2b2118" stroke-width="2"/>
+</svg>`;
+const CTL_PC = `<div class="ctl-grid">
+  <div class="ctl"><div class="pic">${mouseSvg("look")}</div><b>둘러보기</b><span>화면을 한 번 클릭한 뒤<br>마우스를 움직여요</span></div>
+  <div class="ctl"><div class="pic"><div class="wasd"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></div></div><b>걷기</b><span>방향키 ↑←↓→ 도 돼요</span></div>
+  <div class="ctl"><div class="pic"><span class="aim">+</span>${mouseSvg("click")}</div><b>조사하기</b><span><b>+</b>를 물건에 맞추고 클릭<br>(가까이 가야 해요)</span></div>
+  <div class="ctl"><div class="pic"><kbd class="w2">Shift</kbd></div><b>달리기</b><span>누르고 있는 동안</span></div>
+  <div class="ctl"><div class="pic"><kbd class="w3">Space</kbd></div><b>점프</b><span>물에서는 뭍으로 올라가기</span></div>
+  <div class="ctl"><div class="pic"><kbd class="w2">Tab</kbd></div><b>가방 · 수첩</b><span>모은 물건과 단서 보기</span></div>
+</div>
+<p class="ctl-foot"><kbd>Esc</kbd> 마우스 풀기 &nbsp;·&nbsp; <kbd>M</kbd> 소리 켜고 끄기</p>`;
+const CTL_TOUCH = `<div class="phone"><div class="phone-screen">
+    <span class="ph-chip">🎒 가방 &nbsp; 💡 힌트</span>
+    <span class="ph-swipe">👆<i>↔</i></span>
+    <span class="ph-obj">📦</span>
+    <div class="ph-pad"><i>▲</i><i>◀</i><i>▶</i><i>▼</i></div>
+    <div class="ph-act"><i>🏃</i><i>⤒</i></div>
+    <b class="n n1">1</b><b class="n n2">2</b><b class="n n3">3</b><b class="n n4">4</b><b class="n n5">5</b>
+  </div></div>
+<ol class="ph-list">
+  <li><b>둘러보기</b> — 화면을 손가락으로 끌어요</li>
+  <li><b>걷기</b> — 왼쪽 아래 화살표를 눌러요</li>
+  <li><b>조사하기</b> — 가까이 가서 물건을 직접 눌러요</li>
+  <li><b>달리기 · 점프</b> — 오른쪽 아래 버튼</li>
+  <li><b>가방 · 힌트</b> — 위쪽 버튼 (모은 물건과 단서)</li>
+</ol>
+<p class="ctl-foot">📱 휴대폰은 <b>가로로</b> 돌리면 훨씬 넓게 보여요.</p>`;
+const TIPS = `<div class="tip-grid">
+  <div><i>🔍</i><b>보이는 건 전부 조사</b><span>벽의 글, 상자, 사람까지. 가까이 가면 이름이 떠요.</span></div>
+  <div><i>📖</i><b>단서는 수첩에 자동 기록</b><span>외울 필요 없어요. 가방을 열면 언제든 다시 볼 수 있어요.</span></div>
+  <div><i>🔢</i><b>숫자 · 방향 · 순서를 눈여겨보기</b><span>자물쇠의 답은 늘 주변 단서 안에 있어요. 찍지 말고 이유를 찾아요.</span></div>
+  <div><i>🔗</i><b>앞 장의 단서가 다시 쓰여요</b><span>지나간 장의 기록도 수첩에 남아 있어요.</span></div>
+  <div><i>💡</i><b>5분 넘게 막히면 힌트</b><span>힌트는 조금씩만 알려 줘요. 하나에 기록 +1분.</span></div>
+  <div><i>👥</i><b>친구와 나눠 맡기</b><span>한 명은 조사, 한 명은 수첩 정리. 함께하기에서는 진행이 같이 열려요.</span></div>
+</div>
+<p class="ctl-foot">💾 진행 상황은 이 기기에 자동으로 저장돼요. 한 장(약 10분)씩 끊어서 해도 좋아요.</p>`;
+let introPage = 0;
+function buildIntroPages() {
+  const body = document.querySelector("#intro .card-body"), howto = body.querySelector(".howto");
+  const p0 = document.createElement("div"); p0.className = "ipage"; p0.dataset.p = "0";
+  body.insertBefore(p0, $("intro-story")); p0.append($("intro-story"));
+  p0.insertAdjacentHTML("beforeend", `<ol class="path" id="intro-path"></ol>`); p0.append($("intro-progress"));
+  const p1 = document.createElement("div"); p1.className = "ipage hidden"; p1.dataset.p = "1";
+  p1.innerHTML = `<div id="ctl-box"></div><button class="linkbtn" id="ctl-swap"></button>`;
+  const p2 = document.createElement("div"); p2.className = "ipage hidden"; p2.dataset.p = "2"; p2.innerHTML = TIPS;
+  howto.replaceWith(p1, p2);
+  p0.insertAdjacentHTML("beforebegin", `<div class="itabs" id="intro-tabs"><button data-p="0"><i>1</i>이야기</button><button data-p="1"><i>2</i>조작법</button><button data-p="2"><i>3</i>잘 푸는 법</button></div>`);
+  let touchView = isTouch;
+  const drawCtl = () => { $("ctl-box").innerHTML = touchView ? CTL_TOUCH : CTL_PC; $("ctl-swap").textContent = touchView ? "🖥️ 컴퓨터 조작법 보기" : "📱 휴대폰 조작법 보기"; };
+  $("ctl-swap").onclick = () => { touchView = !touchView; drawCtl(); };
+  drawCtl();
+  $("intro-tabs").querySelectorAll("button").forEach((b) => (b.onclick = () => setIntroPage(+b.dataset.p)));
+  $("btn-start").insertAdjacentHTML("beforebegin", `<button class="btn red hidden" id="btn-nextpage"></button>`);
+  $("btn-nextpage").onclick = () => setIntroPage(introPage + 1);
+  setIntroPage(0);
+}
+function setIntroPage(p) {
+  introPage = Math.max(0, Math.min(2, p));
+  document.querySelectorAll("#intro .ipage").forEach((el) => el.classList.toggle("hidden", +el.dataset.p !== introPage));
+  $("intro-tabs").querySelectorAll("button").forEach((b) => b.classList.toggle("on", +b.dataset.p === introPage));
+  if (introPage === 2) lsSet(SEEN_KEY, "1");
+  // 처음 온 사람은 세 쪽을 차례로 넘겨 본 뒤에 시작 (본 적이 있으면 어느 쪽에서든 바로 시작)
+  const guided = !lsGet(SEEN_KEY) && introPage < 2;
+  $("btn-nextpage").classList.toggle("hidden", !guided); $("btn-start").classList.toggle("hidden", guided);
+  $("btn-nextpage").textContent = introPage === 0 ? "다음: 조작법 →" : "다음: 잘 푸는 법 →";
+  $("intro").scrollTop = 0;
+}
+function renderPath(done) {
+  const el = $("intro-path"); if (!el) return;
+  el.innerHTML = CHAPTERS.map((c, i) => `<li class="${i < done ? "done" : i === done ? "now" : "lock"}"><i>${i < done ? "✓" : i === done ? i + 1 : "🔒"}</i><span>${i <= done ? c.place : "???"}</span></li>`).join("");
+}
+
+/* 첫 판 연습 안내: 한 번에 한 가지씩, 해 보면 다음으로 넘어간다 (이 기기에서 한 번만) */
+let coachT = null;
+function startCoach() {
+  if (coachT || lsGet(COACH_KEY) || S.ch !== 0) return;
+  const K = (t, c = "") => `<kbd class="${c}">${t}</kbd>`;
+  const steps = isTouch ? [
+    ["👆", "화면을 <b>끌어서</b> 주위를 둘러보세요", "look"],
+    ["▲", "왼쪽 아래 <b>화살표</b>로 걸어 보세요", "walk"],
+    ["📦", "물건에 <b>가까이 가서 눌러</b> 조사해 보세요", "inspect"],
+    ["🎒", "위쪽 <b>가방</b>을 눌러 수첩을 열어 보세요", "bag"],
+  ] : [
+    ["🖱️", "화면을 <b>클릭</b>하고 마우스를 움직여 둘러보세요", "look"],
+    [K("W") + K("A") + K("S") + K("D"), "<b>WASD</b>나 방향키로 걸어 보세요", "walk"],
+    [`<span class="aim">+</span>`, "가운데 <b>+</b>를 물건에 맞추고 <b>클릭</b>해 조사해 보세요", "inspect"],
+    [K("Tab", "w2"), "<b>Tab</b>을 눌러 가방과 수첩을 열어 보세요", "bag"],
+  ];
+  document.body.insertAdjacentHTML("beforeend", `<div id="coach" class="coach"><span class="c-n"></span><span class="c-ic"></span><span class="c-t"></span><button id="coach-x" aria-label="연습 건너뛰기">건너뛰기</button></div>`);
+  document.body.classList.add("coaching");
+  let i = 0, lastYaw = yaw, turned = 0, lx = targetPos.x, lz = targetPos.z, walked = 0, wait = false;
+  const el = $("coach"), draw = () => { el.querySelector(".c-n").textContent = `연습 ${i + 1}/${steps.length}`; el.querySelector(".c-ic").innerHTML = steps[i][0]; el.querySelector(".c-t").innerHTML = steps[i][1]; el.classList.remove("ok"); };
+  const finish = (skipped) => {
+    clearInterval(coachT); coachT = null; lsSet(COACH_KEY, "1");
+    if (skipped) { el.remove(); document.body.classList.remove("coaching"); return; }
+    el.classList.add("ok"); el.querySelector(".c-n").textContent = "준비 끝!"; el.querySelector(".c-ic").textContent = "🎉"; el.querySelector(".c-t").innerHTML = "이제 단서를 찾아 문을 열어 보세요. 막히면 <b>💡 힌트</b>";
+    $("coach-x").remove();
+    setTimeout(() => { el.remove(); document.body.classList.remove("coaching"); }, 4500);
+  };
+  $("coach-x").onclick = () => finish(true);
+  draw();
+  coachT = setInterval(() => {
+    if (!document.body.classList.contains("playing")) { if (S.ch !== 0) finish(true); return; }
+    turned += Math.abs(yaw - lastYaw); lastYaw = yaw;
+    walked += Math.hypot(targetPos.x - lx, targetPos.z - lz); lx = targetPos.x; lz = targetPos.z;
+    if (wait) return;
+    const open = $("overlay").classList.contains("open"), k = steps[i][2];
+    const ok = k === "look" ? turned > 0.9 : k === "walk" ? walked > 2.5 : k === "inspect" ? open && !bagOpen : bagOpen;
+    if (!ok) return;
+    el.classList.add("ok"); el.querySelector(".c-ic").textContent = "✓"; sfx("item"); wait = true;
+    setTimeout(() => { wait = false; if (++i >= steps.length) finish(false); else { turned = 0; walked = 0; draw(); } }, 900);
+  }, 150);
+}
+
 function refreshIntro() {
   const s = store.get();
-  progressBar("intro-progress", s ? s.ch : 0);
+  progressBar("intro-progress", s ? s.ch : 0); renderPath(s ? s.ch : 0);
   $("btn-start").textContent = s ? `이어서 하기 (제${s.ch + 1}장)` : (THEME.startLabel || "시작하기");
   $("btn-restart").classList.toggle("hidden", !s);
 }
@@ -1218,6 +1343,7 @@ export function start(theme) {
   $("intro-tag").textContent = theme.introTag || `3D 방탈출 · 전 ${CHAPTERS.length}장`;
   $("intro-title").textContent = theme.title;
   $("intro-story").innerHTML = theme.intro;
+  buildIntroPages();
   const en = theme.ending;
   $("end-tag").textContent = en.tag; $("end-name").textContent = en.name; $("end-sub").textContent = en.sub;
   $("end-story").innerHTML = en.story; $("end-tl-title").textContent = en.timelineTitle;

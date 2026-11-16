@@ -170,6 +170,8 @@ let core, T, me, meta, ended = false, pendingRebuild = false, ver = 0, lastPub =
 const others = new Map();   // id → { g, label, tx, tz, ty, tyaw, nick, color }
 const pings = [];
 let coopRoot;
+const lobby = new Map();   // 시작하기 전 대기실: id → { nick, color }
+let onLobby = null;
 
 const progressOf = (S) => ({ ch: S.ch, flags: S.flags, inv: S.inv, used: S.used, journal: S.journal, hintIdx: S.hintIdx, hints: S.hints, wrong: S.wrong, done: !!S.done });
 
@@ -298,6 +300,10 @@ const STYLE = `
 .coop-dlg h2{margin:0 0 10px;font-size:20px}.coop-dlg input{width:100%;font:inherit;font-size:18px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);margin:6px 0;background:#fff;user-select:text}
 .coop-dlg .code{font-size:40px;font-weight:700;letter-spacing:10px;text-align:center;margin:8px 0;color:var(--red)}
 .coop-dlg .err{color:var(--red);font-size:14px;min-height:18px}
+.coop-dlg .who{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 4px}
+.coop-dlg .who span{display:flex;align-items:center;gap:6px;background:var(--paper-2);border-radius:999px;padding:5px 12px;font-weight:700}
+.coop-dlg .who i{width:12px;height:12px;border-radius:50%}
+.coop-dlg .who small{font-weight:400;opacity:.7}
 .coop{position:fixed;right:12px;bottom:12px;width:280px;z-index:5;background:rgba(20,16,12,.72);color:var(--paper);border:1px solid rgba(243,234,216,.25);border-radius:12px;font-size:13px;display:flex;flex-direction:column;backdrop-filter:blur(4px)}
 body:not(.playing) .coop, body:not(.playing) .coop-fab{display:none!important}
 .coop-head{display:flex;align-items:center;gap:6px;padding:7px 10px;border-bottom:1px solid rgba(243,234,216,.15)}
@@ -375,6 +381,13 @@ function say(text, quick) {
 
 /* ── 연결 관리 ── */
 function onEvent(ev) {
+  if (!coopRoot) {   // 아직 대기실
+    if (ev.t === "pos" && ev.d && typeof ev.d === "object") lobby.set(ev.id, ev.d);
+    else if (ev.t === "gone") lobby.delete(ev.id);
+    else if (ev.t === "meta") meta = { ...meta, ...ev.meta };
+    if (onLobby) onLobby();
+    return;
+  }
   if (ev.t === "pos") upsertOther(ev.id, ev.d);
   else if (ev.t === "gone") removeOther(ev.id);
   else if (ev.t === "state") { if (typeof ev.s === "string" && ev.s.length < 20000) merge(sanitize(ev.s), ev.id); }
@@ -416,7 +429,9 @@ function begin(res) {
   const P = res.state ? sanitize(res.state) : null;
   if (P) { Object.assign(S, { ch: Math.min(P.ch, core.CHAPTERS.length - 1), flags: P.flags, inv: P.inv, used: P.used, journal: P.journal, hintIdx: P.hintIdx, hints: P.hints, wrong: P.wrong }); }
   ui();
-  res.peers.forEach((p) => upsertOther(p.id, p));
+  onLobby = null;
+  res.peers.forEach((p) => { if (!lobby.has(p.id)) lobby.set(p.id, p); });
+  lobby.forEach((d, id) => upsertOther(id, d)); lobby.clear();
   (res.chat || []).forEach((c) => chatLine(c, false));
   sysLine(`방 코드 <b>${T.code}</b> — 친구에게 알려 주세요.`);
   core.begin(S);
@@ -475,10 +490,27 @@ export function openCoop(c) {
         res = await connect(code, nick, true); if (res.err !== "taken") break;
       }
       if (res.err) throw new Error(res.err);
-      $("cd-nick").disabled = true;
-      $("cd-step").innerHTML = `<p>방 코드</p><div class="code">${T.code}</div><p class="note">친구들에게 이 코드를 알려 주세요. 먼저 시작해도 친구가 나중에 들어올 수 있어요.</p><div class="actions"><button class="btn red" id="cd-go">시작하기</button></div>`;
-      $("cd-go").onclick = () => { close(); begin(res); };
+      waitRoom(res, true);
     } catch (e) { T = null; busy(false); menu(); err("방을 만들지 못했어요. 인터넷 연결을 확인하고 다시 해 보세요."); }
+  }
+  // 대기실: 누가 들어왔는지 보고 나서 시작한다
+  function waitRoom(res, host) {
+    err(""); $("cd-nick").disabled = true;
+    res.peers.forEach((p) => lobby.set(p.id, p));
+    $("cd-step").innerHTML = `<p>방 코드</p><div class="code">${T.code}</div>
+      <p class="note">${host ? "친구들에게 이 코드를 알려 주세요. 들어오면 아래에 이름이 나타나요." : "같은 방에 들어왔어요. 함께할 친구를 확인하세요."}</p>
+      <div class="who" id="cd-who"></div>
+      <p class="note" id="cd-wait"></p>
+      <div class="actions"><button class="btn red" id="cd-go">시작하기</button></div>`;
+    const draw = () => {
+      const row = (nick, color, tag) => `<span><i style="background:${CSS_COLOR(color)}"></i>${esc(clean(String(nick || "친구").slice(0, NICK_MAX)))}${tag ? ` <small>${tag}</small>` : ""}</span>`;
+      const list = [row(me.nick, me.color, host ? "나 · 방장" : "나")];
+      lobby.forEach((d, id) => list.push(row(d.nick, Number.isInteger(d.color) ? d.color : 0, id === meta?.host ? "방장" : "")));
+      $("cd-who").innerHTML = list.join("");
+      $("cd-wait").textContent = lobby.size ? `지금 ${lobby.size + 1}명. 모두 모였으면 시작하기를 누르세요. (나중에 들어오는 친구도 이어서 할 수 있어요)` : "아직 혼자예요. 친구가 들어오기를 기다리는 중…";
+    };
+    onLobby = draw; draw();
+    $("cd-go").onclick = () => { onLobby = null; close(); begin(res); };
   }
   function joinForm(code) {
     $("cd-step").innerHTML = `<label>방 코드 <input id="cd-code" maxlength="4" placeholder="예: K7QM" autocomplete="off" style="text-transform:uppercase;letter-spacing:6px;font-weight:700"></label>
@@ -500,7 +532,7 @@ export function openCoop(c) {
         try { sessionStorage.setItem("coop-go", JSON.stringify({ code, nick })); } catch (e) {}
         location.href = `${th}.html${location.search}`; return;
       }
-      close(); begin(res);
+      waitRoom(res, false);
     } catch (e) { T = null; busy(false); err("들어가지 못했어요. 인터넷 연결을 확인하고 다시 해 보세요."); }
   }
   if (go?.code) joinForm(go.code); else menu();
