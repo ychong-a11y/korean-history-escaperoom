@@ -1011,8 +1011,9 @@ function play() {
   if (CH.onEnter) setTimeout(() => CH.onEnter(A), 400);
 }
 function progressBar(el, done) { $(el).innerHTML = CHAPTERS.map((_, i) => `<span class="${i < done ? "done" : ""}"></span>`).join(""); }
-function clearChapter() {
+function clearChapter(force) {
   if (S.ch !== loadedCh) return;
+  if (COOP && COOP.gate && force !== true && !COOP.gate()) { inputLocked = false; return; }   // 함께하기: 두 사람 빗장이 먼저
   clearInterval(tickT); inputLocked = true;
   $("overlay").classList.remove("open"); showHUD(false);
   const c = CH.clear, took = S.elapsed - (S.chStart || 0);

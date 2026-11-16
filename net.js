@@ -205,7 +205,7 @@ function merge(P, from) {
   let changed = false, world = false;
   if (P.ch > S.ch) {
     changed = true;
-    if (P.ch === S.ch + 1 && core.inGame()) { core.clearChapter(); core.toast(`👥 ${who}님이 이 장을 탈출했다!`, 3500); }
+    if (P.ch === S.ch + 1 && core.inGame()) { core.A.closeModal(); core.clearChapter(true); core.toast(`👥 ${who}님이 이 장을 탈출했다!`, 3500); }
     else { S.ch = P.ch; S.inv = []; S.used = []; S.chStart = S.elapsed; delete S.pos; if (core.inGame()) { pendingRebuild = "fresh"; } }
   }
   for (const f of P.flags) if (!S.flags.includes(f)) { S.flags.push(f); changed = world = true; }
@@ -315,6 +315,14 @@ body:not(.playing) .coop, body:not(.playing) .coop-fab{display:none!important}
 .coop-quick .ping{background:rgba(178,58,46,.6)}
 .coop-form{display:flex;gap:4px;padding:0 8px 8px}.coop-form input{flex:1;min-width:0;font:inherit;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid rgba(243,234,216,.3);background:rgba(0,0,0,.35);color:var(--paper);user-select:text}
 .coop-host{padding:0 10px 8px;font-size:12px;opacity:.9}
+.coop-duo{display:block;margin:0 8px 8px;width:calc(100% - 16px);background:var(--gold);color:#2b2118;border:0;border-radius:10px;padding:8px;font-weight:700;font-size:13px}
+.duo-seq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:12px 0}
+.duo-seq span{display:flex;flex-direction:column;align-items:center;background:var(--paper-3);border:1px solid var(--line);border-radius:12px;padding:6px 12px;font-weight:700;min-width:54px}
+.duo-seq span i{font-style:normal;font-size:30px;line-height:1.2}.duo-seq small{font-size:11px;color:var(--red)}.duo-seq em{font-style:normal;opacity:.5}
+.duo-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
+.duo-pad button{background:var(--paper-3);border:1px solid var(--line);border-bottom-width:3px;border-radius:12px;padding:8px 4px;font-weight:700;display:flex;flex-direction:column;align-items:center}
+.duo-pad button i{font-style:normal;font-size:30px;line-height:1.2}.duo-pad button:active{transform:translateY(2px)}
+.duo-prog{display:flex;gap:6px;justify-content:center;margin:8px 0}.duo-prog i{width:14px;height:14px;border-radius:50%;border:2px solid var(--gold)}.duo-prog i.on{background:var(--gold)}
 .coop-fab{display:none;position:fixed;right:10px;top:96px;z-index:5;flex-direction:column;gap:8px}
 .coop-fab button{font-size:20px;width:44px;height:44px;padding:0;border-radius:50%;background:rgba(20,16,12,.6);position:relative}
 .coop-fab .dot{position:absolute;right:2px;top:2px;width:10px;height:10px;border-radius:50%;background:var(--red)}
@@ -329,6 +337,7 @@ function ui() {
 <div class="coop-log" id="coop-log"></div>
 <div class="coop-quick" id="coop-quick">${QUICK.map((q) => `<button data-q="${esc(q)}">${esc(q)}</button>`).join("")}<button class="ping" id="coop-ping">📍 여기!${core.isTouch ? "" : " (Q)"}</button></div>
 <form class="coop-form" id="coop-form"><input id="coop-in" maxlength="${MSG_MAX}" placeholder="${core.isTouch ? "메시지" : "Enter로 메시지"}" autocomplete="off"><button>보내기</button></form>
+<button class="coop-duo hidden" id="coop-duo"></button>
 <div class="coop-host hidden" id="coop-host"><label><input type="checkbox" id="coop-chatoff"> 채팅 끄기 (빠른 말·핑만)</label></div></div>
 <div class="coop-fab" id="coop-fab"><button id="coop-tog" aria-label="대화">💬</button><button id="coop-ping2" aria-label="여기 표시">📍</button></div>`);
   $("coop-code").textContent = T.code;
@@ -379,6 +388,71 @@ function say(text, quick) {
   return true;
 }
 
+/* ── 두 사람 빗장: 함께할 때만 나오는, 둘이 말을 나눠야 풀리는 자물쇠 ──
+   장의 마지막 자물쇠를 푼 사람에게는 '무늬 순서'만 보이고, 다른 친구에게는 '누르는 빗장'만 보인다.
+   순서를 말(채팅)로 알려 줘야 문이 열린다. 방에 혼자면 나오지 않는다.
+   진행 표시(flags): duo|장|순서|만든사람 → 풀리면 duoOK|장 */
+const DUO_SYM = [["🌞", "해"], ["🌙", "달"], ["⛰️", "산"], ["🌊", "물"], ["🌲", "솔"], ["🪨", "돌"]];
+const myTag = () => String(T.id).slice(0, 6);
+const duoFlag = (ch) => core.S.flags.find((f) => f.startsWith(`duo|${ch}|`));
+const duoDone = (ch) => core.S.flags.includes(`duoOK|${ch}`);
+let duoNext = 0;   // 빗장 창을 다시 띄울 수 있는 시각
+function duoGate() {   // 엔진이 장을 끝내기 직전에 묻는다. true = 그냥 통과
+  const S = core.S, ch = S.ch;
+  if (!others.size || duoDone(ch)) return true;
+  let f = duoFlag(ch);
+  if (!f) {
+    const n = Math.min(5, 3 + Math.floor(ch / 2)), pool = [0, 1, 2, 3, 4, 5], seq = [];
+    while (seq.length < n) seq.push(pool.splice(Math.floor(Math.random() * pool.length), 1)[0]);
+    f = `duo|${ch}|${seq.join("")}|${myTag()}`; S.flags.push(f); core.save();
+    core.toast("🔐 문에 빗장이 하나 더 걸려 있다. 친구의 손이 필요하다!", 3500);
+  }
+  duoShow(f);
+  return false;
+}
+function duoPass(ch) {
+  const S = core.S; if (S.ch !== ch) return;
+  if (!duoDone(ch)) S.flags.push(`duoOK|${ch}`);
+  core.A.closeModal(); core.sfx("solve"); core.clearChapter(true);
+}
+function duoShow(f) {
+  const [, chS, seqS, owner] = f.split("|"), ch = +chS, seq = [...seqS].map(Number), body = core.$("modal-body");
+  duoNext = Date.now() + 25000;
+  if (owner === myTag()) {   // 무늬 순서가 보이는 쪽
+    core.A.card("🔐 두 사람 빗장 — 안쪽", `<p>문 안쪽 빗장에 무늬가 <b>차례대로</b> 새겨져 있다. 바깥 빗장은 <b>친구만</b> 누를 수 있다.</p>
+      <div class="duo-seq">${seq.map((i, k) => `<span><small>${k + 1}</small><i>${DUO_SYM[i][0]}</i>${DUO_SYM[i][1]}</span>`).join("<em>→</em>")}</div>
+      <p class="note">이 순서를 친구에게 <b>말이나 채팅으로</b> 알려 주세요. 친구 화면에는 누르는 빗장만 보여요.</p>
+      <p class="note" id="duo-solo">친구가 자리에 없나요? 잠시 뒤 혼자 여는 방법이 나타나요.</p>`);
+    setTimeout(() => { const el = body.querySelector("#duo-solo"); if (el && !duoDone(ch)) { el.innerHTML = `<button class="btn ghost" id="duo-force">혼자 힘껏 밀어 열기</button>`; body.querySelector("#duo-force").onclick = () => duoPass(ch); } }, 60000);
+    return;
+  }
+  // 누르는 쪽: 무늬 여섯 개, 순서는 친구만 안다
+  const order = [3, 0, 5, 1, 4, 2];
+  core.A.card("🔐 두 사람 빗장 — 바깥쪽", `<p>친구가 마지막 자물쇠를 풀었다! 그런데 문 바깥에 빗장이 하나 더 있다. 무늬를 <b>정해진 순서대로</b> 눌러야 열린다.</p>
+    <p class="note">순서는 <b>친구 화면에만</b> 보여요. 친구에게 물어보세요.</p>
+    <div class="duo-prog" id="duo-prog">${seq.map(() => "<i></i>").join("")}</div>
+    <div class="duo-pad" id="duo-pad">${order.map((i) => `<button data-i="${i}"><i>${DUO_SYM[i][0]}</i>${DUO_SYM[i][1]}</button>`).join("")}</div>`);
+  let at = 0;
+  const prog = () => body.querySelectorAll("#duo-prog i").forEach((d, k) => d.classList.toggle("on", k < at));
+  body.querySelector("#duo-pad").onclick = (e) => {
+    const b = e.target.closest("[data-i]"); if (!b) return;
+    if (+b.dataset.i === seq[at]) { at++; prog(); const m0 = core.$("msg"); if (m0) m0.textContent = ""; core.sfx("item"); if (at === seq.length) duoPass(ch); }
+    else { at = 0; prog(); core.S.wrong++; core.sfx("wrong"); const m = core.$("msg"); if (m) { m.className = "msg bad"; m.textContent = "순서가 다르다. 처음부터 다시! 친구에게 한 번 더 물어보자."; } }
+  };
+}
+// 1초마다: 풀리지 않은 빗장이 있으면 단추를 보여 주고, 누르는 쪽에는 창을 띄운다
+function duoWatch() {
+  const S = core.S, btn = core.$("coop-duo"); if (!S || !btn || ended) return;
+  const f = core.inGame() ? duoFlag(S.ch) : null, pending = !!f && !duoDone(S.ch);
+  btn.classList.toggle("hidden", !pending);
+  if (!pending) return;
+  const mine = f.split("|")[3] === myTag();
+  btn.textContent = mine ? "🔐 빗장 무늬 다시 보기" : "🔐 빗장 풀기";
+  btn.onclick = () => duoShow(f);
+  if (!others.size && mine) return;
+  if (!mine && !core.modalOpen() && Date.now() > duoNext) duoShow(f);
+}
+
 /* ── 연결 관리 ── */
 function onEvent(ev) {
   if (!coopRoot) {   // 아직 대기실
@@ -425,7 +499,7 @@ async function connect(code, nick, create) {
 function begin(res) {
   coopRoot = new core.THREE.Group(); core.scene.add(coopRoot);
   const S = core.fresh();
-  core.setCoop({ onSave: () => publish(false), elapsed: (S) => Math.max(0, (T.now() - (meta.t0 || T.now())) / 1000) + S.hints * 60, tick, onEnd: () => { core.S.done = true; ended = true; publish(true); } });
+  core.setCoop({ gate: duoGate, onSave: () => publish(false), elapsed: (S) => Math.max(0, (T.now() - (meta.t0 || T.now())) / 1000) + S.hints * 60, tick, onEnd: () => { core.S.done = true; ended = true; publish(true); } });
   const P = res.state ? sanitize(res.state) : null;
   if (P) { Object.assign(S, { ch: Math.min(P.ch, core.CHAPTERS.length - 1), flags: P.flags, inv: P.inv, used: P.used, journal: P.journal, hintIdx: P.hintIdx, hints: P.hints, wrong: P.wrong }); }
   ui();
@@ -438,6 +512,7 @@ function begin(res) {
   window.__coop = { others, pings, get T() { return T; }, get meta() { return meta; }, say, doPing, leave };   // 시험용
   // 내 위치를 1초에 5번 보낸다 (안 움직이면 1초에 한 번)
   let lastSent = "", lastT = 0;
+  setInterval(duoWatch, 1000);
   setInterval(() => {
     tryRebuild();
     if (!core.S) return;
@@ -501,6 +576,7 @@ export function openCoop(c) {
       <p class="note">${host ? "친구들에게 이 코드를 알려 주세요. 들어오면 아래에 이름이 나타나요." : "같은 방에 들어왔어요. 함께할 친구를 확인하세요."}</p>
       <div class="who" id="cd-who"></div>
       <p class="note" id="cd-wait"></p>
+      <p class="note">🔐 함께하면 장 끝마다 <b>두 사람 빗장</b>이 나와요. 한 명에게만 보이는 무늬 순서를 말로 알려 줘야 열려요.</p>
       <div class="actions"><button class="btn red" id="cd-go">시작하기</button></div>`;
     const draw = () => {
       const row = (nick, color, tag) => `<span><i style="background:${CSS_COLOR(color)}"></i>${esc(clean(String(nick || "친구").slice(0, NICK_MAX)))}${tag ? ` <small>${tag}</small>` : ""}</span>`;

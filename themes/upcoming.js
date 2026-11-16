@@ -1,6 +1,6 @@
 THEMES.push(
   {
-    id: "stele", era: "삼국 시대", save: "stele-v1", available: true, href: "stele.html", icon: "🪨", year: "???",
+    id: "stele", players: "1~2명", playersNote: "혼자서도 차근차근 풀 수 있어요. 처음이라면 이 문부터! 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "삼국 시대", save: "stele-v1", available: true, href: "stele.html", icon: "🪨", year: "???",
     title: "돌에 새긴 이름",
     summary: "거대한 비석을 떠낸 탁본. 왕의 이름이 있어야 할 자리만 닳아 지워져 있다.",
     role: "열여덟에 왕이 된 사람",
@@ -9,7 +9,7 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "river", era: "삼국 시대", save: "river-v1", available: true, href: "river.html", icon: "🌊", year: "???",
+    id: "river", players: "2~3명", playersNote: "지도와 숫자를 맞춰 보는 문제가 많아 둘이 나눠 보면 빨라요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "삼국 시대", save: "river-v1", available: true, href: "river.html", icon: "🌊", year: "???",
     title: "물이 빠진 강",
     summary: "강물이 얕아졌다. 강을 건너오는 대군, 그리고 상류에 숨겨진 비밀.",
     role: "백만 대군을 맞은 장수",
@@ -18,7 +18,7 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "hwarang", era: "삼국 시대", save: "hwarang-v1", available: true, href: "hwarang.html", icon: "🪶", year: "???",
+    id: "hwarang", players: "1~2명", playersNote: "혼자서도 좋아요. 둘이면 동굴에서 서로 길을 봐 줄 수 있어요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "삼국 시대", save: "hwarang-v1", available: true, href: "hwarang.html", icon: "🪶", year: "???",
     title: "열다섯의 맹세",
     summary: "두 젊은이가 하늘에 맹세한 작은 돌. 옆 진열장 화랑 명패의 이름이 지워져 있다.",
     role: "열다섯에 화랑이 된 소년",
@@ -27,7 +27,7 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "gate668", era: "삼국 시대", save: "gate668-v1", available: true, href: "gate668.html", icon: "🏯", year: "???",
+    id: "gate668", players: "2~3명", playersNote: "넓은 성 안을 나눠서 살펴보면 좋아요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "삼국 시대", save: "gate668-v1", available: true, href: "gate668.html", icon: "🏯", year: "???",
     title: "무너지는 성문",
     summary: "성 밖을 가득 메운 두 나라의 깃발. 성문이 열리기 전에 무엇을 지켜야 할까?",
     role: "무너지는 성에서 살아남은 젊은이",
@@ -36,7 +36,7 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "diary", era: "조선 시대", save: "diary-full-v1", available: true, href: "diary.html", icon: "📓", year: "???",
+    id: "diary", players: "2~4명", playersNote: "가장 어려운 문. 여럿이 머리를 맞대는 걸 추천해요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "조선 시대", save: "diary-full-v1", available: true, href: "diary.html", icon: "📓", year: "???",
     title: "이름 없는 일기장",
     summary: "주인의 이름이 긁혀 지워진 낡은 일기장. 첫 장을 펼치는 순간, 낯선 집 마당에서 눈을 떴다.",
     role: "날마다 일기를 쓴 장수",
@@ -45,7 +45,7 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "snowfort", era: "조선 시대", save: "snowfort-v1", available: true, href: "snowfort.html", icon: "❄️", year: "???",
+    id: "snowfort", players: "2~3명", playersNote: "문서 조각과 단서가 여러 곳에 흩어져 있어요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "조선 시대", save: "snowfort-v1", available: true, href: "snowfort.html", icon: "❄️", year: "???",
     title: "눈 덮인 산성",
     summary: "산성에 갇힌 지 수십 일. 성안의 식량은 줄어들고, 결정을 내려야 한다.",
     role: "찢긴 문서를 다시 이어 붙인 신하",
@@ -54,7 +54,7 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "harbin", era: "나라를 되찾으려던 때", save: "harbin-v1", available: true, href: "harbin.html", icon: "🕘", year: "???",
+    id: "harbin", players: "1~2명", playersNote: "이야기를 따라가는 맛이 커서 혼자 해도 좋아요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "나라를 되찾으려던 때", save: "harbin-v1", available: true, href: "harbin.html", icon: "🕘", year: "???",
     title: "아침 아홉 시 반",
     summary: "아홉 시 반에 멈춘 회중시계, 넷째 손가락이 짧은 손도장. 태엽을 감자 시간이 거꾸로 흐른다.",
     role: "넷째 손가락이 짧은 사람",
@@ -63,7 +63,7 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "paper", era: "나라를 되찾으려던 때", save: "paper-v1", available: true, href: "paper.html", icon: "📜", year: "???",
+    id: "paper", players: "2~3명", playersNote: "찾을 것이 많아 역할을 나누면 좋아요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "나라를 되찾으려던 때", save: "paper-v1", available: true, href: "paper.html", icon: "📜", year: "???",
     title: "숨겨진 종이 뭉치",
     summary: "인쇄소 바닥 밑에 숨긴 종이 수만 장. 날이 밝기 전에 전해야 한다.",
     role: "종이 뭉치를 품고 달린 학생",

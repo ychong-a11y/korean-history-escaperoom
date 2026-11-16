@@ -77,6 +77,37 @@ button { font: inherit; cursor: pointer; color: inherit; }
 .how3 span { display: flex; align-items: center; gap: 6px; background: rgba(255,255,255,.08); border-radius: 999px; padding: 6px 12px; }
 .how3 i { font-style: normal; font-size: 16px; } .how3 em { font-style: normal; opacity: .5; }
 .hub-progress { margin-top: 12px; font-size: 13px; opacity: .85; } .hub-progress b { color: var(--gold); font-size: 16px; }
+/* 연표 */
+.tl-hint { display: none; text-align: center; font-size: 12px; opacity: .6; margin: 0 0 6px; }
+@media (max-width: 760px) { .tl-hint { display: block; } }
+.tl-wrap { overflow-x: auto; margin: 0 -16px 18px; padding: 0 16px 6px; scrollbar-width: thin; }
+.tl { display: flex; min-width: 720px; }
+.tl-era { min-width: 0; }
+.tl-era + .tl-era { border-left: 1px dashed rgba(176,138,58,.5); }
+.tl-era-name { text-align: center; color: var(--gold); font-family: "Gowun Batang", serif; font-weight: 700; font-size: 17px; padding: 4px 6px 12px; white-space: nowrap; }
+.tl-dots { display: flex; position: relative; }
+.tl-dots::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 2px; background: rgba(176,138,58,.6); }
+.tl-dot { flex: 1; min-width: 0; background: none; border: 0; padding: 0 2px 8px; display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--paper); position: relative; border-radius: 12px; }
+.tl-dot .dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--gold); background: #1c1611; display: grid; place-items: center; font-size: 12px; font-weight: 700; color: #1c1611; transition: transform .15s; z-index: 1; }
+.tl-dot.going .dot { border-color: #e2584c; box-shadow: 0 0 0 4px rgba(226,88,76,.25); }
+.tl-dot.cleared .dot { background: var(--gold); }
+.tl-dot .ic { font-size: 26px; line-height: 1.3; margin-top: 4px; }
+.tl-dot .nm { font-size: 12px; line-height: 1.35; opacity: .75; text-align: center; word-break: keep-all; padding: 0 2px; }
+.tl-dot:hover .dot { transform: scale(1.2); }
+.tl-dot.on { background: rgba(255,255,255,.08); }
+.tl-dot.on .dot { transform: scale(1.3); background: var(--paper); border-color: var(--paper); }
+.tl-dot.on.cleared .dot { background: var(--gold); }
+.tl-dot.on .nm { opacity: 1; font-weight: 700; }
+.theme.big { flex-direction: row; max-width: 820px; margin: 0 auto; cursor: default; text-align: left; }
+.theme.big:hover { transform: none !important; }
+.theme.big .cover { flex: 0 0 34%; height: auto; min-height: 220px; font-size: 84px; }
+.theme.big .info { padding: 20px 22px; gap: 9px; }
+.theme.big h2 { font-size: 28px; } .theme.big p { flex: none; font-size: 15px; }
+.theme .pnote { font-size: 13px !important; color: var(--ink-soft); }
+.badge.people { background: var(--blue); color: var(--paper); font-weight: 700; }
+.theme .go { display: flex; justify-content: flex-end; margin-top: 4px; }
+.btn-go { border: 0; border-radius: 10px; padding: 11px 18px; font-weight: 700; background: var(--red); color: var(--paper); font-size: 15px; }
+@media (max-width: 640px) { .theme.big { flex-direction: column; } .theme.big .cover { flex: none; min-height: 0; height: 120px; font-size: 56px; } .theme.big h2 { font-size: 24px; } .btn-go { width: 100%; } }
 .theme.soon { opacity: .55; cursor: default; }
 .theme.soon .cover { filter: grayscale(1); }
 
@@ -221,14 +252,16 @@ input.text-answer { width: 100%; padding: 12px; font-size: 18px; border-radius: 
       <h1>시간의 문</h1>
       <p>문 하나를 골라 그 시대 속으로 들어가세요.<br>누구의 이야기인지는 <b>끝까지 풀어야</b> 알 수 있어요.</p>
       <div class="how3">
-        <span><i>🚪</i>문을 고르고</span><em>›</em>
+        <span><i>🚪</i>연표에서 문을 고르고</span><em>›</em>
         <span><i>🔍</i>단서를 찾아</span><em>›</em>
         <span><i>🔐</i>자물쇠를 풀면</span><em>›</em>
         <span><i>👤</i>주인공이 밝혀져요</span>
       </div>
       <div class="hub-progress" id="hub-progress"></div>
     </div>
-    <div id="themes"></div>
+    <p class="tl-hint">← 연표를 옆으로 밀어 보세요 →</p>
+    <div class="tl-wrap"><div class="tl" id="tl"></div></div>
+    <div id="detail"></div>
   </section>
 
   <!-- 테마 소개 -->
@@ -342,40 +375,47 @@ function save() { if (T && S) store.set(saveKey(), S); }
 
 /* ===================== 테마 선택 ===================== */
 function renderHub() {
-  $("themes").innerHTML = "";
   const raw = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
-  let era = null, grid = null, nCleared = 0;
-  THEMES.forEach((t, idx) => {
-    if (t.era !== era) {   // 시대가 바뀌면 새 묶음 (목록은 시대 순서)
-      era = t.era;
-      $("themes").insertAdjacentHTML("beforeend", `<div class="era"><span>${era || ""}</span></div><div class="themes"></div>`);
-      grid = $("themes").lastElementChild;
-    }
-    const b = document.createElement("button");
-    const cleared = t.save ? raw("escape-cleared-" + t.save) : store.get(clearKey(t.id));
-    const saved = t.available && store.get(t.save || "escape-save-" + t.id);
-    if (cleared) nCleared++;
-    b.className = "theme" + (t.available ? "" : " soon");
-    b.innerHTML = `
-      <div class="cover" style="background:${t.cover}"><span>${t.icon}</span><span class="year">${t.era ? `${idx + 1}번째 문` : t.year}</span>${cleared ? `<span class="stamp">탈출!</span>` : ""}</div>
+  const info = THEMES.map((t, idx) => ({
+    t, idx,
+    cleared: t.save ? raw("escape-cleared-" + t.save) : store.get(clearKey(t.id)),
+    saved: t.available && store.get(t.save || "escape-save-" + t.id),
+  }));
+  // 연표: 시대별 묶음 안에 테마를 점으로 (목록은 시대 순서)
+  const eras = [];
+  info.forEach((x) => { const last = eras[eras.length - 1]; if (last && last.name === x.t.era) last.items.push(x); else eras.push({ name: x.t.era, items: [x] }); });
+  $("tl").innerHTML = eras.map((e) => `<div class="tl-era" style="flex:${e.items.length}"><div class="tl-era-name">${e.name || ""}</div><div class="tl-dots">${e.items.map((x) =>
+    `<button class="tl-dot${x.cleared ? " cleared" : ""}${x.saved ? " going" : ""}" data-i="${x.idx}" aria-label="${x.t.title}"><span class="dot">${x.cleared ? "✓" : ""}</span><span class="ic">${x.t.icon}</span><span class="nm">${x.t.title}</span></button>`).join("")}</div></div>`).join("");
+  const select = (i, scroll) => {
+    const x = info[i], t = x.t;
+    try { sessionStorage.setItem("hub-sel", String(i)); } catch (e) {}
+    $("tl").querySelectorAll(".tl-dot").forEach((b) => b.classList.toggle("on", +b.dataset.i === i));
+    if (scroll) $("tl").querySelector(".tl-dot.on")?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
+    const label = x.saved ? `이어서 하기${typeof x.saved.ch === "number" ? ` · 제${x.saved.ch + 1}장` : ""}` : x.cleared ? "다시 하기" : "이 문으로 들어가기";
+    $("detail").innerHTML = `<div class="theme big">
+      <div class="cover" style="background:${t.cover}"><span>${t.icon}</span><span class="year">${t.era} · ${i + 1}번째 문</span>${x.cleared ? `<span class="stamp">탈출!</span>` : ""}</div>
       <div class="info">
         <h2>${t.title}</h2>
         <p>${t.summary}</p>
         ${t.role ? `<div class="role">🎭 이번에 따라갈 사람 — <b>${t.role}</b></div>` : ""}
-        ${t.tags ? `<div class="tags">${t.tags.map((x) => `<span>${x}</span>`).join("")}</div>` : ""}
+        ${t.tags ? `<div class="tags">${t.tags.map((s) => `<span>${s}</span>`).join("")}</div>` : ""}
         <div class="meta">
-          ${t.available ? `<span class="badge play">${saved ? `이어서 하기${typeof saved.ch === "number" ? ` · 제${saved.ch + 1}장` : ""}` : cleared ? "다시 하기" : "들어가기"}</span>` : `<span class="badge">준비 중</span>`}
-          ${t.available ? `<span class="badge">⏱ ${t.playtime}</span>` : ""}
-          ${cleared ? `<span class="badge cleared">탈출 성공 · ${String(cleared).replace(/"/g, "")}</span>` : ""}
+          ${t.players ? `<span class="badge people">👥 추천 ${t.players}</span>` : ""}
+          <span class="badge">⏱ ${t.playtime}</span>
+          ${x.cleared ? `<span class="badge cleared">탈출 성공 · ${String(x.cleared).replace(/"/g, "")}</span>` : ""}
         </div>
-      </div>`;
-    if (t.available && t.href) b.onclick = () => { location.href = t.href; };
-    else if (t.available) b.onclick = () => openIntro(t);
-    else b.setAttribute("aria-disabled", "true");
-    grid.appendChild(b);
-  });
-  const total = THEMES.filter((t) => t.available).length;
-  $("hub-progress").innerHTML = `<b>${nCleared}</b> / ${total} 탈출` + (nCleared === total ? " · 🎉 모든 문을 열었어요!" : nCleared ? " · 다음 문으로!" : "");
+        ${t.playersNote ? `<p class="pnote">${t.playersNote}</p>` : ""}
+        <div class="go"><button class="btn-go" id="btn-go">${label} →</button></div>
+      </div></div>`;
+    $("btn-go").onclick = () => { if (t.href) location.href = t.href; else openIntro(t); };
+  };
+  $("tl").onclick = (e) => { const b = e.target.closest(".tl-dot"); if (b) select(+b.dataset.i, true); };
+  let sel = NaN; try { sel = parseInt(sessionStorage.getItem("hub-sel"), 10); } catch (e) {}
+  if (!(sel >= 0 && sel < info.length)) sel = (info.find((x) => x.saved) || info.find((x) => !x.cleared) || info[0]).idx;
+  select(sel, false);
+  { const w = $("tl").parentElement, d = $("tl").querySelector(".tl-dot.on"); if (d) w.scrollLeft = d.getBoundingClientRect().left - w.getBoundingClientRect().left + w.scrollLeft - w.clientWidth / 2 + d.offsetWidth / 2; }
+  const nCleared = info.filter((x) => x.cleared).length, total = info.length;
+  $("hub-progress").innerHTML = `<b>${nCleared}</b> / ${total} 탈출` + (nCleared === total ? " · 🎉 모든 문을 열었어요!" : " · 연표의 점을 눌러 문을 고르세요");
   show("hub");
 }
 
