@@ -87,7 +87,9 @@ class FirebaseTransport {
     const [app, db, auth] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-database.js"), import(base + "firebase-auth.js")]);
     this.db = db;
     this.app = app.initializeApp(this.cfg, "coop");
-    const cred = await auth.signInAnonymously(auth.getAuth(this.app));   // 익명 로그인: 개인 정보 없이 '이 기기'만 구분
+    // 익명 로그인: 개인 정보 없이 '이 탭'만 구분. 탭마다 따로(세션 저장) 해야 한 컴퓨터의 여러 탭·창이 서로 다른 사람으로 들어온다.
+    const A = auth.initializeAuth(this.app, { persistence: auth.browserSessionPersistence });
+    const cred = await auth.signInAnonymously(A);
     this.id = cred.user.uid;
     this.D = db.getDatabase(this.app);
     this.offs.push(db.onValue(db.ref(this.D, ".info/serverTimeOffset"), (s) => { this.offset = s.val() || 0; }));
@@ -215,6 +217,10 @@ function merge(P, from) {
   if (P.wrong > S.wrong) { S.wrong = P.wrong; changed = true; }
   if (world && core.inGame() && !pendingRebuild) pendingRebuild = "keep";
   if (changed) { core.save(); core.renderInv(); }
+  // 거의 동시에 둘이 저장하면 방의 진행 상황(한 칸)에 늦게 쓴 쪽만 남는다.
+  // 받은 것에 내 것이 빠져 있으면 다시 올려서 잃어버리지 않게 한다.
+  const lacks = (mine, theirs) => mine.some((x) => !theirs.includes(x));
+  if (S.ch > P.ch || lacks(S.flags, P.flags) || (S.ch === P.ch && (lacks(S.inv, P.inv) || lacks(S.used, P.used)))) publish(true);
 }
 
 // 세계 다시 짓기 (창이 열려 있으면 닫힐 때까지 미룸). 내 위치는 그대로.
