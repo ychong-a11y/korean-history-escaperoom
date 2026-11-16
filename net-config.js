@@ -12,3 +12,6 @@ export const FIREBASE_CONFIG = {
   messagingSenderId: "658708366725",
   appId: "1:658708366725:web:9645140676ead9bb25b0ec",
 };
+
+// 음성 대화: database.rules.json 의 rtc 규칙을 Firebase 콘솔에 올린 뒤에 true 로 바꾼다 (그 전에는 버튼이 보이지 않는다)
+export const VOICE = false;

@@ -3,7 +3,7 @@
    - 전송: LocalTransport(같은 브라우저 탭끼리, 시험용 ?local=1) · FirebaseTransport(Realtime Database)
    - 진행 공유: 저장할 때마다 S의 진행 부분을 방에 올리고, 받은 쪽은 합집합/최댓값으로 합친다.
    설계 설명은 ENGINE-GUIDE.md 9절. */
-import { FIREBASE_CONFIG } from "./net-config.js";
+import { FIREBASE_CONFIG, VOICE } from "./net-config.js";
 
 const FB_VER = "10.14.1";
 const CODE_CHARS = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";   // 0·O·1·I 는 헷갈려서 뺌
@@ -12,6 +12,8 @@ const QUICK = ["여기 와 봐!", "이거 뭐지?", "찾았다!", "잠깐만", "
 const COLORS = [0x2f6fb5, 0xc0392b, 0x2e8b57, 0xd4a017, 0x8e44ad, 0xe67e22, 0x16a5a5, 0xd35d9b];
 const CSS_COLOR = (i) => "#" + COLORS[i % COLORS.length].toString(16).padStart(6, "0");
 const LOCAL = new URLSearchParams(location.search).get("local") === "1";
+const VOICE_OK = !!window.RTCPeerConnection && (LOCAL || VOICE === true);   // 음성 대화: 데이터베이스 규칙에 rtc 칸이 생긴 뒤 net-config.js에서 켠다
+const FAKE_MIC = LOCAL && new URLSearchParams(location.search).get("fakemic") === "1";   // 시험용: 마이크 대신 삐 소리
 const rid = () => Math.random().toString(36).slice(2, 10);
 // 이미 방에 있는 사람들과 겹치지 않는 옷 색 고르기
 const pickColor = (peerColors) => { const used = new Set(peerColors); return [...COLORS.keys()].find((i) => !used.has(i)) ?? peerColors.length % COLORS.length; };
@@ -63,9 +65,11 @@ class LocalTransport {
     if (m.k === "state") this.on({ t: "state", id: m.from, s: m.d.s, v: m.d.v });
     else if (m.k === "chat") this.on({ t: "chat", id: m.from, d: m.d });
     else if (m.k === "ping") this.on({ t: "ping", id: m.from, d: m.d });
+    else if (m.k === "sig") { if (m.d && m.d.to === this.id) this.on({ t: "sig", id: m.from, d: m.d.d }); }
     else if (m.k === "meta") { this.meta = { ...this.meta, ...m.d }; this.on({ t: "meta", meta: m.d }); }
   }
   // 8초 동안 소식이 없으면 나간 것으로 본다 (탭을 그냥 닫은 경우)
+  sendSig(to, d) { this._send("sig", { to, d }); }
   _watch() { this.alive ??= setInterval(() => { const t = Date.now(); for (const [id, last] of this.peers) if (t - last > 8000) { this.peers.delete(id); this.on({ t: "gone", id }); } }, 2000); }
   sendPos(p) { this.me = { ...this.me, ...p }; this._send("pos", this.me); }
   publishState(s, v) { this._send("state", { s, v }); }
@@ -141,7 +145,14 @@ class FirebaseTransport {
     sub(db.onChildAdded(db.query(db.child(room, "chat"), db.limitToLast(CHAT_KEEP)), (c) => { if (this.seenChat.has(c.key)) return; this.seenChat.add(c.key); const v = c.val(); if (v.uid !== this.id) this.on({ t: "chat", id: v.uid, d: v }); }));
     sub(db.onChildAdded(db.child(room, "pings"), (c) => { const v = c.val(); if (v.uid !== this.id && this.now() - (v.t || 0) < 6000) this.on({ t: "ping", id: v.uid, d: v }); }));
     sub(db.onValue(db.child(room, "meta"), (s) => { const v = s.val(); if (!v) this.on({ t: "closed" }); else this.on({ t: "meta", meta: v }); }));
+    // 음성 연결 신호: 내 앞으로 온 것만 읽고 바로 지운다
+    if (VOICE_OK) sub(db.onChildAdded(db.child(room, "rtc/" + this.id), (c) => {
+      const v = c.val(); db.remove(c.ref).catch(() => {});
+      if (!v || this.now() - (v.t || 0) > 30000) return;
+      try { this.on({ t: "sig", id: v.from, d: JSON.parse(v.d) }); } catch (e) {}
+    }));
   }
+  sendSig(to, d) { const db = this.db; return db.set(db.push(db.child(this.room, "rtc/" + to)), { from: this.id, d: JSON.stringify(d), t: db.serverTimestamp() }); }
   sendPos(p) { this.db.update(this.myRef, p).catch(() => {}); }
   publishState(s, v) { this.db.set(this.db.child(this.room, "state"), { s, v, by: this.id }).catch(() => {}); }
   async sendChat(d) {
@@ -267,7 +278,90 @@ function upsertOther(id, d) {
 function removeOther(id) {
   const o = others.get(id); if (!o) return;
   coopRoot.remove(o.g); o.g.traverse((m) => { if (m.material?.map) m.material.map.dispose(); });
+  vClose(id);
   others.delete(id); sysLine(`${esc(o.nick)}님이 나갔어요`); updateCount();
+}
+
+/* ── 음성 대화 ── 같은 방 사람들끼리 브라우저에서 브라우저로 직접 잇는다(WebRTC). 서버에는 연결 신호만 잠깐 오가고, 목소리는 저장되지 않는다.
+   켜는 사람만 들어온다(기본은 꺼짐). 두 사람 사이에서는 id가 앞서는 쪽이 먼저 연결을 건다. */
+const ICE = [{ urls: "stun:stun.l.google.com:19302" }];
+const V = { on: false, busy: false, muted: false, stream: null, pcs: new Map() };
+function fakeMic() { const c = new AudioContext(), o = c.createOscillator(), g = c.createGain(), d = c.createMediaStreamDestination(); o.frequency.value = 330; g.gain.value = 0.05; o.connect(g); g.connect(d); o.start(); return d.stream; }
+function vSend(to, d) { try { const p = T.sendSig(to, d); if (p && p.catch) p.catch(() => vFail()); } catch (e) { vFail(); } }
+function vFail() { if (!V.on) return; voiceLeave(true); sysLine("음성 연결 신호를 보낼 수 없어요. 잠시 뒤에 다시 켜 보세요."); }
+function vUI() {
+  const $ = core.$, bar = $("coop-vbar"); if (!bar) return;
+  const live = [...V.pcs.values()].filter((p) => p.pc.connectionState === "connected").length;
+  bar.classList.toggle("hidden", !V.on);
+  $("coop-vstat").textContent = V.on ? (live ? `🎙️ 음성 연결 ${live}명` : "🎙️ 음성 대기 중 (친구도 켜야 들려요)") : "";
+  $("coop-vmute").textContent = V.muted ? "🔇 내 마이크 켜기" : "🎙️ 내 마이크 끄기";
+  const label = V.on ? (V.muted ? "🔇" : "🎙️") : "🎧";
+  [["coop-voice", V.on ? (V.muted ? "🔇 음소거" : "🎙️ 켜짐") : "🎧 음성"], ["coop-mic", label]].forEach(([id, t]) => { const b = $(id); if (b) { b.textContent = t; b.classList.toggle("on", V.on && !V.muted); } });
+}
+function vClose(id) {
+  const p = V.pcs.get(id); if (!p) return;
+  V.pcs.delete(id);
+  try { p.pc.onconnectionstatechange = null; p.pc.close(); } catch (e) {}
+  if (p.audio) { p.audio.srcObject = null; p.audio.remove(); }
+  vUI();
+}
+function vPeer(id) {
+  let p = V.pcs.get(id); if (p) return p;
+  const pc = new RTCPeerConnection({ iceServers: ICE });
+  p = { pc, audio: null }; V.pcs.set(id, p);
+  V.stream.getTracks().forEach((t) => pc.addTrack(t, V.stream));
+  pc.ontrack = (e) => {
+    if (!p.audio) { p.audio = document.createElement("audio"); p.audio.autoplay = true; p.audio.playsInline = true; p.audio.style.display = "none"; document.body.appendChild(p.audio); }
+    p.audio.srcObject = e.streams[0]; p.audio.play().catch(() => {});
+  };
+  pc.onconnectionstatechange = () => {
+    if (pc.connectionState === "failed") { vClose(id); sysLine(`${esc(others.get(id)?.nick || "친구")}님과 음성이 이어지지 않아요. 통신망이 직접 연결을 막았을 수 있어요.`); }
+    else vUI();
+  };
+  return p;
+}
+const vGathered = (pc) => new Promise((res) => {
+  if (pc.iceGatheringState === "complete") return res();
+  const t = setTimeout(res, 2500);
+  pc.addEventListener("icegatheringstatechange", () => { if (pc.iceGatheringState === "complete") { clearTimeout(t); res(); } });
+});
+async function vOffer(id) { const { pc } = vPeer(id); await pc.setLocalDescription(await pc.createOffer()); await vGathered(pc); vSend(id, { k: "offer", sdp: pc.localDescription.sdp }); }
+async function onSig(id, d) {
+  if (!d || typeof d !== "object" || !others.has(id)) return;
+  if (d.k === "off") return vClose(id);
+  if (!V.on) return;
+  try {
+    if (d.k === "on") { vClose(id); if (String(T.id) < String(id)) await vOffer(id); else vSend(id, { k: "ack" }); }
+    else if (d.k === "ack") { if (!V.pcs.has(id)) await vOffer(id); }
+    else if (d.k === "offer" && typeof d.sdp === "string") {
+      vClose(id); const { pc } = vPeer(id);
+      await pc.setRemoteDescription({ type: "offer", sdp: d.sdp }); await pc.setLocalDescription(await pc.createAnswer()); await vGathered(pc);
+      vSend(id, { k: "answer", sdp: pc.localDescription.sdp });
+    } else if (d.k === "answer" && typeof d.sdp === "string") { const p = V.pcs.get(id); if (p && p.pc.signalingState === "have-local-offer") await p.pc.setRemoteDescription({ type: "answer", sdp: d.sdp }); }
+  } catch (e) { vClose(id); }
+}
+async function voiceJoin() {
+  if (V.on || V.busy) return;
+  V.busy = true;
+  try { V.stream = FAKE_MIC ? fakeMic() : await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true } }); }
+  catch (e) { V.busy = false; sysLine("마이크를 쓸 수 없어요. 브라우저에서 마이크를 허용했는지 확인해 주세요."); return; }
+  V.busy = false; V.on = true; V.muted = false;
+  sysLine("🎙️ 음성 대화를 켰어요. 이어폰을 쓰면 소리가 울리지 않아요.");
+  for (const id of others.keys()) vSend(id, { k: "on" });
+  vUI();
+}
+function voiceLeave(quiet) {
+  if (!V.on) return;
+  V.on = false;
+  for (const id of [...V.pcs.keys()]) { if (!quiet) try { T.sendSig(id, { k: "off" }); } catch (e) {} vClose(id); }
+  if (!quiet) for (const id of others.keys()) try { T.sendSig(id, { k: "off" }); } catch (e) {}
+  if (V.stream) V.stream.getTracks().forEach((t) => t.stop());
+  V.stream = null; vUI();
+}
+function voiceMute() { if (!V.on) return; V.muted = !V.muted; V.stream.getAudioTracks().forEach((t) => (t.enabled = !V.muted)); vUI(); }
+function voiceButton() {   // 꺼져 있으면 켜기(한 번 물어봄), 켜져 있으면 내 마이크만 껐다 켰다
+  if (!V.on) { if (confirm("음성 대화를 켤까요?\n같은 방 친구들에게 내 목소리가 들려요. 녹음되거나 저장되지 않아요.")) voiceJoin(); }
+  else voiceMute();
 }
 
 /* ── 핑 (여기!) ── */
@@ -315,6 +409,9 @@ body:not(.playing) .coop, body:not(.playing) .coop-fab{display:none!important}
 .coop-quick .ping{background:rgba(178,58,46,.6)}
 .coop-form{display:flex;gap:4px;padding:0 8px 8px}.coop-form input{flex:1;min-width:0;font:inherit;font-size:13px;padding:5px 8px;border-radius:8px;border:1px solid rgba(243,234,216,.3);background:rgba(0,0,0,.35);color:var(--paper);user-select:text}
 .coop-host{padding:0 10px 8px;font-size:12px;opacity:.9}
+.coop-vbar{display:flex;flex-wrap:wrap;align-items:center;gap:4px;padding:6px 8px;border-bottom:1px solid rgba(243,234,216,.15);font-size:12px}.coop-vbar.hidden{display:none}.coop-vbar span{flex:1 1 100%}
+.coop-vbar button{background:rgba(243,234,216,.12);border:1px solid rgba(243,234,216,.25);color:var(--paper);border-radius:999px;padding:3px 9px;font-size:12px}
+.coop-head button.on,.coop-fab button.on{background:rgba(46,139,87,.75);opacity:1;border-radius:999px}
 .coop-duo{display:block;margin:0 8px 8px;width:calc(100% - 16px);background:var(--gold);color:#2b2118;border:0;border-radius:10px;padding:8px;font-weight:700;font-size:13px}
 .duo-seq{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:12px 0}
 .duo-seq span{display:flex;flex-direction:column;align-items:center;background:var(--paper-3);border:1px solid var(--line);border-radius:12px;padding:6px 12px;font-weight:700;min-width:54px}
@@ -333,16 +430,18 @@ function ui() {
   const $ = core.$;
   document.head.insertAdjacentHTML("beforeend", `<style>${STYLE}</style>`);
   document.body.insertAdjacentHTML("beforeend", `
-<div class="coop" id="coop"><div class="coop-head"><b>👥 방 <span id="coop-code"></span> · <span id="coop-n">1</span>명</b><button id="coop-leave">나가기</button></div>
+<div class="coop" id="coop"><div class="coop-head"><b>👥 방 <span id="coop-code"></span> · <span id="coop-n">1</span>명</b>${VOICE_OK ? `<button id="coop-voice">🎧 음성</button>` : ""}<button id="coop-leave">나가기</button></div>
+<div class="coop-vbar hidden" id="coop-vbar"><span id="coop-vstat"></span><button id="coop-vmute"></button><button id="coop-vleave">음성 나가기</button></div>
 <div class="coop-log" id="coop-log"></div>
 <div class="coop-quick" id="coop-quick">${QUICK.map((q) => `<button data-q="${esc(q)}">${esc(q)}</button>`).join("")}<button class="ping" id="coop-ping">📍 여기!${core.isTouch ? "" : " (Q)"}</button></div>
 <form class="coop-form" id="coop-form"><input id="coop-in" maxlength="${MSG_MAX}" placeholder="${core.isTouch ? "메시지" : "Enter로 메시지"}" autocomplete="off"><button>보내기</button></form>
 <button class="coop-duo hidden" id="coop-duo"></button>
 <div class="coop-host hidden" id="coop-host"><label><input type="checkbox" id="coop-chatoff"> 채팅 끄기 (빠른 말·핑만)</label></div></div>
-<div class="coop-fab" id="coop-fab"><button id="coop-tog" aria-label="대화">💬</button><button id="coop-ping2" aria-label="여기 표시">📍</button></div>`);
+<div class="coop-fab" id="coop-fab"><button id="coop-tog" aria-label="대화">💬</button>${VOICE_OK ? `<button id="coop-mic" aria-label="음성 대화">🎧</button>` : ""}<button id="coop-ping2" aria-label="여기 표시">📍</button></div>`);
   $("coop-code").textContent = T.code;
   $("coop-quick").onclick = (e) => { const b = e.target.closest("[data-q]"); if (b) say(b.dataset.q, true); };
   $("coop-ping").onclick = doPing; $("coop-ping2").onclick = doPing;
+  if (VOICE_OK) { $("coop-voice").onclick = voiceButton; $("coop-mic").onclick = voiceButton; $("coop-vmute").onclick = voiceMute; $("coop-vleave").onclick = () => { voiceLeave(); sysLine("음성 대화에서 나왔어요."); }; }
   $("coop-tog").onclick = () => { $("coop").classList.toggle("open"); $("coop-tog").querySelector(".dot")?.remove(); };
   $("coop-form").onsubmit = (e) => { e.preventDefault(); const i = $("coop-in"); if (say(i.value, false)) i.value = ""; i.blur(); };
   const inp = $("coop-in");
@@ -467,11 +566,12 @@ function onEvent(ev) {
   else if (ev.t === "state") { if (typeof ev.s === "string" && ev.s.length < 20000) merge(sanitize(ev.s), ev.id); }
   else if (ev.t === "chat") chatLine(ev.d, false);
   else if (ev.t === "ping") { if (ev.d && typeof ev.d === "object") showPing(ev.d); }
+  else if (ev.t === "sig") onSig(ev.id, ev.d);
   else if (ev.t === "meta") { const was = meta.chatOff; meta = { ...meta, ...ev.meta }; applyMeta(); if (was !== meta.chatOff && meta.host !== T.id) sysLine(meta.chatOff ? "방장이 채팅을 껐어요 (빠른 말·핑만)" : "방장이 채팅을 켰어요"); }
   else if (ev.t === "closed") { sysLine("방이 닫혔어요."); }
 }
 let left = false;
-function leave() { if (left || !T) return; left = true; try { T.leave(); } catch (e) {} }
+function leave() { if (left || !T) return; left = true; try { voiceLeave(); } catch (e) {} try { T.leave(); } catch (e) {} }
 
 function tick(dt) {
   const k = Math.min(1, dt * 10);
@@ -512,7 +612,7 @@ function begin(res) {
   (res.chat || []).forEach((c) => chatLine(c, false));
   sysLine(`방 코드 <b>${T.code}</b> — 친구에게 알려 주세요.`);
   core.begin(S);
-  window.__coop = { others, pings, get T() { return T; }, get meta() { return meta; }, say, doPing, leave };   // 시험용
+  window.__coop = { V, voiceJoin, voiceLeave, voiceMute, others, pings, get T() { return T; }, get meta() { return meta; }, say, doPing, leave };   // 시험용
   // 내 위치를 1초에 5번 보낸다 (안 움직이면 1초에 한 번)
   let lastSent = "", lastT = 0;
   setInterval(duoWatch, 1000);

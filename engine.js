@@ -11,7 +11,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 const $ = (id) => document.getElementById(id);
-document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n  <button class=\"chip\" id=\"btn-set\" aria-label=\"설정\">⚙️ <span class=\"key-hint\">Esc</span></button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\" aria-label=\"걷기 조이스틱\"><i id=\"joy-knob\"></i></div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·여정 기록), <b>Esc</b> 설정. 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">👥 친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
+document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"quests hidden\" id=\"quests\"></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n  <button class=\"chip\" id=\"btn-set\" aria-label=\"설정\">⚙️ <span class=\"key-hint\">Esc</span></button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\" aria-label=\"걷기 조이스틱\"><i id=\"joy-knob\"></i></div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·여정 기록), <b>Esc</b> 설정. 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">👥 친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
 let THEME = null, CHAPTERS = [];
 
 /* ================================================================
@@ -446,7 +446,8 @@ function person(x, z, rot, robe = MAT.white, p = ROOT, o = {}) {
   if (o.old && !o.woman) mk(PG.beard, GRAY_MAT, head);
   head.rotation.z = ((hsh % 7) - 3) * 0.012;
   g.scale.setScalar(0.975 + (hsh % 5) * 0.0125);   // 키가 조금씩 다르게 (테마가 뒤에 scale을 정하면 그 값이 쓰인다)
-  g.userData.person = { body, head, ph: x * 1.7 + z * 3.1, n: g.children.length };
+  g.userData.person = { body, head, ph: x * 1.7 + z * 3.1, n: g.children.length, look: null,
+    voice: (o.kid ? 1.75 : o.woman ? 1.45 : o.old ? 0.72 : o.helmet ? 0.82 : 1) * (0.92 + (hsh % 5) * 0.04) };   // 목소리 높이 (말할 때)
   PEOPLE.push(g);
   return g;
 }
@@ -455,7 +456,7 @@ function animPeople(t) {
   for (const g of PEOPLE) {
     const u = g.userData.person, k = t + u.ph, br = Math.sin(k * 1.9) * 0.012;
     u.body.scale.set(1 + br, 1 + br * 0.4, 1 + br);
-    if (g.children.length === u.n) { const s = Math.sin(k * 0.37); u.head.rotation.y = 0.45 * s * s * s; }
+    if (u.look === null && g.children.length === u.n) { const s = Math.sin(k * 0.37); u.head.rotation.y = 0.45 * s * s * s; }
   }
 }
 // a → b 를 잇는 굵기가 변하는 막대 · 찌그러뜨린 공 (말 · 나무용)
@@ -758,11 +759,67 @@ function setHover(m) {
   hovered = id;
   if (m) clickable.filter((c) => c.userData.objId === id).forEach((c) => { if (c.material.emissive) { if (!c.userData.hl) { c.material = c.material.clone(); c.userData.hl = 1; } c.material.emissive.setHex(0x3a2a10); } });
 }
+/* ── 인물이 말하기 ── 사람에게 말을 걸어 창이 뜨면: 고개를 내 쪽으로 돌리고, 글 길이만큼 웅얼웅얼 소리를 낸다
+   (설정에서 '읽어 주기'를 고르면 기기의 한국어 음성으로 읽는다) */
+let TALKER = null, talkStop = null, talkUntil = 0, talkWho = null;
+const personOf = (m) => { for (let o = m; o; o = o.parent) if (o.userData && o.userData.person) return o; return null; };
+function talkText(el) {
+  const pickText = (sel) => [...el.querySelectorAll(sel)].map((x) => x.textContent).join(" ");
+  return (pickText(".letter") || pickText("p")).replace(/\s+/g, " ").trim().slice(0, 220);
+}
+function stopTalk() {
+  if (talkStop) talkStop(); talkStop = null; talkUntil = 0;
+  if (talkWho) { const u = talkWho.userData.person; u.look = null; u.head.rotation.x = 0; }
+  talkWho = null;
+}
+function startTalk(pg, el) {
+  stopTalk();
+  const text = talkText(el); if (!text) return;
+  const u = pg.userData.person; talkWho = pg;
+  const v = pg.worldToLocal(camera.position.clone());
+  if (u.rot0 === undefined) u.rot0 = pg.rotation.y;
+  u.look = Math.max(-1.1, Math.min(1.1, pg.rotation.y - u.rot0 + Math.atan2(-v.x, -v.z)));   // 처음 서 있던 방향에서 얼마나 돌아볼지
+  talkUntil = ELAPSED_T + 1.5;
+  if (!AU.on || AU.voice === "off") return;
+  if (AU.voice === "tts" && window.speechSynthesis) {
+    try {
+      const ut = new SpeechSynthesisUtterance(text), kv = speechSynthesis.getVoices().find((x) => x.lang && x.lang.toLowerCase().startsWith("ko"));
+      ut.lang = "ko-KR"; if (kv) ut.voice = kv; ut.pitch = Math.max(0.3, Math.min(1.9, u.voice)); ut.rate = 1.03; ut.volume = Math.min(1, AU.fx + 0.1);
+      ut.onend = () => { if (talkWho === pg) talkUntil = 0; };
+      speechSynthesis.cancel(); speechSynthesis.speak(ut);
+      talkUntil = ELAPSED_T + Math.min(24, text.length * 0.17);
+      talkStop = () => speechSynthesis.cancel();
+      return;
+    } catch (er) {}
+  }
+  const c = AU.ctx; if (!c) return;
+  const out = c.createGain(); out.gain.value = 0.55; out.connect(BUS.fx);
+  const base = 205 * u.voice; let t = c.currentTime + 0.06, n = 0;
+  for (const ch of text) {
+    if (n >= 46) break;
+    if (/\s/.test(ch)) { t += 0.05; continue; }
+    if (!/[0-9A-Za-z가-힣一-龥]/.test(ch)) { t += 0.1; continue; }
+    const f = base * (0.86 + (((ch.charCodeAt(0) * 7) % 13) / 13) * 0.42);
+    const os = c.createOscillator(), eg = c.createGain();
+    os.type = "triangle"; os.frequency.setValueAtTime(f, t); os.frequency.exponentialRampToValueAtTime(f * 0.88, t + 0.06);
+    eg.gain.setValueAtTime(0.0001, t); eg.gain.exponentialRampToValueAtTime(0.17, t + 0.012); eg.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+    os.connect(eg); eg.connect(out); os.start(t); os.stop(t + 0.08);
+    t += 0.066; n++;
+  }
+  talkUntil = ELAPSED_T + (t - c.currentTime);
+  talkStop = () => { try { out.gain.setValueAtTime(0, c.currentTime); setTimeout(() => out.disconnect(), 300); } catch (er) {} };
+}
+function animTalk(t) {   // 말하는 사람: 고개를 돌려 나를 보고, 말하는 동안 살짝 끄덕인다
+  const u = talkWho.userData.person;
+  if (talkWho.children.length === u.n) u.head.rotation.y += (u.look - (talkWho.rotation.y - u.rot0) - u.head.rotation.y) * 0.16;
+  else talkWho.rotation.y += (u.rot0 + u.look * 0.85 - talkWho.rotation.y) * 0.12;   // 머리에 장식을 얹은 사람은 몸째로 돌아본다
+  u.head.rotation.x = t < talkUntil ? Math.sin(t * 11) * 0.045 : u.head.rotation.x * 0.8;
+}
 function tryInteract(m) {
   if (!m) return;
   tipEl.classList.add("hidden"); hideGuide();
   if (lastPickFar) { const w = m.userData.label, c = w.charCodeAt(w.length - 1) - 0xac00; toast(`${w}${c >= 0 && c % 28 ? "이" : "가"} 너무 멀다. 가까이 걸어가 보자.`); }
-  else { save(); CH.interact(m.userData.objId, A, lastHit); }
+  else { save(); TALKER = personOf(m); try { CH.interact(m.userData.objId, A, lastHit); } finally { TALKER = null; } }
 }
 function updateAim() {
   if (!locked() || inputLocked) return;
@@ -991,6 +1048,8 @@ function frame(dt) {
   CH.tick?.(dt, ELAPSED_T, A);
   COOP?.tick(dt);
   if (GFX.high && PEOPLE.length) animPeople(ELAPSED_T);
+  if (talkWho) animTalk(ELAPSED_T);
+  if (QMARKS) for (const sp of QMARKS.children) sp.position.y = sp.userData.y0 + Math.sin(ELAPSED_T * 2.4 + sp.userData.y0) * 0.05;
   if (lantern.intensity > 0) lantern.position.set(camera.position.x, camera.position.y + 0.35, camera.position.z);
   if (++frameNo % 3 === 0) updateAim();
   WATERS.forEach((w) => { w.material.uniforms.time.value += dt * 0.5; });
@@ -1010,8 +1069,9 @@ function openModal(html) {
   if (document.pointerLockElement) document.exitPointerLock();
   $("lockhint").classList.add("hidden"); tipEl.classList.add("hidden");
   $("overlay").querySelector(".modal").scrollTop = 0;
+  if (TALKER) startTalk(TALKER, $("modal-body")); else stopTalk();
 }
-function closeModal() { $("overlay").classList.remove("open"); inputLocked = false; bagOpen = false; renderInv(); requestLock(); if (!locked() && !isTouch && !lockFailed) $("lockhint").classList.remove("hidden"); }
+function closeModal() { stopTalk(); $("overlay").classList.remove("open"); inputLocked = false; bagOpen = false; renderInv(); requestLock(); if (!locked() && !isTouch && !lockFailed) $("lockhint").classList.remove("hidden"); }
 $("overlay").addEventListener("click", (e) => { if (e.target.id === "overlay") closeModal(); });
 $("modal-body").addEventListener("click", (e) => { if (e.target.closest("[data-close]")) closeModal(); });
 const CLOSE = `<button class="btn ghost" data-close>닫기</button>`;
@@ -1112,8 +1172,46 @@ const COOP_API = {
   at: (x, z, r = 1.2) => (FAKE_COOP?.all ? FAKE_COOP.n : (Math.hypot(targetPos.x - x, targetPos.z - z) < r ? 1 : 0) + (COOP?.at?.(x, z, r) ?? 0)),
   active: () => !!COOP || !!FAKE_COOP,
 };
+/* ── 부탁(퀘스트) ── 장에 quests: { id: { title, desc, from: 부탁하는 대상 objId, to: 끝낼 때 찾아갈 대상(없으면 from), when?: (A) => 받을 수 있는지 } }
+   상태는 깃발로 저장한다(함께하기에서도 그대로 나뉜다): "q+id" 받음 · "q-id" 끝냄. id는 테마 안에서 겹치지 않게. */
+const questState = (id) => (S.flags.includes("q-" + id) ? 2 : S.flags.includes("q+" + id) ? 1 : 0);
+let QMARKS = null; const QTEX = {};
+function qTex(sym) {
+  if (QTEX[sym]) return QTEX[sym];
+  const t = canvasTex(96, 96, (g, w, h) => {
+    g.clearRect(0, 0, w, h);
+    g.fillStyle = sym === "!" ? "#f2c230" : "#e9e2d0"; g.beginPath(); g.arc(w / 2, h / 2, 40, 0, 7); g.fill();
+    g.lineWidth = 6; g.strokeStyle = "#2a1e12"; g.stroke();
+    g.fillStyle = "#2a1e12"; g.font = "900 64px sans-serif"; g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(sym, w / 2, h / 2 + 4);
+  });
+  t.userData = { keep: true };
+  return (QTEX[sym] = t);
+}
+function refreshQuests() {
+  const el = $("quests"); if (!el || !S || !CH) return;
+  const qs = CH.quests || {};
+  el.innerHTML = Object.keys(qs).filter((id) => questState(id) === 1).slice(0, 3).map((id) => `<div>📜 ${qs[id].title}</div>`).join("");
+  if (QMARKS) { scene.remove(QMARKS); QMARKS.children.forEach((sp) => sp.material.dispose()); QMARKS = null; }
+  if (!ROOT) return;
+  const marks = new THREE.Group();
+  for (const [id, q] of Object.entries(qs)) {
+    const st = questState(id); if (st === 2 || (st === 0 && q.when && !q.when(A))) continue;
+    const target = st === 0 ? q.from : (q.to || q.from); if (!target) continue;
+    const bb = new THREE.Box3(); let found = false;
+    ROOT.traverse((m) => { if (m.isMesh && m.userData.objId === target && m.visible) { bb.expandByObject(m); found = true; } });
+    if (!found) continue;
+    const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: qTex(st === 0 ? "!" : "?"), transparent: true, fog: false }));
+    sp.position.set((bb.min.x + bb.max.x) / 2, bb.max.y + 0.4, (bb.min.z + bb.max.z) / 2); sp.scale.set(0.4, 0.4, 1); sp.userData.y0 = sp.position.y;
+    marks.add(sp);
+  }
+  if (marks.children.length) { QMARKS = marks; scene.add(marks); }
+}
 const A = {
   coop: COOP_API,
+  // 부탁: 0 아직 · 1 받음 · 2 끝냄
+  quest: (id) => questState(id),
+  questStart: (id) => { if (questState(id)) return false; S.flags.push("q+" + id); save(); refreshQuests(); sfx("item"); toast(`📜 새 부탁: ${CH.quests[id].title}`, 3800); return true; },
+  questDone: (id) => { if (questState(id) !== 1) return false; S.flags.push("q-" + id); save(); refreshQuests(); sfx("solve"); toast(`✅ 부탁을 들어주었다: ${CH.quests[id].title}`, 3800); return true; },
   card, textLock, codeLock, dirLock, choiceLock, orderLock, matchLock, toast, ok, closeModal, formation, GANJI_TABLE,
   has: (f) => S.flags.includes(f),
   flag: (f) => { if (!S.flags.includes(f)) S.flags.push(f); save(); },
@@ -1162,6 +1260,7 @@ function hold(k) {
 }
 function renderInv() {
   if (!S) return;
+  refreshQuests();
   if (HELD && (!S.inv.includes(HELD) || S.used.includes(HELD))) HELD = null;
   let n = 0;
   $("inv").innerHTML = S.inv.length ? S.inv.map((k) => { const u = S.used.includes(k); return `<span class="item ${u ? "used" : ""} ${HELD === k ? "held" : ""}" data-k="${k}">${u || isTouch ? "" : `<i class="num">${++n}</i>`}${HELD === k ? "✋ " : ""}${ITEMS[k].icon} ${ITEMS[k].name}</span>`; }).join(" ") : `<span class="inv-label">없음</span>`;
@@ -1214,7 +1313,8 @@ function openJourney() {
   const groups = [];
   for (let i = Math.min(S.ch, CHAPTERS.length - 1); i >= 0; i--) {
     const c = CHAPTERS[i], js = S.journal.filter((j) => j.ch === i);
-    groups.push(`<h3 style="margin:14px 0 4px;font-size:15px">제${i + 1}장 · ${c.place} <span class="note">${i < S.ch ? "✔ " + c.clear.title : "· 지금 여기"}</span></h3>${js.length ? `<ul class="timeline">${js.map((j) => `<li>${j.t}</li>`).join("")}</ul>` : '<p class="note">아직 적은 것이 없다.</p>'}`);
+    const qh = Object.entries(c.quests || {}).filter(([id]) => questState(id)).map(([id, q]) => `<div class="qline ${questState(id) === 2 ? "done" : ""}">📜 <b>${q.title}</b> ${questState(id) === 2 ? "· ✔ 들어주었다" : `· ${q.desc}`}</div>`).join("");
+    groups.push(`<h3 style="margin:14px 0 4px;font-size:15px">제${i + 1}장 · ${c.place} <span class="note">${i < S.ch ? "✔ " + c.clear.title : "· 지금 여기"}</span></h3>${qh}${js.length ? `<ul class="timeline">${js.map((j) => `<li>${j.t}</li>`).join("")}</ul>` : '<p class="note">아직 적은 것이 없다.</p>'}`);
   }
   card("📖 여정 기록", `<p class="note">지나온 곳과 찾은 단서. 가장 최근 장이 맨 위에 있어요.</p>${groups.join("")}`, `<button class="btn gold" id="back-bag">🎒 가방으로</button>`);
   bagOpen = true;
@@ -1225,6 +1325,7 @@ function openSettings() {
   card("⚙️ 설정", `<p class="note">게임이 잠시 멈췄어요. 닫으면 이어서 할 수 있어요.</p>
     <h3 style="margin:6px 0 6px">🔊 소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
+    <h3 style="margin:18px 0 6px">🗣️ 인물 목소리</h3><div class="choices grid2" id="voice-sel">${[["mumble", "웅얼웅얼", "말하는 느낌의 소리"], ...(window.speechSynthesis ? [["tts", "읽어 주기", "기기의 한국어 음성"]] : []), ["off", "끄기", "글만 보기"]].map(([k, t, d]) => `<button data-v="${k}" style="${AU.voice === k ? "border-color:var(--ink);font-weight:700" : ""}">${AU.voice === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">🎨 그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     ${`<h3 style="margin:18px 0 6px">${isTouch ? "👆 화면 돌리는 감도" : "🖱️ 마우스 감도"}</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
     <p class="note" style="margin-top:14px">Tab 가방 · Esc 설정 · M 소리 · 숫자 키 손에 들기</p>`}`,
@@ -1232,6 +1333,7 @@ function openSettings() {
   $("modal-body").querySelector("[data-close]").textContent = "계속하기";
   $("vol-music").oninput = (e) => { AU.music = +e.target.value; saveSound(); if (AU.ctx) BUS.music.gain.value = AU.music * 0.5; };
   $("vol-fx").oninput = (e) => { AU.fx = +e.target.value; saveSound(); if (AU.ctx) { BUS.fx.gain.value = AU.fx; BUS.amb.gain.value = AU.fx * 0.6; } };
+  $("voice-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; AU.voice = b.dataset.v; saveSound(); if (AU.voice === "tts") try { speechSynthesis.getVoices(); } catch (er) {} openSettings(); };
   $("gfx").onclick = (e) => {
     const b = e.target.closest("button"); if (!b) return;
     const lv = b.dataset.g; if (lv === GFX.level) return;
@@ -1264,7 +1366,7 @@ function startTimer() { clearInterval(tickT); let last = Date.now(); tickT = set
 function disposeRoot() {
   WATERS.length = 0;
   if (!ROOT) return;
-  PEOPLE.length = 0;
+  PEOPLE.length = 0; stopTalk();
   ROOT.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); if (m.material && m.userData.hl) m.material.dispose(); });
   scene.remove(ROOT);
 }
@@ -1287,6 +1389,7 @@ function loadChapter(i, resumePos) {
   $("place").innerHTML = `${CH.place}<small>제${i + 1}장 · ${CH.when}</small>`;
   setMusic(CH.musicKey ? CH.musicKey(S) : "ch" + (i + 1));
   hovered = null;
+  refreshQuests();
 }
 function goLandscape() {
   if (!isTouch) return;
@@ -1298,7 +1401,7 @@ function goLandscape() {
   } catch (e) {}
 }
 function showHUD(on) {
-  ["hud-top", "hud-bottom", "guide", "move", "act"].forEach((x) => $(x).classList.toggle("hidden", !on));
+  ["hud-top", "hud-bottom", "guide", "move", "act", "quests"].forEach((x) => $(x).classList.toggle("hidden", !on));
   document.body.classList.toggle("playing", on);
   if (!on) { ["cross", "lockhint", "tip"].forEach((x) => $(x).classList.add("hidden")); if (document.pointerLockElement) document.exitPointerLock(); }
   else if (!isTouch && !lockFailed) $("lockhint").classList.remove("hidden");
@@ -1351,14 +1454,14 @@ $("btn-replay").onclick = () => { if (!COOP) store.del(); location.reload(); };
    - 효과음: 발소리 · 점프 · 풍덩 · 정답 · 오답 · 물건 · 문 · 활 · 큰 북
    ================================================================ */
 const SND_KEY = "escape-sound";
-const AU = (() => { let p = {}; try { p = JSON.parse(localStorage.getItem(SND_KEY)) || {}; } catch (e) {} return { ctx: null, on: p.on ?? true, music: p.music ?? 0.6, fx: p.fx ?? 0.8, mood: null, amb: [], timer: null, next: 0, step: 0 }; })();
+const AU = (() => { let p = {}; try { p = JSON.parse(localStorage.getItem(SND_KEY)) || {}; } catch (e) {} return { ctx: null, on: p.on ?? true, music: p.music ?? 0.6, fx: p.fx ?? 0.8, voice: p.voice || "mumble", mood: null, amb: [], timer: null, next: 0, step: 0 }; })();
 const SCALES = { pyeong: [0, 2, 5, 7, 9], gyemyeon: [0, 3, 5, 7, 10] };
 const MOODS = {
   rest: { scale: "pyeong", root: 293.66, bpm: 56, pluck: 0.3, flute: 0.2, drum: null, amb: [] },
   ending: { scale: "pyeong", root: 293.66, bpm: 60, pluck: 0.45, flute: 0.35, drum: null, amb: ["birds"] },
 };
 let NOISE = null, REVERB = null, BUS = {};
-function saveSound() { try { localStorage.setItem(SND_KEY, JSON.stringify({ on: AU.on, music: AU.music, fx: AU.fx })); } catch (e) {} }
+function saveSound() { try { localStorage.setItem(SND_KEY, JSON.stringify({ on: AU.on, music: AU.music, fx: AU.fx, voice: AU.voice })); } catch (e) {} }
 function audioInit() {
   if (AU.ctx) { AU.ctx.resume(); return; }
   const Ctx = window.AudioContext || window.webkitAudioContext; if (!Ctx) return;
