@@ -264,6 +264,9 @@ button.slot:hover { background: rgba(243,234,216,.24); }
 /* 부탁(퀘스트) 표시 */
 .quests { position: fixed; left: 14px; top: 62px; z-index: 4; display: grid; gap: 4px; pointer-events: none; max-width: min(320px, 46vw); }
 .quests div { background: rgba(20,16,12,.62); color: var(--paper); border-left: 3px solid #f2c230; border-radius: 0 8px 8px 0; padding: 4px 10px; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.quests .qnote { background: rgba(242,194,48,.92); color: #2a1e12; font-weight: 700; border-left-color: #2a1e12; animation: qin .35s ease-out; }
+.quests .qnote.done { background: rgba(190,225,170,.94); }
+@keyframes qin { from { transform: translateX(-16px); opacity: 0; } to { transform: none; opacity: 1; } }
 .qline { margin: 2px 0 6px; padding: 6px 10px; border-left: 3px solid #f2c230; background: rgba(242,194,48,.12); border-radius: 0 8px 8px 0; font-size: 14px; }
 .qline.done { opacity: .65; border-left-color: #8a8a7a; }
 @media (pointer: coarse) and (max-height: 500px) { .quests { top: 40px; left: 10px; } .quests div { font-size: 11px; padding: 3px 8px; } }

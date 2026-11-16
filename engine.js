@@ -1049,6 +1049,7 @@ function frame(dt) {
   COOP?.tick(dt);
   if (GFX.high && PEOPLE.length) animPeople(ELAPSED_T);
   if (talkWho) animTalk(ELAPSED_T);
+  if (ELAPSED_T - qRefT > 2) { qRefT = ELAPSED_T; if (CH.quests) refreshQuests(); }   // 뒤늦게 생긴 물체에도 표시가 붙게
   if (QMARKS) for (const sp of QMARKS.children) sp.position.y = sp.userData.y0 + Math.sin(ELAPSED_T * 2.4 + sp.userData.y0) * 0.05;
   if (lantern.intensity > 0) lantern.position.set(camera.position.x, camera.position.y + 0.35, camera.position.z);
   if (++frameNo % 3 === 0) updateAim();
@@ -1172,10 +1173,12 @@ const COOP_API = {
   at: (x, z, r = 1.2) => (FAKE_COOP?.all ? FAKE_COOP.n : (Math.hypot(targetPos.x - x, targetPos.z - z) < r ? 1 : 0) + (COOP?.at?.(x, z, r) ?? 0)),
   active: () => !!COOP || !!FAKE_COOP,
 };
-/* ── 부탁(퀘스트) ── 장에 quests: { id: { title, desc, from: 부탁하는 대상 objId, to: 끝낼 때 찾아갈 대상(없으면 from), when?: (A) => 받을 수 있는지 } }
+/* ── 부탁(퀘스트) ── 장에 quests: { id: { title, desc, from: 부탁하는 대상 objId, to: 받은 뒤 찾아갈 대상(없으면 from · (A) => objId 함수도 됨), when?: (A) => 받을 수 있는지 } }
    상태는 깃발로 저장한다(함께하기에서도 그대로 나뉜다): "q+id" 받음 · "q-id" 끝냄. id는 테마 안에서 겹치지 않게. */
 const questState = (id) => (S.flags.includes("q-" + id) ? 2 : S.flags.includes("q+" + id) ? 1 : 0);
-let QMARKS = null; const QTEX = {};
+let QMARKS = null, qRefT = 0; const QTEX = {};
+let QNOTE = [];   // 잠깐 보여 주는 부탁 알림 { t, until }
+function qNote(t, kind) { QNOTE.push({ t, kind, until: performance.now() + 4200 }); if (QNOTE.length > 2) QNOTE.shift(); setTimeout(refreshQuests, 4300); }
 function qTex(sym) {
   if (QTEX[sym]) return QTEX[sym];
   const t = canvasTex(96, 96, (g, w, h) => {
@@ -1190,16 +1193,22 @@ function qTex(sym) {
 function refreshQuests() {
   const el = $("quests"); if (!el || !S || !CH) return;
   const qs = CH.quests || {};
-  el.innerHTML = Object.keys(qs).filter((id) => questState(id) === 1).slice(0, 3).map((id) => `<div>📜 ${qs[id].title}</div>`).join("");
+  QNOTE = QNOTE.filter((n) => n.until > performance.now());
+  const html = QNOTE.map((n) => `<div class="qnote ${n.kind}">${n.t}</div>`).join("") + Object.keys(qs).filter((id) => questState(id) === 1).slice(0, 3).map((id) => `<div>📜 ${qs[id].title}</div>`).join("");
+  if (html !== el._h) { el.innerHTML = html; el._h = html; }
   if (QMARKS) { scene.remove(QMARKS); QMARKS.children.forEach((sp) => sp.material.dispose()); QMARKS = null; }
   if (!ROOT) return;
-  const marks = new THREE.Group();
-  for (const [id, q] of Object.entries(qs)) {
+  const marks = new THREE.Group(), seen = new Set();
+  for (const [id, q] of Object.entries(qs).sort((a, b) => questState(b[0]) - questState(a[0]))) {
     const st = questState(id); if (st === 2 || (st === 0 && q.when && !q.when(A))) continue;
-    const target = st === 0 ? q.from : (q.to || q.from); if (!target) continue;
-    const bb = new THREE.Box3(); let found = false;
-    ROOT.traverse((m) => { if (m.isMesh && m.userData.objId === target && m.visible) { bb.expandByObject(m); found = true; } });
+    const target = st === 0 ? q.from : ((typeof q.to === "function" ? q.to(A) : q.to) || q.from); if (!target || seen.has(target)) continue;
+    // 같은 이름이 사람과 물건(창살 · 탁자 · 솥)에 함께 붙어 있으면 사람 머리 위에 띄운다
+    const bb = new THREE.Box3(), ms = []; let who = null;
+    ROOT.traverse((m) => { if (m.isMesh && m.userData.objId === target && m.visible) { ms.push(m); who = who || personOf(m); } });
+    const found = ms.length > 0;
+    if (who) bb.expandByObject(who); else ms.forEach((m) => bb.expandByObject(m));
     if (!found) continue;
+    seen.add(target);
     const sp = new THREE.Sprite(new THREE.SpriteMaterial({ map: qTex(st === 0 ? "!" : "?"), transparent: true, fog: false }));
     sp.position.set((bb.min.x + bb.max.x) / 2, bb.max.y + 0.4, (bb.min.z + bb.max.z) / 2); sp.scale.set(0.4, 0.4, 1); sp.userData.y0 = sp.position.y;
     marks.add(sp);
@@ -1210,8 +1219,8 @@ const A = {
   coop: COOP_API,
   // 부탁: 0 아직 · 1 받음 · 2 끝냄
   quest: (id) => questState(id),
-  questStart: (id) => { if (questState(id)) return false; S.flags.push("q+" + id); save(); refreshQuests(); sfx("item"); toast(`📜 새 부탁: ${CH.quests[id].title}`, 3800); return true; },
-  questDone: (id) => { if (questState(id) !== 1) return false; S.flags.push("q-" + id); save(); refreshQuests(); sfx("solve"); toast(`✅ 부탁을 들어주었다: ${CH.quests[id].title}`, 3800); return true; },
+  questStart: (id) => { if (questState(id)) return false; S.flags.push("q+" + id); save(); qNote("새 부탁을 받았다", "new"); refreshQuests(); sfx("item"); return true; },
+  questDone: (id) => { if (questState(id) !== 1) return false; S.flags.push("q-" + id); save(); qNote(`✅ 들어주었다: ${CH.quests[id].title}`, "done"); refreshQuests(); sfx("solve"); return true; },
   card, textLock, codeLock, dirLock, choiceLock, orderLock, matchLock, toast, ok, closeModal, formation, GANJI_TABLE,
   has: (f) => S.flags.includes(f),
   flag: (f) => { if (!S.flags.includes(f)) S.flags.push(f); save(); },

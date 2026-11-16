@@ -147,8 +147,8 @@ const BIG = (t) => `<div class="doc" style="text-align:center;font-size:30px;let
 /* ───────────── 제1장 · 국내성의 소년 (4세기 후반) ───────────── */
 CHAPTERS.push({
   quests: {
-    s1_bow: { title: "과녁 셋을 차례로 맞히기", desc: "활 걸이의 맥궁으로 하나, 둘, 셋 차례로 맞히면 스승이 깃발 아래를 보여 준다.", from: "teacher" },
-    s1_bag: { title: "성문 지기의 물주머니 찾아 주기", desc: "성문 지기가 우물에 가죽 물주머니를 두고 왔다. 찾아서 돌려주자.", from: "guard" },
+    s1_bow: { title: "과녁 셋을 차례로 맞히기", desc: "활 걸이의 맥궁으로 하나, 둘, 셋 차례로 맞히면 스승이 깃발 아래를 보여 준다.", from: "teacher", when: (A) => !A.has("s1_shot") },
+    s1_bag: { title: "성문 지기의 물주머니 찾아 주기", desc: "성문 지기가 우물에 가죽 물주머니를 두고 왔다. 찾아서 돌려주자.", from: "guard", to: (A) => (A.owns("waterbag") ? "guard" : "well") },
   },
   place: "돌성의 궁궐 마당", when: "4세기 후반 어느 봄 · 압록강 가 국내성",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.4, 0.85, 0.35], sunCol: 0xfff0c0, glow: 0.6, fog: 0xb8c8d8, fogNear: 40, fogFar: 130, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.4 },
@@ -369,8 +369,8 @@ function dressTablets() {
 /* ───────────── 제2장 · 열여덟의 왕좌 (391) ───────────── */
 CHAPTERS.push({
   quests: {
-    s2_era: { title: "새 해 이름 정하기", desc: "병풍에서 '끝없이 이어진다'는 뜻의 '길' 자를 찾아, 조서의 해 이름 칸을 채우자.", from: "minister", to: "desk" },
-    s2_envoy: { title: "사신이 든 차례대로 방위 짚기", desc: "접견 기록의 실마리로 사신 넷의 차례를 알아내고, 지도 탁자에서 그 나라의 방위를 짚자.", from: "envoy", to: "maptable" },
+    s2_era: { title: "새 해 이름 정하기", desc: "병풍에서 '끝없이 이어진다'는 뜻의 '길' 자를 찾아, 조서의 해 이름 칸을 채우자.", from: "minister", to: "desk", when: (A) => !A.has("s2_era") },
+    s2_envoy: { title: "사신이 든 차례대로 방위 짚기", desc: "접견 기록의 실마리로 사신 넷의 차례를 알아내고, 지도 탁자에서 그 나라의 방위를 짚자.", from: "envoy", to: "maptable", when: (A) => !A.owns("armoryKey") },
   },
   place: "붉은 기둥의 궁궐", when: "신묘년(391) 여름 · 국내성 궁궐", woodFloor: true,
   atmosphere: { top: 0x1a1410, mid: 0x3a2a1a, low: 0x5a4028, sun: [0.4, 0.7, 0.3], sunCol: 0xffc080, glow: 0.2, fog: 0x2a1f16, fogNear: 30, fogFar: 80, hemiSky: 0xffe0b8, hemiGround: 0x5a3a20, hemiI: 1.55, light: 0xffd8a0, lightI: 0.5, exposure: 1.25 },
@@ -545,7 +545,7 @@ CHAPTERS.push({
 /* ───────────── 제3장 · 아리수를 건너 (396) ───────────── */
 CHAPTERS.push({
   quests: {
-    s3_bridge: { title: "아리수에 배다리 놓기", desc: "배가 모자라 강을 건널 수 없다. 물에 뜨는 것을 줄줄이 엮어 나루터에 띄우자.", from: "scribe", to: "ferry" },
+    s3_bridge: { title: "아리수에 배다리 놓기", desc: "배가 모자라 강을 건널 수 없다. 물에 뜨는 것을 줄줄이 엮어 나루터에 띄우자.", from: "scribe", to: "ferry", when: (A) => !A.has("s3_bridge") },
   },
   place: "아리수 강가", when: "병신년(396) · 한강 가의 진영",
   combos: [["rope", "logs", "raft", "통나무를 밧줄로 엮었다. 물에 띄우면 배다리가 될 것이다."]],
@@ -819,7 +819,7 @@ CHAPTERS.push({
 /* ───────────── 제5장 · 쇠 갑옷의 기병 (5세기 초) ───────────── */
 CHAPTERS.push({
   quests: {
-    s5_armor: { title: "말에게 갑옷 입히기", desc: "대장장이의 말과 벽화를 실마리로 갑옷 걸이의 받침대를 열고, 말에게 맞는 갑옷을 입히자.", from: "smith", to: "horse" },
+    s5_armor: { title: "말에게 갑옷 입히기", desc: "대장장이의 말과 벽화를 실마리로 갑옷 걸이의 받침대를 열고, 말에게 맞는 갑옷을 입히자.", from: "smith", to: "horse", when: (A) => !A.has("s5_horse") },
   },
   place: "요동의 들판", when: "5세기 초 · 요동 들판의 진영",
   atmosphere: { hdri: "qwantani_dawn_puresky", hdrExposure: 0.55, top: 0x29386b, mid: 0x8c789e, low: 0xf29e73, sun: [1, 0.22, 0.12], sunCol: 0xff8c40, fog: 0x7d7088, fogNear: 40, fogFar: 140, hemiSky: 0xc8c4e0, hemiGround: 0x5a4630, hemiI: 1.05, light: 0xffc28a, lightI: 2.2 },

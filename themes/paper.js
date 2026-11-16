@@ -103,9 +103,15 @@ const board1Tex = () => canvasTex(512, 256, (g, w, h) => {
   g.font = FONT(26); g.fillText("보기)  三百五十二 = 352", w / 2, 220);
 });
 CHAPTERS.push({
+  quests: {
+    p1_pack: { title: "경성 갈 보따리 싸기", desc: "새 옷 한 벌과 성경 한 권을 찾아 마루의 보따리에 싸자. 새 저고리는 어머니의 함에 있다.", from: "mother", to: "bundle", when: (A) => !A.has("p1_packed") },
+    p1_school: { title: "가게 될 학당의 이름 알아내기", desc: "아버지가 보여 주신 편지를 실마리로 학당 이름 두 글자를 알아내, 사립문 앞의 선교사에게 답하자.", from: "father", to: "missionary" },
+    p1_towel: { title: "냇가에 널어 둔 수건 걷어 오기", desc: "어머니가 냇가 큰 버드나무 가지에 수건을 널어 두셨다. 걷어서 어머니께 가져다 드리자.", from: "mother", to: (A) => (A.owns("towel") ? "mother" : "willow") },
+  },
   place: "버드나무 집", when: "병진년(1916) 봄 무렵 · 충청남도 천안 지령리",
   atmosphere: SPRING,
   items: {
+    towel: { icon: "🧺", name: "잘 마른 수건", desc: "냇가 버드나무 가지에 널어 두었던 무명 수건. 볕에 잘 말랐다. 어머니께 가져다 드리자." },
     clothes: { icon: "👘", name: "새 저고리", desc: "어머니가 지어 함에 넣어 두신 새 옷. 경성 가는 보따리에 넣자." },
     bible: { icon: "📖", name: "작은 성경", desc: "예배당 성경함에서 꺼낸 손때 묻은 성경. 보따리에 넣자." },
   },
@@ -208,8 +214,21 @@ CHAPTERS.push({
   tick() { L.gateOpen += (L.gateTarget - L.gateOpen) * 0.04; L.gl.rotation.y = -L.gateOpen * 1.4; L.gr.rotation.y = L.gateOpen * 1.4; },
   interact(id, A) {
     if (id === "mother") {
+      const q = A.quest("p1_towel");
+      let pre = "", tail = "";
+      if (q === 1 && A.owns("towel")) {
+        A.use("towel"); A.questDone("p1_towel");
+        A.note("어머니의 귀띔: 장독을 셀 때는 뚜껑이 독 위에 얹혀 있는지만 본다. 땅에 내려놓은 뚜껑은 독이 아니다. 작은 단지는 큰 독과 따로 센다.");
+        pre = `<div class="letter">"수건을 걷어 왔구나. 볕에 잘 말랐네. 고맙다, 얘야.<br>그 대신 하나 일러 주마. 장독을 셀 때는 <b>뚜껑이 독 위에 얹혀 있는지</b>만 보면 된다. 땅에 내려놓은 뚜껑은 독이 아니란다. 작은 단지는 큰 독과 <b>따로</b> 세고."</div>`;
+      } else if (q === 2) tail = `<br><br>"수건은 잘 개어 두었다. 고맙다, 얘야."`;
+      else if (q === 1) tail = `<br><br>"참, 냇가 <b>큰 버드나무</b>에 널어 둔 수건도 잊지 말고 걷어다 다오."`;
+      else {
+        A.questStart("p1_towel");
+        tail = `<br><br>"그리고 얘야, 부탁이 하나 있다. 아침에 빨아서 냇가 <b>큰 버드나무</b> 가지에 <b>수건</b>을 널어 두었는데, 나는 장독을 돌보느라 손을 뗄 수가 없구나. 가는 길에 좀 걷어다 주겠니?"`;
+      }
+      if (!A.has("p1_packed")) A.questStart("p1_pack");
       A.note("어머니: 새 저고리는 함에 넣어 두었다. 함 번호는 장독대로 — 뚜껑을 덮어 둔 큰 독의 수, 그다음 작은 단지의 수. 오늘은 볕이 좋아 큰 독 몇 개는 뚜껑을 열어 두었다.");
-      return A.card("어머니", `<div class="letter">"얘야, 경성 갈 짐은 다 쌌니? 새 저고리는 내 <b>함</b>에 넣어 두었다.<br>함 번호는 잊지 않게 <b>장독대</b>로 정해 두었지. 먼저 <b>뚜껑을 덮어 둔 큰 독</b>이 몇 개인지, 그다음엔 <b>작은 단지</b>가 몇 개인지.<br>아, 오늘은 볕이 좋아서 큰 독 몇 개는 뚜껑을 열어 두었단다."</div>`);
+      return A.card("어머니", `${pre}<div class="letter">"얘야, 경성 갈 짐은 다 쌌니? 새 저고리는 내 <b>함</b>에 넣어 두었다.<br>함 번호는 잊지 않게 <b>장독대</b>로 정해 두었지. 먼저 <b>뚜껑을 덮어 둔 큰 독</b>이 몇 개인지, 그다음엔 <b>작은 단지</b>가 몇 개인지.<br>아, 오늘은 볕이 좋아서 큰 독 몇 개는 뚜껑을 열어 두었단다."${tail}</div>`);
     }
     if (id === "jars") return A.card("장독대", `<p>크고 작은 독과 단지가 햇볕을 쬐고 있다. 간장, 된장, 고추장 냄새가 난다.</p><p class="note">큰 독 몇 개는 뚜껑을 열어 두었고, 그 뚜껑은 땅에 내려놓았다. 직접 세어 보자.</p>`);
     if (id === "chest") {
@@ -239,12 +258,13 @@ CHAPTERS.push({
     if (id === "bundle") {
       if (A.has("p1_packed")) return A.card("보따리", `<p>짐을 다 쌌다. 보따리가 제법 묵직하다.</p>`);
       if (!A.owns("clothes") || !A.owns("bible")) return A.card("마루의 보따리", `<p>경성 갈 짐을 싸는 보따리. 아직 비어 있다.</p><p class="note">넣을 것: 새 옷 한 벌, 성경 한 권. ${A.owns("clothes") ? "(옷 ✔)" : ""} ${A.owns("bible") ? "(성경 ✔)" : ""}</p>`);
-      A.flag("p1_packed"); A.use("clothes"); A.use("bible"); sfx("item");
+      A.flag("p1_packed"); A.questDone("p1_pack"); A.use("clothes"); A.use("bible"); sfx("item");
       return A.card("보따리", `<p class="msg ok">새 저고리와 작은 성경을 보따리에 싸서 단단히 묶었다.</p><p>이제 사립문 앞의 선교사님께 가자.</p>`);
     }
     if (id === "father") {
+      A.questStart("p1_school");
       A.note("선교사의 편지: 따님이 다닐 학당은, 봄마다 눈처럼 하얀 꽃을 피우는 나무의 꽃 이름을 땄습니다. 學堂 앞의 두 글자.");
-      return A.card("아버지", `<div class="letter">"공주에서 선교사님이 오셨다. 너를 경성의 학당에 보내 공부시키자고 하시는구나. 배워야 나라를 되찾을 힘이 생긴다. 다녀오너라."</div><p>아버지가 선교사의 편지를 보여 주신다.</p><div class="doc">"따님이 다니게 될 학당은, 이 댁 마당의 그 나무처럼 봄마다 <b>눈처럼 하얀 꽃</b>을 피우는 나무의 <b>꽃</b> 이름을 땄습니다. 學堂 앞의 두 글자랍니다."</div><p class="note">아버지는 마을에 학교를 세워 아이들을 가르쳤다고 전한다.</p>`);
+      return A.card("아버지", `<div class="letter">"공주에서 선교사님이 오셨다. 너를 경성의 학당에 보내 공부시키자고 하시는구나. 배워야 나라를 되찾을 힘이 생긴다. 다녀오너라.<br>네가 다닐 학당의 이름은, 이 편지를 보고 스스로 알아내 보려무나."</div><p>아버지가 선교사의 편지를 보여 주신다.</p><div class="doc">"따님이 다니게 될 학당은, 이 댁 마당의 그 나무처럼 봄마다 <b>눈처럼 하얀 꽃</b>을 피우는 나무의 <b>꽃</b> 이름을 땄습니다. 學堂 앞의 두 글자랍니다."</div><p class="note">아버지는 마을에 학교를 세워 아이들을 가르쳤다고 전한다.</p>`);
     }
     if (id === "dict1") {
       A.note("학교 옥편: 梨 배나무 리 · 桃 복숭아나무 도 · 杏 살구나무 행 · 花 꽃 화 · 學 배울 학 · 堂 집 당 · 白 흰 백 · 春 봄 춘. ※ 낱말 첫머리의 'ㄹ'은 'ㅇ'으로 읽기도 한다 (李 리 → 이).");
@@ -257,6 +277,10 @@ CHAPTERS.push({
       A.note("고향 집 문패: 柳重權 — 아버지의 이름. 첫 글자는 집안의 성(姓)으로, 대문 밖 냇가의 큰 나무와 같은 글자라고 한다.");
       return A.card("대문 기둥의 문패", `<div class="doc" style="text-align:center;font-size:34px;letter-spacing:6px">柳 重 權</div><p>아버지의 이름이 적힌 문패다. 아버지는 웃으며 말씀하시곤 했다. "우리 집 성(姓)은 저 대문 밖 냇가의 <b>큰 나무</b>와 같은 글자란다."</p>`);
     }
+    if (id === "willow" && A.quest("p1_towel") === 1 && !A.owns("towel")) {
+      A.card("냇가의 큰 버드나무", `<p>냇가에 늘어진 큰 <b>버드나무</b>. 낮은 가지에 어머니가 널어 둔 <b>무명 수건</b>이 바람에 흔들린다. 볕에 잘 말랐다.</p><p>이 냇물은 조금 아래에서 다른 냇물과 만난다. 사람들은 두 내가 아우르는 그곳의 장터를 <b>아우내</b>라고 부른다.</p>`);
+      return A.give("towel");
+    }
     if (id === "willow") return A.card("냇가의 큰 버드나무", `<p>냇가에 늘어진 큰 <b>버드나무</b>. 가지가 바람에 흔들린다.</p><p>이 냇물은 조금 아래에서 다른 냇물과 만난다. 사람들은 두 내가 아우르는 그곳의 장터를 <b>아우내</b>라고 부른다.</p>`);
     if (id === "bell") return A.card("예배당 종", `<p>주일마다 마을에 울리던 종이다. 이 집 식구들은 마을 예배당에 다녔다.</p>`);
     if (id === "gate1") return A.card("사립문", `<p>사립문 밖으로 큰길이 뻗어 있다. 선교사님이 기다리고 계신다.</p>`);
@@ -265,7 +289,7 @@ CHAPTERS.push({
       A.card("선교사", `<div class="letter">"짐은 다 쌌군요. 그런데 하나만 물어볼게요. 네가 가게 될 학당의 이름을 아니?"</div>`);
       return A.textLock("두 글자", ["이화", "梨花", "이화학당", "梨花學堂", "리화", "리화학당"], () => {
         A.note("경성의 학당 이름: 梨花(이화) — 배꽃. 이화학당.");
-        A.closeModal(); E.lockInput(); L.gateTarget = 1; E.turnBack(); sfx("door"); toast("사립문이 열린다. 배꽃이 흩날린다…", 3000);
+        A.questDone("p1_school"); A.closeModal(); E.lockInput(); L.gateTarget = 1; E.turnBack(); sfx("door"); toast("사립문이 열린다. 배꽃이 흩날린다…", 3000);
         setTimeout(A.clearChapter, 2400);
       }, "선교사가 고개를 갸웃한다. 편지가 말한 '하얀 꽃'과 옥편을 다시 보자.");
     }
@@ -295,6 +319,10 @@ const nameTagTex = () => canvasTex(160, 360, (g, w, h) => {
   g.fillStyle = "#1e1a16"; g.font = FONT(78); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText("寬", 80, 175); g.fillText("順", 80, 280);
 });
 CHAPTERS.push({
+  quests: {
+    p2_day: { title: "함께 나서기로 한 날 알아내기", desc: "동무가 베개 밑에 쪽지를 넣어 두었다. 그날이 몇 월 며칠인지 알아내 반닫이 위의 작은 함을 열자.", from: "pillow", to: "diarybox", when: (A) => !A.owns("sewing") },
+    p2_flag: { title: "태극기 네 귀퉁이 수놓기", desc: "동무가 작은 함에 바늘과 실을 남겼다. 수틀의 태극기 네 귀퉁이에 괘를 제자리에 수놓자.", from: "diarybox", to: "flag2", when: (A) => A.owns("sewing") && !A.has("p2_flag") },
+  },
   place: "배꽃 학당의 밤", when: "기미년(1919) 2월 하순 · 경성 정동 이화학당 기숙사",
   atmosphere: NIGHT_IN,
   items: {
@@ -369,16 +397,16 @@ CHAPTERS.push({
       return A.card("한자 공책", `<div class="doc"><table><tr><td>前 앞 전</td><td>後 뒤 후</td><td>日 날 일</td></tr><tr><td>午後 오후(낮)</td><td>時 때 시</td><td>國葬 나라의 장례</td></tr><tr><td colspan="3">塔洞公園 — 탑골공원(파고다 공원)</td></tr></table></div>`);
     }
     if (id === "pillow") {
-      A.flag("p2_memo");
+      A.flag("p2_memo"); if (!A.owns("sewing")) A.questStart("p2_day");
       A.note("베개 밑 쪽지: 國葬 二日 前 · 午後 二時 · 塔洞公園. — 그날은 우리도 함께.");
       return A.card("베개 밑의 쪽지", `<p>베개를 들추자 꼭꼭 접은 쪽지가 나왔다. 동무가 몰래 넣어 둔 것이다.</p><div class="letter" style="text-align:center;font-size:20px">國葬 二日 前<br>午後 二時 · 塔洞公園<br><span style="font-size:15px">그날은 우리도 함께.</span></div>`);
     }
     if (id === "diarybox") {
-      if (A.owns("sewing")) return A.card("작은 함", `<p>함이 비었다.</p>`);
+      if (A.owns("sewing")) { if (!A.has("p2_flag")) A.questStart("p2_flag"); return A.card("작은 함", `<p>함이 비었다.</p>`); }
       A.card("반닫이 위의 작은 함", `<p>동무들과 비밀을 넣어 두는 작은 함. 숫자 네 칸 자물쇠가 달렸다.</p><div class="doc" style="text-align:center">"우리가 함께 나서기로 한 날"<br><span class="note">달 두 자리 · 날 두 자리</span></div>`);
       return A.codeLock("0301", () => {
         A.note("나서기로 한 날: 3월 1일 (국장 3월 3일의 이틀 앞), 낮 2시, 탑골공원.");
-        A.card("작은 함", `<p class="msg ok">함이 열렸다.</p><p>안에 검은 실과 <b>바늘</b>, 그리고 동무의 글씨: "수틀의 태극기, 네 귀퉁이를 마저 수놓아 줘."</p>`); A.give("sewing");
+        A.card("작은 함", `<p class="msg ok">함이 열렸다.</p><p>안에 검은 실과 <b>바늘</b>, 그리고 동무의 글씨: "수틀의 태극기, 네 귀퉁이를 마저 수놓아 줘."</p>`); A.give("sewing"); A.questDone("p2_day"); A.questStart("p2_flag");
       }, "열리지 않는다. 신문의 국장 날짜와 쪽지의 '二日 前'을 함께 따져 보자.");
     }
     if (id === "nametag") {
@@ -398,7 +426,7 @@ CHAPTERS.push({
       if (!A.needItem(id, "sewing", "수틀의 태극기", `${imgOf(taegukTex(false), "70%")}<p>가운데 태극만 수놓인 태극기. 네 귀퉁이는 비어 있다. 실과 바늘이 있어야 마저 수놓을 수 있다.</p>`, "바늘과 실 꺼내기")) return;
       A.card("수틀의 태극기", `<p>네 귀퉁이에 놓을 괘 모양은 정해져 있다. 수를 놓으며 괘마다 무엇을 뜻하는지 짝을 지어 보자.</p>`);
       return A.matchLock([G_GEON, G_GON, G_GAM, G_RI], ["하늘", "땅", "물", "불"], [0, 1, 2, 3], () => {
-        A.flag("p2_flag"); L.flagMat.map = taegukTex(true); L.flagMat.needsUpdate = true;
+        A.flag("p2_flag"); A.questDone("p2_flag"); L.flagMat.map = taegukTex(true); L.flagMat.needsUpdate = true;
         A.note("태극기 네 괘: ☰ 하늘 · ☷ 땅 · ☵ 물 · ☲ 불.");
         A.card("수틀의 태극기", `<p class="msg ok">네 귀퉁이를 모두 수놓았다.</p>${imgOf(taegukTex(true), "70%")}<p>이화학당 동무들은 이렇게 몰래 태극기를 만들었다.</p>`);
       }, "실이 엉켰다. 교과서의 모양과 벽 종이의 뜻을 이어 보자.");
@@ -432,6 +460,10 @@ const namesTex = () => canvasTex(512, 330, (g, w, h) => {
 });
 const TYPES = ["獨", "屬", "自", "立", "從", "主"];
 CHAPTERS.push({
+  quests: {
+    p3_print: { title: "선언서를 밤 안에 모두 찍기", desc: "사장의 쪽지대로 판의 빈칸을 채우고, 인쇄기 계수기를 맞춰 오늘 들어온 종이를 모두 찍자.", from: "boss", to: "press", when: (A) => !A.has("p3_printed") },
+    p3_cart: { title: "선언서를 손수레에 실어 보내기", desc: "찍어 낸 선언서를 뒷문 앞의 손수레에 싣자. 묶음 끈 자물쇠의 실마리는 사장의 쪽지에 있다.", from: "boss", to: "cart", when: (A) => A.has("p3_printed") },
+  },
   place: "숨겨진 종이 뭉치", when: "기미년(1919) 2월 27일 밤 · 경성 수송동 보성사",
   atmosphere: NIGHT_IN,
   items: {
@@ -508,7 +540,11 @@ CHAPTERS.push({
   },
   tick(dt) { if (E.S && E.S.flags.includes("p3_printed")) L.wheel.rotation.x += dt * 2.5; },
   interact(id, A) {
-    if (id === "boss") return A.card("인쇄소 사장", `<div class="letter">"여기는 천도교에서 운영하는 인쇄소 <b>보성사</b>요. 오늘 밤 안에 선언서를 모두 찍어 내야 하오. 일본 경찰 눈에 띄면 끝이니, 창은 모두 가렸소.<br>판을 짜는 법, 찍을 장 수, 수레 자물쇠는 벽에 꽂아 둔 내 쪽지에 다 적어 두었소."</div>`);
+    if (id === "boss") {
+      const printed = A.has("p3_printed");
+      A.questStart(printed ? "p3_cart" : "p3_print");
+      return A.card("인쇄소 사장", `<div class="letter">"여기는 천도교에서 운영하는 인쇄소 <b>보성사</b>요. 오늘 밤 안에 선언서를 모두 찍어 내야 하오. 일본 경찰 눈에 띄면 끝이니, 창은 모두 가렸소.<br>판을 짜는 법, 찍을 장 수, 수레 자물쇠는 벽에 꽂아 둔 내 쪽지에 다 적어 두었소.<br>${printed ? "이제 찍은 것을 수레에 실어, 날이 밝기 전에 내보내 주시오." : "부탁하오. 판을 짜서 오늘 밤 안에 모두 찍어 주시오."}"</div>`);
+    }
     if (id === "memo3") {
       A.note("사장의 쪽지: ① 판의 빈칸 — 우리는 남에게 붙은(屬) 나라가 아니요, 남을 좇는(從) 백성도 아니다. ② 오늘 들어온 종이는 한 장도 남기지 말고 모두 찍는다. ③ 수레 자물쇠는 끝 장 명단의 사람 수. 이름 한 분이 세로 한 줄이다.");
       return A.card("사장의 쪽지", `<div class="letter">① 판의 빈칸에 넣을 활자: 우리는 <b>남에게 붙은 나라가 아니요</b>, <b>남을 좇는 백성도 아니다</b>. 그 반대를 새겨라.<br>② 오늘 들어온 종이는 <b>한 장도 남기지 말고</b> 모두 찍는다.<br>③ 수레 자물쇠 번호는 끝 장 <b>명단의 사람 수</b>로 해 두었다. 이름 한 분이 <b>세로 한 줄</b>이다.</div>`);
@@ -548,7 +584,7 @@ CHAPTERS.push({
       if (!A.has("p3_proof")) return A.card("인쇄기", `<p>커다란 인쇄기. 판이 아직 완성되지 않았다.</p>`);
       A.card("인쇄기 계수기", `<p>판을 걸었다. 계수기에 오늘 밤 찍을 장 수를 맞추면 인쇄기가 돌아간다.</p><div class="doc" style="text-align:center">○○○○○ 장</div>`);
       return A.codeLock("21000", () => {
-        A.flag("p3_printed"); addStacks(); sfx("door");
+        A.flag("p3_printed"); A.questDone("p3_print"); A.questStart("p3_cart"); addStacks(); sfx("door");
         A.note("2월 27일 밤, 보성사에서 독립선언서를 찍었다: 四十二連 × 五百張 = 21000장 (2만 1천 장쯤 찍었다고 전한다).");
         A.card("밤새 돌아가는 인쇄기", `<p class="msg ok">철컥, 철컥 — 인쇄기가 돌기 시작했다.</p><p>밤새 찍은 선언서는 <b>2만 1천 장</b>쯤이었다고 전한다. 종이 냄새와 잉크 냄새가 방 안에 가득하다.</p>`);
       }, "계수기가 멈춘다. 장부의 종이 양과 단위표를 곱해 보자.");
@@ -563,7 +599,7 @@ CHAPTERS.push({
       A.card("뒷문 앞의 손수레", `<p>선언서 더미를 수레에 싣고 겉을 덮었다. 묶음 끈에 숫자 두 칸 자물쇠가 달려 있다.</p>`);
       return A.codeLock("33", () => {
         A.note("민족 대표 33인 (끝 장 명단의 세로줄 33).");
-        A.closeModal(); sfx("door"); toast("수레가 어둠 속으로 조용히 빠져나간다…", 3000); setTimeout(A.clearChapter, 1400);
+        A.questDone("p3_cart"); A.closeModal(); sfx("door"); toast("수레가 어둠 속으로 조용히 빠져나간다…", 3000); setTimeout(A.clearChapter, 1400);
       }, "자물쇠가 꿈쩍하지 않는다. 명단의 세로줄만 다시 세어 보자.");
     }
   },
@@ -581,10 +617,16 @@ function addStacks() {
 const PLEDGES = ["오늘 우리의 이 일은 정의·인도·생존·존영을 위한 겨레의 요구이니…", "최후의 한 사람까지, 최후의 한순간까지 겨레의 바른 뜻을 시원하게 드러내라", "모든 행동은 질서를 존중하여, 우리의 주장과 태도가 떳떳하고 바르게 하라"];
 const LETTER4 = [["장", "안", "면", "학"], ["오", "으", "어", "교"], ["너", "로", "서", "닫"], ["라", "곧", "천", "히"]];
 CHAPTERS.push({
+  quests: {
+    p4_pledge: { title: "찢긴 선언서 끝장 이어 붙이기", desc: "선언서 끝장이 찢겨 공원에 흩어졌다. 조각들을 찾아 견주어 보고, 팔각정에서 제자리에 이어 주자.", from: "organizer", to: "pavilion", when: (A) => !A.has("p4_read") },
+    p4_wrap: { title: "언니의 책보 찾아 주기", desc: "사촌 언니가 십층 석탑 아래에 책보를 두고 왔다. 찾아서 돌려주자.", from: "cousin", to: (A) => (A.owns("bookwrap") ? "cousin" : "pagoda") },
+    p4_home: { title: "고향 편지 읽어 내기", desc: "글자가 이상하게 늘어선 고향 편지를 읽어, 어디로 오라는지 공원 정문에서 언니에게 답하자.", from: "cousin", to: "gate4", when: (A) => A.has("p4_march") },
+  },
   place: "팔각정 앞에서", when: "기미년(1919) 3월 1일 낮 · 경성 탑골공원",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x4a78b0, mid: 0xa8c4dc, low: 0xdcd8cc, sun: [0.4, 0.6, 0.5], sunCol: 0xfff0d0, glow: 0.6, fog: 0xb8c4d0, fogNear: 45, fogFar: 150, hemiSky: 0xdde6f2, hemiGround: 0x5e5848, hemiI: 1.1, light: 0xfff2dc, lightI: 2.1 },
   items: {
     letter: { icon: "✉️", name: "고향에서 온 편지", desc: "사촌 언니가 건넨 편지. 글자가 네 줄로 이상하게 늘어서 있다." },
+    bookwrap: { icon: "📚", name: "언니의 책보", desc: "사촌 언니가 십층 석탑 아래에 두고 온 책 보자기. 언니에게 돌려주자." },
   },
   hints: [
     "탑 아래와 비석 옆의 찢어진 종잇조각, 팔각정, 게시판, 벤치 위 전단을 모두 살펴보세요.",
@@ -666,9 +708,10 @@ CHAPTERS.push({
     }
     if (id === "pavilion") {
       if (A.has("p4_read")) return A.card("팔각정", `<p>팔각정 위에서 읽은 선언서의 메아리가 아직 공원에 울린다.</p>`);
+      A.questStart("p4_pledge");
       A.card("팔각정", `<p>오후 두 시. 한 학생이 팔각정 단상에 올라섰다. 손에 든 선언서 끝장, <b>공약 삼장</b>이 찢겨 나가 있다. 조각을 제자리에 이어 주자.</p>`);
       return A.matchLock(["公約 一", "公約 二", "公約 三"], PLEDGES, [0, 1, 2], () => {
-        A.flag("p4_read"); smallFlags(L.crowd.filter((_, i) => i % 3 === 0)); sfx("buk");
+        A.flag("p4_read"); A.questDone("p4_pledge"); smallFlags(L.crowd.filter((_, i) => i % 3 === 0)); sfx("buk");
         A.note("3월 1일 오후 2시, 탑골공원 팔각정에서 학생 대표가 독립선언서를 읽었다. 사람들은 태극기를 꺼내 들고 '대한 독립 만세'를 외치며 거리로 나섰다.");
         A.card("대한 독립 만세!", `<p class="msg ok">선언서가 온전해졌다.</p><p>학생 대표가 선언서를 끝까지 읽어 내려가자, 사람들이 숨겨 온 <b>태극기</b>를 꺼내 들었다. <b>"대한 독립 만세!"</b> 외침이 공원을 넘어 종로 거리로 퍼져 나갔다.</p><p>이화학당 학생들도 그 행렬에 있었다.</p><p class="note">같은 시각 민족 대표들은 가까운 태화관에서 선언식을 열었다.</p>`);
       }, "찢긴 자리가 맞지 않는다. 가장자리 모양을 다시 견주어 보자.");
@@ -683,7 +726,10 @@ CHAPTERS.push({
     }
     if (id === "organizer") {
       if (A.has("p4_march")) return A.card("학생 대표", `<div class="letter">"학교 문은 닫혔지만, 만세는 이제 온 나라로 퍼질 거요."</div>`);
-      if (!A.has("p4_read")) return A.card("학생 대표", `<div class="letter">"곧 선언서를 읽을 거요. 팔각정을 보시오."</div>`);
+      if (!A.has("p4_read")) {
+        A.questStart("p4_pledge");
+        return A.card("학생 대표", `<div class="letter">"곧 선언서를 읽을 거요. 팔각정을 보시오.<br>그런데 선언서 끝장이 찢겨 공원에 흩어졌다 하오. 조각을 찾아 팔각정에서 제자리에 이어 주시오."</div>`);
+      }
       A.card("학생 대표", `<div class="letter">"오늘로 끝이 아니오. 학생들끼리 다시 모이기로 했소. 전단을 읽었다면 날짜를 대 보시오."</div><div class="doc" style="text-align:center">○○월 ○○일</div>`);
       return A.codeLock("0305", () => {
         A.flag("p4_march");
@@ -692,14 +738,35 @@ CHAPTERS.push({
       }, "\"그날이 아니오.\" 전단의 한자를 게시판 풀이로 다시 읽어 보자.");
     }
     if (id === "cousin") {
-      if (!A.has("p4_march")) return A.card("사촌 언니", `<div class="letter">"사람이 정말 많지? 우리 학당 동무들도 다 나왔어."</div>`);
-      if (A.owns("letter")) return letterCard(A);
-      A.give("letter");
-      return letterCard(A, `<div class="letter">"학교가 문을 닫는대. 마침 고향에서 편지가 왔는데, 글자가 이상하게 늘어서 있어. 어른들이 일본 순사 눈을 피하려고 이렇게 쓰셨나 봐."</div>`);
+      const q = A.quest("p4_wrap");
+      let pre = "", tail = "";
+      if (q === 1 && A.owns("bookwrap")) {
+        A.use("bookwrap"); A.questDone("p4_wrap");
+        if (!A.has("p4_read")) {
+          A.note("사촌 언니의 귀띔: 찢어진 종이는 찢긴 가장자리 모양이 꼭 맞는 것끼리 원래 한 장이다. 탑 아래와 비석 옆의 조각을 둘 다 보고 견주어 본다.");
+          pre = `<div class="letter">"내 책보! 고마워. 잃어버린 줄 알고 걱정했어.<br>보답으로 하나 알려 줄게. 찢어진 종이는 <b>찢긴 가장자리 모양</b>이 꼭 맞는 것끼리 원래 한 장이야. 탑 아래와 비석 옆에 떨어진 조각을 둘 다 보고 견주어 봐."</div>`;
+        } else {
+          A.note("사촌 언니의 귀띔: 어른들 글은 요즘 책처럼 읽으면 뜻이 안 통할 때가 있다. 공원 비석에 글씨가 어떻게 새겨져 있는지 보면 읽는 차례가 보인다.");
+          pre = `<div class="letter">"내 책보! 고마워. 잃어버린 줄 알고 걱정했어.<br>보답으로 하나 알려 줄게. 어른들 글은 요즘 책처럼 읽으면 뜻이 안 통할 때가 있어. 저기 <b>비석</b>에 글씨가 어떻게 새겨져 있는지 봐 둬. 읽는 차례가 보일 거야."</div>`;
+        }
+      } else if (q === 2) tail = `"책보 찾아 줘서 고마워."`;
+      else if (q === 1) tail = `"참, <b>십층 석탑</b> 아래에 두고 온 내 책보도 잊지 말아 줘."`;
+      else {
+        A.questStart("p4_wrap");
+        tail = `"그런데 부탁이 하나 있어. 아까 <b>십층 석탑</b> 아래에서 동무들을 기다리다가 <b>책보</b>를 두고 왔지 뭐야. 나는 여기서 동무들을 놓칠까 봐 움직일 수가 없어. 좀 가져다줄래?"`;
+      }
+      if (!A.has("p4_march")) return A.card("사촌 언니", `${pre}<div class="letter">"사람이 정말 많지? 우리 학당 동무들도 다 나왔어."${tail ? `<br><br>${tail}` : ""}</div>`);
+      if (A.owns("letter")) { A.questStart("p4_home"); return letterCard(A, `${pre}${tail ? `<div class="letter">${tail}</div>` : ""}`); }
+      A.give("letter"); A.questStart("p4_home");
+      return letterCard(A, `${pre}<div class="letter">"학교가 문을 닫는대. 마침 고향에서 편지가 왔는데, 글자가 이상하게 늘어서 있어. 어른들이 일본 순사 눈을 피하려고 이렇게 쓰셨나 봐."${tail ? `<br><br>${tail}` : ""}</div>`);
     }
     if (id === "stele") {
       A.note("비석: 옛 글은 위에서 아래로 세로로 쓰고, 오른쪽 줄부터 읽는다.");
       return A.card("비석", `<p>오래된 비석. 글씨가 위에서 아래로 세로로 새겨져 있다.</p><div class="doc">옛 글은 <b>세로로</b> 쓰고, <b>오른쪽 줄부터</b> 왼쪽으로 읽어 나간다.</div><p class="note">탑골공원이라는 이름은 이곳의 십층 석탑에서 왔다.</p>`);
+    }
+    if (id === "pagoda" && A.quest("p4_wrap") === 1 && !A.owns("bookwrap")) {
+      A.card("십층 석탑", `<p>흰 돌로 쌓은 십층 석탑. '탑골'이라는 이름이 이 탑에서 왔다. 탑 아래에 종잇조각이 떨어져 있다.</p><p>탑 받침돌 한쪽에 곱게 싼 <b>책보</b>가 놓여 있다. 사촌 언니의 것이다.</p>`);
+      return A.give("bookwrap");
     }
     if (id === "pagoda") return A.card("십층 석탑", `<p>흰 돌로 쌓은 십층 석탑. '탑골'이라는 이름이 이 탑에서 왔다. 탑 아래에 종잇조각이 떨어져 있다.</p>`);
     if (id === "crowd") return A.card("모여든 사람들", A.has("p4_read") ? `<p>학생도, 상인도, 갓 쓴 어른도 태극기를 흔들며 만세를 외친다.</p>` : `<p>학생들과 시민들이 팔각정 둘레에 빽빽이 모여들었다. 모두 숨죽이고 기다린다.</p>`);
@@ -708,7 +775,7 @@ CHAPTERS.push({
       A.card("공원 정문", `<p>사촌 언니가 묻는다. <b>"편지에 우리더러 어디로 오라고 하셨어?"</b></p>`);
       return A.textLock("두 글자", ["천안", "天安", "천안으로"], () => {
         A.note("고향 편지: 학교 닫히면 어서 천안으로 곧장 오너라.");
-        A.closeModal(); sfx("door"); toast("선언서 한 장을 보따리 깊숙이 품고, 고향으로…", 3200); setTimeout(A.clearChapter, 1600);
+        A.questDone("p4_home"); A.closeModal(); sfx("door"); toast("선언서 한 장을 보따리 깊숙이 품고, 고향으로…", 3200); setTimeout(A.clearChapter, 1600);
       }, "언니가 고개를 젓는다. 편지를 비석처럼 읽어 보자.");
     }
   },
@@ -733,6 +800,10 @@ const map5Tex = () => canvasTex(512, 512, (g, w, h) => {
   g.fillStyle = "#5a4a3a"; g.font = FONT(20); g.fillText("장 터", 256, 276); g.fillText("(약도)", 256, 300);
 });
 CHAPTERS.push({
+  quests: {
+    p5_fire: { title: "주막의 함을 열어 신호 불 올리기", desc: "쪽지가 말한 그날을 알아내 주막 마루의 함을 열고, 불 붙일 것으로 높은 곳에 신호를 올리자.", from: "plan", to: "beacon", when: (A) => !A.has("p5_signal") },
+    p5_flags: { title: "장터에 태극기 나눠 주기", desc: "약도의 ✕ 표시가 가리키는 가게에서 태극기를 찾아, 장터 단상에서 사람들에게 나눠 주자.", from: "map5", to: "stage", when: (A) => !A.has("p5_done") },
+  },
   place: "아우내의 장날", when: "기미년(1919) 3월 31일 밤 ~ 4월 1일 · 천안 병천 아우내 장터",
   atmosphere: NIGHT5,
   items: {
@@ -822,6 +893,7 @@ CHAPTERS.push({
   tick(dt, t) { if (L.fire) fireTick(L.fire, t); },
   interact(id, A) {
     if (id === "plan") {
+      if (!A.has("p5_signal")) A.questStart("p5_fire");
       A.note("주막 쪽지: 만세는 서울의 그날처럼 '三月 初一日'에. 다만 장꾼들이 쓰는 달력(陰)으로 센다 — 마침 장날이라 사람이 많이 모인다. 함 자물쇠는 학당에서 쓰던 달력(陽)으로.");
       return A.card("주막 소반 위의 쪽지", `<div class="letter">"서울에서는 <b>三月 一日</b>에 만세를 불렀다지. 우리도 그와 같은 <b>'三月 初一日'</b>에 하되, 날은 <b>장꾼들이 쓰는 달력</b>으로 센다. 그날이 마침 아우내 <b>장날</b>이라 사람이 많이 모일 것이다.<br>불 붙일 것은 함에 넣어 두었다. 함 번호는 학당에서 쓰던 <b>달력</b>대로, 그날의 달 두 자리·날 두 자리."</div>`);
     }
@@ -841,7 +913,7 @@ CHAPTERS.push({
     if (id === "beacon") {
       if (A.has("p5_signal")) return A.card("매봉산의 봉화", `<p>밤새 타오른 봉화가 아직 연기를 피워 올린다.</p>`);
       if (!A.needItem(id, "tinder", "매봉산 꼭대기의 봉화", `<p>동쪽 매봉산 꼭대기에 장작이 쌓여 있다. 불을 붙일 것이 있으면 신호를 올릴 수 있다.</p>`, "부싯돌을 쳐서 불 붙이기")) return;
-      A.flag("p5_signal"); sfx("buk");
+      A.flag("p5_signal"); A.questDone("p5_fire"); sfx("buk");
       L.fire = campfire(46, 15, -4, 30, 1.6);
       if (L.stars) { E.ROOT.remove(L.stars); L.stars = null; }
       setAtmosphere(DAY5); addMarketCrowd(A); if (L.shopLight) L.shopLight.intensity = 1.2;   // 다시 지은 모습(낮)과 같게
@@ -849,6 +921,7 @@ CHAPTERS.push({
       return A.card("전날 밤의 횃불", `<p class="msg ok">매봉산 꼭대기에 불이 올랐다.</p><p>만세 전날 밤, 매봉산에 횃불을 올리자 둘레의 산과 마을에서도 하나둘 불이 올라 신호를 주고받았다고 전한다.</p><p>…밤이 지나고 <b>장날 아침</b>이 밝았다. 장터로 사람들이 모여든다. 이제 태극기를 나눠 줄 차례다.</p>`);
     }
     if (id === "map5") {
+      if (!A.has("p5_done")) A.questStart("p5_flags");
       A.note("주막 앞 약도: 맨 위에 매봉산이 그려져 있다. 장터 네 구석의 가게 가운데 그림 오른쪽 위 가게에 ✕ 표시 — '태극기는 여기 옷감 사이에'.");
       return A.card("주막 앞의 약도", `${imgOf(L.mapTex, "80%")}<p>장터 약도. 맨 위에 <b>매봉산</b>이 그려져 있다. 네 구석 가게 가운데 하나에 ✕ 표시와 함께 작은 글씨: "태극기는 여기, 옷감 사이에."</p><p class="note">이 약도는 어느 쪽을 위로 그렸을까?</p>`);
     }
@@ -863,7 +936,7 @@ CHAPTERS.push({
       if (!A.needItem(id, "flags", "장터 단상", `<p>장터 한가운데 단상. 모여든 사람들에게 나눠 줄 것이 있어야 한다.</p>`, "태극기 꾸러미 풀기")) return;
       A.card("장터 단상", `<p>사람들에게 태극기를 나눠 주었다. 단상의 큰 깃발에 장터가 함께 외칠 여섯 글자를 차례대로 쓰자.</p>`);
       return A.orderLock(["大", "韓", "獨", "立", "萬", "歲"], () => {
-        A.flag("p5_done"); L.banner.material.map = textTex("大韓獨立萬歲", { w: 128, h: 512, size: 62, bg: "#f4f0e6" }); L.banner.material.needsUpdate = true;
+        A.flag("p5_done"); A.questDone("p5_flags"); L.banner.material.map = textTex("大韓獨立萬歲", { w: 128, h: 512, size: 62, bg: "#f4f0e6" }); L.banner.material.needsUpdate = true;
         smallFlags(L.crowdList.filter((_, i) => i % 2 === 0)); sfx("buk");
         A.note("1919년 4월 1일(음력 3월 1일) 아우내 장날 만세 운동. 일본 헌병의 총격으로 여러 사람이 목숨을 잃었고, 그 가운데 그의 아버지와 어머니도 있었다. 그는 그 자리에서 붙잡혔다.");
         A.card("1919년 4월 1일, 아우내 장터", `<p class="msg ok">"대한 독립 만세!"</p><div class="letter">낮 무렵, 장터에 모인 사람들이 태극기를 흔들며 만세를 불렀다. 모인 사람이 수천 명이었다고 전한다. 그는 앞장서서 태극기를 나눠 주고 만세를 외쳤다.<br>곧 일본 헌병들이 달려와 총을 쏘았다. 이날 여러 사람이 목숨을 잃었고, 그 가운데에는 <b>그의 아버지와 어머니</b>도 있었다.<br>그는 그 자리에서 붙잡혔다.</div><p class="note">장터 어귀로 나가자.</p>`);
@@ -908,6 +981,10 @@ const scratchTex = () => canvasTex(256, 200, (g, w, h) => {
   g.fillText("그날로부터", w / 2, 50); g.fillText("꼭 ○○○일째", w / 2, 100); g.fillText("다 같이 다시", w / 2, 150);
 });
 CHAPTERS.push({
+  quests: {
+    p6_tap: { title: "벽 너머 두드림 알아듣기", desc: "옆 방에서 벽을 두드려 말을 보낸다. 감방 안에 숨겨진 글자판을 찾아 무슨 말인지 읽어 내자.", from: "cellmates", to: "wall6", when: (A) => !A.has("p6_tap") },
+    p6_name: { title: "종이 뭉치 주인의 이름 불러 주기", desc: "성은 고향 집 대문에, 이름은 학당의 잠자리에 남아 있었다. 수첩과 옥편으로 세 글자를 읽어 내자.", from: "bundle6", when: (A) => A.has("p6_anniv") },
+  },
   place: "여덟 번째 방", when: "경신년(1920) 2월 29일 밤 · 경성 서대문 감옥",
   atmosphere: NIGHT6,
   items: {},
@@ -975,7 +1052,7 @@ CHAPTERS.push({
       A.note("동쪽 벽 너머의 두드림: ● | ●●● — ●●● | ●●●●● — ●●●● | ●");
       A.card("동쪽 벽의 틈", `<p>벽에 귀를 대자, 옆 방에서 일정하게 두드리는 소리가 들린다. 잠깐씩 쉬었다가 다시 두드린다.</p><div class="doc" style="text-align:center;font-size:20px;letter-spacing:2px">${dots(1)} | ${dots(3)}<br>${dots(3)} | ${dots(5)}<br>${dots(4)} | ${dots(1)}</div><p class="note">( | 는 잠깐 쉬는 자리)</p>`);
       return A.textLock("들려온 말 (세 글자)", ["다같이", "다같이!"], () => {
-        A.flag("p6_tap"); A.note("옆 방 동지가 두드려 보낸 말: 다 같이.");
+        A.flag("p6_tap"); A.questDone("p6_tap"); A.note("옆 방 동지가 두드려 보낸 말: 다 같이.");
         A.card("다 같이", `<p class="msg ok">"다 · 같 · 이"</p><p>옆 방 동지가 전한 말이다. 감방마다 같은 뜻을 품고 있다. 그런데 언제?</p><p class="note">서쪽 벽의 긁힌 글을 보자.</p>`);
       }, "뜻이 통하지 않는다. 두드림의 앞과 뒤를 이불 밑 표에서 다시 따라가 보자.");
     }
@@ -997,12 +1074,17 @@ CHAPTERS.push({
     }
     if (id === "bundle6") {
       if (!A.has("p6_anniv")) return A.card("종이 뭉치", `<p>붉은 댕기로 묶은 종이 뭉치. 고향까지 품고 갔던 바로 그 선언서다. 아직 풀리지 않는다.</p>`);
+      A.questStart("p6_name");
       A.card("붉은 댕기로 묶은 종이 뭉치", `<p>댕기에 수놓인 이름이 닳아 빈칸 세 개만 남았다. 종이 뭉치가 속삭인다.</p><div class="letter">"이 종이를 품고 고향까지 간 사람을 기억해 다오. 그의 이름을 불러 다오."</div><p class="note">성(姓)은 고향 집 대문에, 이름은 학당의 잠자리에 남아 있었다. 가방(Tab)의 수첩과 옥편을 함께 보자.</p>`);
-      return A.textLock("세 글자", ["유관순", "柳寬順", "류관순"], () => { A.closeModal(); toast("이름을 부르자 댕기가 스르르 풀린다…", 3000); setTimeout(A.endGame, 1500); }, "댕기가 풀리지 않는다. 1장 문패의 첫 글자, 2장 이름표의 두 글자를 옥편으로 읽어 보자.");
+      return A.textLock("세 글자", ["유관순", "柳寬順", "류관순"], () => { A.questDone("p6_name"); A.closeModal(); toast("이름을 부르자 댕기가 스르르 풀린다…", 3000); setTimeout(A.endGame, 1500); }, "댕기가 풀리지 않는다. 1장 문패의 첫 글자, 2장 이름표의 두 글자를 옥편으로 읽어 보자.");
     }
     if (id === "door6") return A.card("철문", `<p>굳게 닫힌 철문 위에 <b>八號</b>(8호)라는 번호가 붙어 있다. 그는 이 '8호 감방'에서 여러 여성 독립운동가들과 함께 지냈다고 전한다.</p>`);
     if (id === "window6") return A.card("높은 창", A.has("p6_anniv") ? `<p>창밖이 붉게 밝아 온다. 3월 1일 새벽이다.</p>` : `<p>손이 닿지 않는 높은 창. 창살 너머로 달빛만 들어온다.</p>`);
-    if (id === "cellmates") return A.card("감방 동지들", `<div class="letter">"고향 장터에서 부모님을 잃었다지… 그래도 너는 늘 우리를 먼저 다독였지. 내일 아침엔, 다 같이."</div>`);
+    if (id === "cellmates") {
+      const ask = !A.has("p6_tap");
+      if (ask) A.questStart("p6_tap");
+      return A.card("감방 동지들", `<div class="letter">"고향 장터에서 부모님을 잃었다지… 그래도 너는 늘 우리를 먼저 다독였지. 내일 아침엔, 다 같이."${ask ? `<br><br>"그런데 동쪽 벽에서 또 두드리는 소리가 나는구나. 무슨 말인지 네가 좀 들어 봐 주겠니?"` : ""}</div>`);
+    }
   },
   clear: null,
 });

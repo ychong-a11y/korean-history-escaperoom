@@ -155,6 +155,10 @@ function tileSvg(slots) {
 /* ───────────── 제1장 · 닫힌 성문 (668 평양성) ───────────── */
 const C1_ORDER = ["남생이 당에 항복", "요동의 큰 성들이 무너지기 시작", "부여성이 무너짐", "평양성 임금의 항복"];
 CHAPTERS.push({
+  quests: {
+    c1_slips: { title: "흩어진 죽간을 차례대로 묶기", desc: "성안에 흩어진 죽간을 모두 찾아, 관청의 죽간 상자에 일어난 차례대로 끼우자.", from: "messenger", to: "chronicle", when: (A) => !A.has("c1_open") },
+    c1_millet: { title: "배고픈 아이에게 먹을 것 주기", desc: "피란민 아이가 며칠째 굶었다. 성안에 남은 곡식을 찾아 나눠 주자.", from: "child", when: (A) => !A.has("c1_sD") },
+  },
   place: "닫힌 성문", when: "668년 가을 · 평양성",
   atmosphere: { hdri: "qwantani_dusk_2_puresky", hdrExposure: 0.6, top: 0x2a2f4a, mid: 0x8a6a6a, low: 0xd08a5a, sun: [-0.8, 0.14, -0.5], sunCol: 0xff8a40, glow: 0.6, fog: 0x6e5e5a, fogNear: 30, fogFar: 120, hemiSky: 0xd8b8a8, hemiGround: 0x4a3a2a, hemiI: 1.0, light: 0xffaa70, lightI: 1.8 },
   items: {
@@ -275,7 +279,9 @@ CHAPTERS.push({
     }
     if (id === "messenger") {
       A.note("전령: 임금(보장왕)께서 왕자 남산을 보내 수령 98명과 함께 흰 깃발을 들고 당 장수 이적에게 항복하셨다. 그러나 남건 장군은 성문을 닫고 버티고 있다. 군사 일은 승려 신성에게 맡겼다.");
-      return A.card("왕궁에서 온 전령", `<div class="letter">"한 달 넘게 성이 에워싸여 있었소. 마침내 임금께서는 왕자 남산을 보내, 수령 아흔여덟 명과 함께 <b>흰 깃발</b>을 들고 당나라 장수 이적에게 나아가 항복하셨소.<br>그런데 남건 장군은 성문을 닫아걸고 아직 버티고 있소. 군사 일은 저기 있는 <b>승려 신성</b>에게 맡기셨다 하오."</div>`);
+      const ask = A.has("c1_open") ? "" : `<br>부탁이 하나 있소. 이 나라의 지난 몇 해를 적은 <b>죽간</b>이 성안에 흩어졌다 하오. 뒷사람이 알 수 있게, 찾아서 관청의 <b>죽간 상자</b>에 차례대로 묶어 주시오.`;
+      if (!A.has("c1_open")) A.questStart("c1_slips");
+      return A.card("왕궁에서 온 전령", `<div class="letter">"한 달 넘게 성이 에워싸여 있었소. 마침내 임금께서는 왕자 남산을 보내, 수령 아흔여덟 명과 함께 <b>흰 깃발</b>을 들고 당나라 장수 이적에게 나아가 항복하셨소.<br>그런데 남건 장군은 성문을 닫아걸고 아직 버티고 있소. 군사 일은 저기 있는 <b>승려 신성</b>에게 맡기셨다 하오.${ask}"</div>`);
     }
     if (id === "monk") {
       if (A.has("c1_open")) return A.card("승려", `<p>승려는 보이지 않는다. 열린 성문 너머로 바람만 분다.</p>`);
@@ -296,8 +302,9 @@ CHAPTERS.push({
     }
     if (id === "child") {
       if (A.has("c1_sD")) return A.card("피란민 아이", `<p>아이는 좁쌀 주먹밥을 꼭 쥐고 어머니 곁에 앉아 있다.</p>`);
+      A.questStart("c1_millet");
       if (!A.needItem(id, "millet", "피란민 아이", `<p>아이가 배고픈 얼굴로 무언가를 꼭 쥐고 있다. 대나무 조각 같다.</p><div class="letter">"며칠째 아무것도 못 먹었어요…"</div>`, "좁쌀 나눠 주기")) return;
-      A.flag("c1_sD");
+      A.flag("c1_sD"); A.questDone("c1_millet");
       A.note("죽간 (아이가 주운 것): 부여성이 무너진 지 '일곱 달 뒤' — 한 달 넘게 에워싸인 평양성에서 임금이 흰 깃발을 내보내 항복하였다.");
       return A.card("피란민 아이", `<p class="msg ok">좁쌀을 나눠 주자 아이 어머니가 고개를 숙였다.</p><p>아이가 쥐고 있던 것을 내민다. "관청 앞에서 주웠어요."</p>${SLIP("부여성이 무너진 지 <b>일곱 달 뒤</b> — 한 달 넘게 에워싸인 평양성에서 임금이 흰 깃발을 내보내 항복하였다.")}`);
     }
@@ -308,7 +315,7 @@ CHAPTERS.push({
       if (n < 4) return A.card("죽간 상자", `<p>서기의 상자. 뚜껑 안쪽에 "나라의 마지막 몇 해를 <b>일어난 차례대로</b> 묶어 두어라"라고 적혀 있다. 홈은 네 칸.</p><p class="note">지금 찾은 죽간: ${n} / 4</p>`);
       A.card("죽간 상자", `<p>찾은 죽간 네 개를 일어난 차례대로 상자의 홈에 끼우자.</p><p class="note">해의 이름이 적힌 죽간도 있고, 다른 죽간을 기준으로 적힌 것도 있다.</p>`);
       return A.orderLock(C1_ORDER, () => {
-        A.flag("c1_open"); L.open = 1; if (L.bar) { drop(L.bar); L.bar = null; } sfx("door");
+        A.flag("c1_open"); A.questDone("c1_slips"); L.open = 1; if (L.bar) { drop(L.bar); L.bar = null; } sfx("door");
         A.note("평양성의 마지막: 남생 항복(병인) → 요동의 큰 성들(정묘 가을) → 부여성(그 이듬해 2월) → 일곱 달 뒤 임금의 항복. 닷새 뒤 승려 신성이 몰래 성문을 열었다.");
         A.card("닷새 뒤", `<p class="msg ok">죽간을 차례대로 끼우자, 서기가 마지막 한 줄을 써 넣었다.</p><div class="letter">"임금이 항복한 뒤에도 남건은 성문을 닫고 버텼다. 그러나 닷새 뒤, 군사 일을 맡았던 승려 신성이 몰래 성문을 열었다. 당나라와 신라의 군사가 성안으로 들어왔고, 남건은 붙잡혔다.<br>임금과 많은 고구려 사람들이 당나라로 끌려갔다."</div><p class="note">빗장이 풀린 성문이 천천히 열린다. 성문 옆 문지도리 돌에 누군가 글자를 새기다 말았다.</p>`);
       }, "죽간이 홈에 맞지 않는다. 해의 이름과 '이듬해', '일곱 달 뒤'를 다시 따져 보자.");
@@ -332,6 +339,11 @@ CHAPTERS.push({
 /* ───────────── 제2장 · 여러 겨레의 성 (696 영주) ───────────── */
 const SMOKE2 = { top: 0x5a5048, mid: 0xa08068, low: 0xd8a070, sun: [0.3, 0.5, 0.6], sunCol: 0xffa060, glow: 0.5, fog: 0x9a8070, fogNear: 25, fogFar: 110, hemiSky: 0xe0c0a0, hemiGround: 0x5a4a38, hemiI: 1.05, light: 0xffc890, lightI: 1.7, exposure: 1.05 };
 CHAPTERS.push({
+  quests: {
+    c2_chest: { title: "마구간 짐 상자에서 편지 꺼내기", desc: "무리의 어른이 마구간 짐 상자에 편지를 넣어 두셨다. 자물쇠는 올해의 간지로 맞춰져 있다.", from: "halmeoni", to: "chest", when: (A) => !A.owns("arrowLetter") && !A.has("c2_letter") },
+    c2_letter: { title: "말갈 무리에게 화살 편지 전하기", desc: "어른의 쪽지대로 화살 편지를 말갈 마을에 전하자. 마을이 어디인지는 관청 앞 마을 지도판에 있다.", from: "chest", to: "mtent", when: (A) => A.owns("arrowLetter") && !A.has("c2_letter") },
+    c2_ember: { title: "할머니 집 아궁이 불씨 살피기", desc: "할머니는 무릎이 아파 걷기 힘들다. 구들 놓은 집 아궁이의 불씨가 살아 있는지 보고 와서 알려 드리자.", from: "halmeoni", to: (A) => (A.has("c2_emberSeen") ? "halmeoni" : "house") },
+  },
   place: "여러 겨레의 성", when: "696년 여름 · 요하 서쪽 영주(營州)",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.3, 0.85, 0.4], sunCol: 0xfff0c0, glow: 0.6, fog: 0xc0c8cc, fogNear: 40, fogFar: 140, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.3 },
   items: {
@@ -427,19 +439,32 @@ CHAPTERS.push({
   interact(id, A) {
     if (id === "halmeoni") {
       A.note("고구려 할머니: 평양성이 무너지고 꼭 스물여덟 해가 지났다. 우리 고구려 사람들 마을은 거란 사람들 마을과 광장을 사이에 두고 마주 보고 있다. 무리의 어른이 마구간 짐 상자에 편지를 두셨다 — 자물쇠는 '올해의 간지'.");
-      return A.card("고구려 할머니", `<div class="letter">"평양성 성문이 무너지던 해 나는 열두 살이었지. 그 뒤로 우리는 이 먼 영주까지 옮겨 와 살았어. 벌써 꼭 <b>스물여덟 해</b>가 지났구나.<br>우리 고구려 사람들 마을은 저기 거란 사람들 마을과 광장을 사이에 두고 <b>마주 보고</b> 있단다.<br>참, 무리의 어른께서 <b>마구간 짐 상자</b>에 편지를 넣어 두셨어. 자물쇠는 <b>올해의 간지</b>로 맞춰 두셨다더라."</div>`);
+      const opened = A.owns("arrowLetter") || A.has("c2_letter");
+      if (!opened) A.questStart("c2_chest");
+      const talk = `"평양성 성문이 무너지던 해 나는 열두 살이었지. 그 뒤로 우리는 이 먼 영주까지 옮겨 와 살았어. 벌써 꼭 <b>스물여덟 해</b>가 지났구나.<br>우리 고구려 사람들 마을은 저기 거란 사람들 마을과 광장을 사이에 두고 <b>마주 보고</b> 있단다.<br>참, 무리의 어른께서 <b>마구간 짐 상자</b>에 편지를 넣어 두셨어. 자물쇠는 <b>올해의 간지</b>로 맞춰 두셨다더라.${opened ? "" : " 네가 가서 꺼내 보렴."}"`;
+      // 곁가지 부탁: 구들 놓은 집의 불씨 보고 오기
+      const q = A.quest("c2_ember");
+      if (q === 2) return A.card("고구려 할머니", `<div class="letter">"불씨를 봐 줘서 고맙구나."<br><br>${talk}</div>`);
+      if (q === 1 && A.has("c2_emberSeen")) {
+        A.questDone("c2_ember");
+        A.note("할머니의 귀띔: 여러 해 뒤의 간지를 셀 때 한 해씩 다 짚지 않아도 된다. 천간은 열씩, 지지는 열둘씩 덜어 내고 남은 만큼만 짚는다. 짚기 시작할 해는 평양성 성문이 무너진 해.");
+        return A.card("고구려 할머니", `<div class="letter">"불씨가 살아 있더냐? 아이고, 고맙구나.<br>보답으로 해 세는 법을 하나 일러 주마. 스물여덟 해를 한 해씩 다 짚을 것 없단다. <b>천간은 열 해</b>마다 제자리로 돌아오니, 열씩 덜어 내고 <b>남은 만큼만</b> 짚으면 돼. <b>지지는 열두 해</b>마다 돌아오니 열둘씩 덜어 내고. 짚기 시작할 해는 성문이 무너진 그해란다."</div><div class="letter">${talk}</div>`);
+      }
+      if (q === 1) return A.card("고구려 할머니", `<div class="letter">${talk}<br><br>"아궁이 불씨는 보고 왔니? 저기 <b>구들 놓은 집</b>이란다."</div>`);
+      A.questStart("c2_ember");
+      return A.card("고구려 할머니", `<div class="letter">${talk}<br><br>"그리고 얘야, 부탁이 하나 있단다. 저기 <b>구들 놓은 집</b> 아궁이에 불씨를 묻어 두고 나왔는데, 무릎이 아파 자꾸 오갈 수가 없구나. 불씨가 꺼지지 않았는지 좀 보고 와 주겠니?"</div>`);
     }
     if (id === "calendar") {
       A.note("관청 달력: 간지표(천간 10 · 지지 12). 올해 칸만 찢겨 나갔다.");
       return A.card("관청 벽의 달력", `<p>도독부에서 내건 달력. <b>올해</b>가 적힌 칸만 누가 찢어 갔다. 아래에 간지표가 남아 있다.</p><div class="doc">${GANJI_TABLE}</div><p class="note">천간은 10해, 지지는 12해마다 처음으로 돌아온다.</p>`);
     }
     if (id === "chest") {
-      if (A.owns("arrowLetter")) return A.card("마구간의 짐 상자", `<p>상자에는 길 떠날 때 쓸 보따리만 남았다.</p>`);
+      if (A.owns("arrowLetter")) { if (!A.has("c2_letter")) A.questStart("c2_letter"); return A.card("마구간의 짐 상자", `<p>상자에는 길 떠날 때 쓸 보따리만 남았다.</p>`); }
       A.card("마구간의 짐 상자", `<p>말 옆에 놓인 짐 상자. 두 글자 자물쇠가 걸려 있다.</p><div class="doc" style="text-align:center">"올해"</div>`);
       return A.textLock("두 글자", ["병신", "丙申", "병신년"], () => {
         A.note("올해의 간지: 병신(丙申) — 무진에서 28해 뒤.");
         A.note("어른의 쪽지: 거란이 들고일어나면 이 성은 흔들린다. 그때 우리는 동쪽으로 간다. 말갈 무리에게도 화살 편지를 전하라. 그들의 마을이 어디인지는 관청 앞 마을 지도판에 적혀 있다.");
-        A.card("마구간의 짐 상자", `<p class="msg ok">자물쇠가 열렸다.</p><p>안에 화살대에 감은 편지 한 통과 쪽지가 있다.</p><div class="letter">"요즘 거란 사람들의 분노가 심상치 않다. 그들이 들고일어나면 이 성은 흔들릴 것이다. 그때 우리는 <b>동쪽으로</b> 간다.<br>말갈 무리에게도 이 화살 편지를 전하라. 그들의 마을이 어디인지는 <b>관청 앞 마을 지도판</b>에 적혀 있다."</div>`); A.give("arrowLetter");
+        A.card("마구간의 짐 상자", `<p class="msg ok">자물쇠가 열렸다.</p><p>안에 화살대에 감은 편지 한 통과 쪽지가 있다.</p><div class="letter">"요즘 거란 사람들의 분노가 심상치 않다. 그들이 들고일어나면 이 성은 흔들릴 것이다. 그때 우리는 <b>동쪽으로</b> 간다.<br>말갈 무리에게도 이 화살 편지를 전하라. 그들의 마을이 어디인지는 <b>관청 앞 마을 지도판</b>에 적혀 있다."</div>`); A.give("arrowLetter"); A.questDone("c2_chest"); A.questStart("c2_letter");
       }, "자물쇠가 열리지 않는다. 무진에서 몇 해가 지났는지, 간지가 어떻게 도는지 다시 따져 보자.");
     }
     if (id === "notice") {
@@ -467,6 +492,10 @@ CHAPTERS.push({
       return A.card("방위석", `<p>광장 한가운데의 둥근 돌. 쇠로 만든 화살표가 박혀 있고, 화살표 끝에 <b>北(북녘 북)</b>이 새겨져 있다.</p><p class="note">화살표가 어느 건물을 가리키는지 직접 보자.</p>`);
     }
     if (id === "office") return A.card("관청", `<p>'營州 都督府(영주 도독부)'. 붉은 정문이 굳게 닫혀 있다.</p>`);
+    if (id === "house" && A.quest("c2_ember") === 1 && !A.has("c2_emberSeen")) {
+      A.flag("c2_emberSeen");
+      return A.card("구들 놓은 집", `<p class="msg ok">아궁이를 들여다보니 재 속에 <b>불씨</b>가 빨갛게 살아 있다.</p><p>방 밑으로 불길이 지나가 바닥을 데우는 <b>구들(온돌)</b>을 놓은 집. 집 옆에 굴뚝이 따로 서 있다. 고구려 사람들은 고향에서처럼 이렇게 방을 데웠다.</p><p class="note">할머니께 돌아가 알려 드리자.</p>`);
+    }
     if (id === "house") return A.card("구들 놓은 집", `<p>방 밑으로 불길이 지나가 바닥을 데우는 <b>구들(온돌)</b>을 놓은 집. 집 옆에 굴뚝이 따로 서 있다. 고구려 사람들은 고향에서처럼 이렇게 방을 데웠다.</p>`);
     if (id === "vmap") {
       if (A.has("c2_vmap")) return A.card("마을 지도판", `<div class="doc">東 고구려 유민 · 西 거란 · 南 당나라 군영 · 北 말갈</div>`);
@@ -480,7 +509,7 @@ CHAPTERS.push({
     if (id === "mtent") {
       if (A.has("c2_letter")) return A.card("말갈 마을 천막", `<p>말갈 사람들이 짐을 꾸리고 있다. 동쪽으로 함께 갈 것이다.</p>`);
       if (!A.needItem(id, "arrowLetter", "말갈 마을 천막", `<p>사냥 활이 걸린 말갈 사람들의 천막. 파수꾼이 경계하는 눈빛이다.</p>`, "화살 편지 건네기")) return;
-      A.flag("c2_letter");
+      A.flag("c2_letter"); A.questDone("c2_letter");
       A.note("말갈 무리의 우두머리: 우리도 동쪽으로 간다. 고구려 사람들과 함께 요하를 건너자.");
       return A.card("말갈 마을 천막", `<p class="msg ok">파수꾼이 화살 편지를 받아 천막 안으로 들어갔다.</p><div class="letter">말갈 무리의 우두머리가 나와 말했다. "우리도 이 성에 더 머물 까닭이 없다. 고구려 사람들과 함께 <b>동쪽으로</b> 가겠다. 요하를 건너자."</div>`);
     }
@@ -507,6 +536,10 @@ const C3_MAP = (() => {
     <div style="margin-top:8px;height:10px;background:#6a8aa8;border-radius:5px"></div><div style="font-size:13px;color:#2a4a68">아래 가장자리: 강 (요하)</div></div>`;
 })();
 CHAPTERS.push({
+  quests: {
+    c3_names: { title: "사신이 내민 이름 셋 짝짓기", desc: "두루마리, 파수꾼, 척후병, 아버지의 자리를 살피고 옥편으로 읽어, 세 이름이 누구인지 사신에게 밝히자.", from: "envoy", when: (A) => !A.has("c3_match") },
+    c3_path: { title: "길잡이 돌에 떠날 길 맞추기", desc: "사신의 일과 아버지의 상자를 매듭지은 뒤, 길 지도의 길을 동쪽 길목 길잡이 돌에 실제 방위로 맞추자.", from: "scout", to: "path" },
+  },
   place: "강 건너 두 무리", when: "697년 무렵 · 요하 동쪽",
   atmosphere: { hdri: "qwantani_dawn_puresky", hdrExposure: 0.55, top: 0x29386b, mid: 0x8c789e, low: 0xf29e73, sun: [1, 0.2, 0.12], sunCol: 0xff8c40, fog: 0x7d7088, fogNear: 40, fogFar: 150, hemiSky: 0xc8c4e0, hemiGround: 0x5a4630, hemiI: 1.05, light: 0xffc28a, lightI: 2.1, waterColor: 0x1a3a4a },
   items: {},
@@ -587,7 +620,8 @@ CHAPTERS.push({
     }
     if (id === "scout") {
       A.note("척후병: 당이 군사를 보낸다. 장수의 깃발에 李楷固. 본래 영주에서 들고일어난 거란 이진충의 장수였는데 당에 항복했다고 한다.");
-      return A.card("척후병", `<div class="letter">"서쪽에서 소식이 왔소. 칭호를 거절하면 당이 군사를 보낸다 하오. 장수의 깃발에는 <b>李楷固</b> 세 글자.<br>본래 영주에서 들고일어났던 <b>거란</b> 이진충의 장수였는데, 당에 항복해 이제는 당의 장수가 됐다지."</div>`);
+      A.questStart("c3_path");
+      return A.card("척후병", `<div class="letter">"서쪽에서 소식이 왔소. 칭호를 거절하면 당이 군사를 보낸다 하오. 장수의 깃발에는 <b>李楷固</b> 세 글자.<br>본래 영주에서 들고일어났던 <b>거란</b> 이진충의 장수였는데, 당에 항복해 이제는 당의 장수가 됐다지.<br>그리되면 우리도 여기 오래 머물 수 없소. 떠날 길은 저 탁자의 <b>길 지도</b>에 그려 두었으니, 때가 되면 동쪽 길목의 <b>길잡이 돌</b>에 그 길을 맞춰 주시오. 남은 사람들이 따라올 수 있게 말이오."</div>`);
     }
     if (id === "ftent") {
       A.note("아버지의 자리: 펼쳐 둔 두루마리에 '震' 자가 크게 보인다. 아버지는 이 무렵 세상을 떠났다고 전한다.");
@@ -595,9 +629,10 @@ CHAPTERS.push({
     }
     if (id === "envoy") {
       if (A.has("c3_match")) return A.card("당나라 사신", `<p>사신은 굳은 얼굴로 배에 오를 채비를 한다. "황제께 그대로 아뢰겠소."</p>`);
+      A.questStart("c3_names");
       A.card("당나라 사신", `<div class="letter">"황제의 뜻을 전하러 왔소. 칭호를 받을 사람과, 혹시 황제의 뜻을 따르지 않으면 찾아갈 장수가 누구인지 분명히 해 두시오."</div><p>사신이 이름 세 개를 내민다. 각 이름이 누구인지 짝지어 주자.</p>`);
       return A.matchLock(["乞乞仲象", "乞四比羽", "李楷固"], ["그의 아버지 (고구려 무리의 어른)", "말갈 무리의 우두머리", "당이 보낸 거란 출신 장수"], [0, 1, 2], () => {
-        A.flag("c3_match");
+        A.flag("c3_match"); A.questDone("c3_names");
         A.note("乞乞仲象 = 그의 아버지 (震國公, 진국공) · 乞四比羽 = 말갈 무리의 우두머리 (許國公, 허국공 — 받지 않음) · 李楷固 = 당이 보낸 거란 출신 장수.");
         A.card("당나라 사신", `<p class="msg ok">사신이 고개를 끄덕였다.</p><div class="letter">"震國公은 이 천막의 어른, 許國公은 말갈의 우두머리… 그런데 말갈의 우두머리는 칭호를 받지 않겠다 하니, 황제께서 가만있지 않으실 것이오."</div>`);
       }, "사신이 고개를 젓는다. 파수꾼, 척후병, 아버지의 자리를 다시 살펴보자.");
@@ -618,7 +653,7 @@ CHAPTERS.push({
     if (id === "path") {
       if (!A.has("c3_match") || !A.has("c3_box")) return A.card("동쪽 길목의 길잡이 돌", `<p>돌무더기 위에 방향 돌림판이 있다. 아직 떠날 때가 아니다. 사신의 일과 아버지의 상자를 먼저 매듭짓자.</p>`);
       A.card("동쪽 길목의 길잡이 돌", `<p>돌무더기 위 놋쇠 돌림판에 '<b>↑ = 北</b>'이라 새겨져 있다. 지도의 길을 <b>실제 방위</b>로 맞추면 남은 사람들이 길을 따라올 수 있다.</p>`);
-      return A.dirLock(["→", "→", "↑", "→", "↓", "→"], () => { A.closeModal(); toast("남은 사람들이 길잡이 돌을 따라 동쪽 산길로 들어선다…", 2600); sfx("door"); setTimeout(A.clearChapter, 1400); }, "돌림판이 덜컥 멈춘다. 지도의 위쪽은 어느 방위였지?");
+      return A.dirLock(["→", "→", "↑", "→", "↓", "→"], () => { A.questDone("c3_path"); A.closeModal(); toast("남은 사람들이 길잡이 돌을 따라 동쪽 산길로 들어선다…", 2600); sfx("door"); setTimeout(A.clearChapter, 1400); }, "돌림판이 덜컥 멈춘다. 지도의 위쪽은 어느 방위였지?");
     }
     if (id === "boat") return A.card("사신의 배", `<p>사신이 요하를 건너올 때 타고 온 배. 강은 우리 진영의 <b>서쪽</b>으로 흐른다.</p>`);
   },
@@ -628,6 +663,11 @@ CHAPTERS.push({
 /* ───────────── 제4장 · 구름 걸린 고개 (698 무렵 천문령) ───────────── */
 const C4_LM = { lm_rock: [-28, "골짜기의 돌무더기"], lm_birch: [-10, "자작나무 숲"], lm_bridge: [10, "외나무다리"], lm_neck: [28, "좁은 목"] };
 CHAPTERS.push({
+  quests: {
+    c4_arrows: { title: "궁수들에게 화살 나눠 주기", desc: "궁수들의 화살이 모자란다. 적의 무리 수를 세어 화살 창고를 열고, 궁수 대장에게 가져다주자.", from: "archers", when: (A) => !A.has("c4_arrows") },
+    c4_drum: { title: "신호 북을 차례대로 치기", desc: "적의 앞머리가 골짜기의 표지 넷을 지나는 차례대로 신호 북을 치자. 골짜기는 직접 내려다보아야 한다.", from: "tactician", to: "drum", when: (A) => !A.has("c4_battle") },
+    c4_ford: { title: "외나무다리 옆 개울 살펴 주기", desc: "말갈 기병 대장은 말 곁을 떠날 수 없다. 울타리에서 골짜기의 외나무다리를 살펴보고 와서 알려 주자.", from: "riders", to: (A) => (A.has("c4_fordSeen") ? "riders" : "lm_bridge"), when: (A) => !A.has("c4_battle") },
+  },
   place: "구름 걸린 고개", when: "698년 무렵 · 동쪽으로 가는 산길",
   atmosphere: { top: 0x3a4258, mid: 0x8a7a84, low: 0xe0a070, sun: [-1, 0.14, 0.12], sunCol: 0xff9050, glow: 0.9, fog: 0x8a8890, fogNear: 45, fogFar: 180, hemiSky: 0xc8cce0, hemiGround: 0x5a5850, hemiI: 1.1, light: 0xffb888, lightI: 1.5, exposure: 1.1 },
   items: {
@@ -707,12 +747,17 @@ CHAPTERS.push({
     }
     if (id === "eflags") return A.card("골짜기의 깃발들", `<p>골짜기 서쪽 끝에서 깃발들이 천천히 다가온다. 맨 앞에 흰 깃발, 그 뒤로 붉은 깃발들.</p><p class="note">울타리 앞에서 하나씩 세어 보자.</p>`);
     if (id === "tactician" || id === "table") {
+      if (!A.has("c4_battle")) A.questStart("c4_drum");
       A.note("참모: 무리 하나에 화살 세 묶음. 화살 창고 자물쇠 숫자 = 나눠 줄 화살 묶음 수. 신호 북은 적의 앞머리가 골짜기의 표지를 지나는 차례대로 친다. 고구려 사람과 말갈 사람이 한 몸처럼 움직여야 한다.");
       return A.card("참모", `<div class="letter">"고구려 궁수와 말갈 기병이 <b>한 몸처럼</b> 움직여야 이길 수 있소.<br>· 적의 <b>무리 하나에 화살 세 묶음</b>씩. 화살 창고 자물쇠는 나눠 줄 화살 묶음 수로 맞춰 두었소.<br>· 골짜기에는 표지가 넷 있소. 적의 앞머리가 표지를 하나씩 지날 때마다 <b>신호 북</b>을 친다. <b>적이 지나는 차례대로</b> 쳐야 숨어 있는 이들이 때를 아오."</div><p class="note">작전 탁자에는 골짜기를 그린 그림이 없다. 직접 내려다보아야 한다.</p>`);
     }
     if (id === "book") {
       A.note("참모의 옥편: 大 큰 대 · 天 하늘 천 · 夫 지아비 부 · 門 문 문 · 問 물을 문 · 聞 들을 문 · 嶺 고개 령 · 領 거느릴 령 · 山 메 산");
       return A.card("참모의 옥편", `<div class="doc"><table><tr><td>大 큰 대</td><td>天 하늘 천</td><td>夫 지아비 부</td></tr><tr><td>門 문 문</td><td>問 물을 문</td><td>聞 들을 문</td></tr><tr><td>嶺 고개 령</td><td>領 거느릴 령</td><td>山 메 산</td></tr></table></div><p class="note">天은 大 위에 가로획이 <b>따로</b> 하나 더 있고, 夫는 가로획이 세로획을 <b>뚫고</b> 지나간다.</p>`);
+    }
+    if (id === "lm_bridge" && A.quest("c4_ford") === 1 && !A.has("c4_fordSeen")) {
+      A.flag("c4_fordSeen");
+      return A.card(C4_LM[id][1], `<p>고개 아래 골짜기의 표지: <b>${C4_LM[id][1]}</b>.</p><p class="msg ok">통나무 하나를 걸친 다리다. 말이 건너기에는 좁다. 하지만 다리 옆 개울은 폭이 좁고 얕아 보인다.</p><p class="note">이 표지가 골짜기의 어느 쪽 끝에 가까운지 살펴보자. 해는 어느 쪽으로 기울고 있지?<br>본 것을 말갈 기병 대장에게 돌아가 알려 주자.</p>`);
     }
     if (/^lm_/.test(id)) return A.card(C4_LM[id][1], `<p>고개 아래 골짜기의 표지: <b>${C4_LM[id][1]}</b>.</p><p class="note">이 표지가 골짜기의 어느 쪽 끝에 가까운지 살펴보자. 해는 어느 쪽으로 기울고 있지?</p>`);
     if (id === "store") {
@@ -722,17 +767,33 @@ CHAPTERS.push({
     }
     if (id === "archers") {
       if (A.has("c4_arrows")) return A.card("고구려 궁수 대장", `<p>"화살은 넉넉하오. 북소리만 기다리겠소."</p>`);
+      A.questStart("c4_arrows");
       if (!A.needItem(id, "arrows", "고구려 궁수 대장", `<div class="letter">"화살이 모자라오. 적의 무리마다 세 묶음씩은 있어야 하오."</div>`, "화살 묶음 나눠 주기")) return;
-      A.flag("c4_arrows");
+      A.flag("c4_arrows"); A.questDone("c4_arrows");
       return A.card("고구려 궁수 대장", `<p class="msg ok">궁수들에게 화살을 나눠 주었다.</p><div class="letter">"말갈 기병과 함께 북소리를 기다리겠소."</div>`);
     }
-    if (id === "riders") return A.card("말갈 기병 대장", `<div class="letter">"우리 말갈 기병은 고구려 궁수들과 한 몸이오. 신호 북이 울리면 고개 아래로 내달리겠소."</div>`);
+    if (id === "riders") {
+      // 곁가지 부탁: 골짜기의 외나무다리 보고 오기
+      const talk = `"우리 말갈 기병은 고구려 궁수들과 한 몸이오. 신호 북이 울리면 고개 아래로 내달리겠소."`;
+      const q = A.quest("c4_ford");
+      if (q === 2) return A.card("말갈 기병 대장", `<div class="letter">"개울을 봐 주어 고맙소."<br><br>${talk}</div>`);
+      if (q === 1 && A.has("c4_fordSeen")) {
+        A.questDone("c4_ford");
+        if (A.has("c4_battle")) return A.card("말갈 기병 대장", `<div class="letter">"개울이 좁고 얕다고? 잘 봐 주었소. 고맙소!"<br><br>${talk}</div>`);
+        A.note("말갈 기병 대장의 귀띔: 골짜기를 내려다볼 때는 해가 기우는 쪽이 내 어느 손 쪽인지부터 본다. 적은 그쪽에서 오니, 표지도 그쪽 것부터 차례로 짚는다.");
+        return A.card("말갈 기병 대장", `<div class="letter">"개울이 좁고 얕다고? 됐소, 말이 뛰어 건널 수 있겠구려. 고맙소!<br>보답으로 하나 일러 주리다. 골짜기를 내려다볼 때는 먼저 <b>해가 기우는 쪽</b>이 내 어느 손 쪽인지부터 보시오. 적은 그쪽에서 오니, 표지도 <b>그쪽 것부터</b> 차례로 짚으면 되오."<br><br>${talk}</div>`);
+      }
+      if (q === 1) return A.card("말갈 기병 대장", `<div class="letter">${talk}<br><br>"외나무다리는 보고 왔소? 울타리 앞에 서면 골짜기 아래에 보일 거요."</div>`);
+      if (A.has("c4_battle")) return A.card("말갈 기병 대장", `<div class="letter">${talk}</div>`);
+      A.questStart("c4_ford");
+      return A.card("말갈 기병 대장", `<div class="letter">${talk}<br><br>"그런데 부탁이 하나 있소. 나는 말들을 달래느라 여기를 뜰 수 없소. 울타리에서 골짜기의 <b>외나무다리</b>를 좀 살펴봐 주겠소? 다리 옆 개울을 말이 건널 만한지 알고 싶소."</div>`);
+    }
     if (id === "drum") {
       if (A.has("c4_battle")) return A.card("신호 북", `<p>북 가죽이 아직 떨린다. 골짜기는 조용하다.</p>`);
       if (!A.has("c4_arrows")) return A.card("신호 북", `<p>신호 북. 궁수들에게 화살이 모자라 아직 칠 수 없다.</p>`);
       A.card("신호 북", `<p>적의 앞머리가 골짜기의 표지를 지나는 차례대로 북을 친다.</p>`);
       return A.orderLock(["돌무더기", "자작나무 숲", "외나무다리", "좁은 목"], () => {
-        A.flag("c4_battle"); if (L.enemy) { drop(L.enemy); L.enemy = null; } sfx("buk");
+        A.flag("c4_battle"); A.questDone("c4_drum"); if (L.enemy) { drop(L.enemy); L.enemy = null; } sfx("buk");
         A.note("고개의 싸움: 북소리에 맞추어 고구려 궁수와 말갈 기병이 함께 움직였다. 당군이 크게 무너졌고, 장수 이해고는 겨우 몸만 빠져 달아났다.");
         A.card("북소리", `<p class="msg ok">북소리가 골짜기를 울렸다.</p><div class="letter">적의 앞머리가 좁은 목에 들어서자, 고개 위의 고구려 궁수들과 말갈 기병들이 한꺼번에 일어섰다.<br>당나라 군사는 크게 무너졌고, 장수 이해고는 <b>겨우 몸만 빠져</b> 달아났다고 기록은 전한다.</div><p class="note">골짜기가 조용해졌다. 고갯마루 돌에 이 고개의 이름을 새기자.</p>`);
       }, "북소리가 엇갈린다. 적은 어느 쪽에서 오지? 내려다볼 때 그쪽은 왼쪽인가, 오른쪽인가?");
@@ -754,6 +815,10 @@ CHAPTERS.push({
 const PINE5 = [-8, -6];
 const MOUND = (i, j) => [PINE5[0] + 1.5 * i, PINE5[1] + 1.5 * j];
 CHAPTERS.push({
+  quests: {
+    c5_gate: { title: "새 문지도리 돌에 올해 새기기", desc: "성문이 무너진 지 꼭 서른 해. 새 성문 옆 문지도리 돌에 올해의 이름을 새겨 문짝을 달자.", from: "elder", to: "pivot", when: (A) => !A.has("c5_gate") },
+    c5_flag: { title: "빈 깃대에 새 깃발 올리기", desc: "성문을 세우고 이 산의 옛 기와를 찾은 뒤, 깃대에 나라 이름을 적은 깃발을 올리자.", from: "melder", to: "flag", when: (A) => !A.has("c5_flag") },
+  },
   place: "산 위의 새 성", when: "698년 · 동모산",
   atmosphere: { hdri: "qwantani_sunrise_puresky", hdrExposure: 0.6, top: 0x3b4a6a, mid: 0x8a8ea0, low: 0xd8a888, sun: [1, 0.2, 0.08], sunCol: 0xff9a60, fog: 0x9a98a0, fogNear: 40, fogFar: 160, hemiSky: 0xc8d0e8, hemiGround: 0x4a4a40, hemiI: 1.1, light: 0xffd0a8, lightI: 2.0 },
   items: {
@@ -815,7 +880,9 @@ CHAPTERS.push({
   interact(id, A) {
     if (id === "elder") {
       A.note("고구려 노인: 평양성 성문이 무너진 지 꼭 서른 해. 이 산은 옛 고구려 계루부(왕실이 나온 부)의 땅이라 한다. 옛 기와가 묻힌 곳 — 큰 소나무에서 해 뜨는 쪽으로 흙더미 셋을 세고, 거기서 한낮의 해가 걸리는 쪽으로 둘을 더 센 자리.");
-      return A.card("고구려 노인", `<div class="letter">"평양성 성문이 무너지던 날을 나는 잊지 못하오. 그로부터 <b>꼭 서른 해</b>, 이제 우리 손으로 다시 성문을 세우는구려.<br>이 산은 옛 고구려 <b>계루부</b>(왕실이 나온 부)의 땅이라 하오. 옛날 이 산에 살던 이들이 기와를 묻어 두었다는 이야기가 있지.<br><b>큰 소나무</b>에서 <b>해 뜨는 쪽</b>으로 흙더미 <b>셋</b>을 세고, 거기서 <b>한낮의 해가 걸리는 쪽</b>으로 <b>둘</b>을 더 센 자리라오."</div>`);
+      const ask = A.has("c5_gate") ? "" : `<br>그리고 부탁이오. 새 성문 옆 <b>문지도리 돌</b>에 올해의 이름을 새겨 주시오. 그래야 문짝을 단다 하오.`;
+      if (!A.has("c5_gate")) A.questStart("c5_gate");
+      return A.card("고구려 노인", `<div class="letter">"평양성 성문이 무너지던 날을 나는 잊지 못하오. 그로부터 <b>꼭 서른 해</b>, 이제 우리 손으로 다시 성문을 세우는구려.<br>이 산은 옛 고구려 <b>계루부</b>(왕실이 나온 부)의 땅이라 하오. 옛날 이 산에 살던 이들이 기와를 묻어 두었다는 이야기가 있지.<br><b>큰 소나무</b>에서 <b>해 뜨는 쪽</b>으로 흙더미 <b>셋</b>을 세고, 거기서 <b>한낮의 해가 걸리는 쪽</b>으로 <b>둘</b>을 더 센 자리라오.${ask}"</div>`);
     }
     if (id === "plan") {
       A.note("새 성 설계도: ↑ 北. 성문은 南(남쪽) — 한낮의 해를 마주 보도록 세운다.");
@@ -829,7 +896,7 @@ CHAPTERS.push({
       if (A.has("c5_gate")) return A.card("새 문지도리 돌", `${BIG("戊戌")}<p>새 문짝이 이 돌 위에서 돌아간다.</p>`);
       A.card("새 문지도리 돌", `<p>새 성문 문짝을 받칠 돌. 1장에서 본 돌과 꼭 닮았다. 정을 들고 글을 새긴다.</p><div class="doc" style="text-align:center">"이 문을 세운 해 ○○"</div>`);
       return A.textLock("두 글자", ["무술", "戊戌", "무술년"], () => {
-        A.flag("c5_gate"); hangDoors(); sfx("door");
+        A.flag("c5_gate"); A.questDone("c5_gate"); hangDoors(); sfx("door");
         A.note("5장 새 문지도리 돌에 새긴 해: 무술(戊戌) — 무진에서 꼭 서른 해 뒤.");
         A.card("새 문지도리 돌", `<p class="msg ok">돌에 두 글자를 새기자 일꾼들이 새 문짝을 들어 올렸다.</p>${BIG("戊戌")}<p>서른 해 전 평양성의 문지도리에는 '무진', 이 돌에는 '무술'.</p>`);
       }, "정이 미끄러진다. 무진에서 서른 해를 간지 셈판으로 다시 세어 보자.");
@@ -847,14 +914,18 @@ CHAPTERS.push({
       A.note("수막새 조각 ② — 동모산 흙 속에서: 뒷면에 긁힌 글자 榮 (영화 영). 세 자리 가운데 세 번째 자리 조각이다.");
       return A.card("흙 속의 조각", `<p class="msg ok">삽 끝에 무언가 걸렸다.</p><p>연꽃무늬 수막새의 또 한 조각이다. 뒷면에 긁힌 글자 하나.</p>${tileSvg(["?", "祚", "榮"])}<div class="doc" style="text-align:center"><b>榮</b> — 영화 영<br><span class="note">세 자리 가운데 세 번째 자리 조각 ②</span></div><p class="note">첫 자리는 아직 비어 있다.</p>`);
     }
-    if (id === "melder") return A.card("말갈 노인", `<div class="letter">"고구려 사람도, 우리 말갈 사람도 이 산으로 모여들고 있소. 새 나라에 깃발을 올린다지?"</div>`);
+    if (id === "melder") {
+      if (A.has("c5_flag")) return A.card("말갈 노인", `<div class="letter">"고구려 사람도, 우리 말갈 사람도 이 산으로 모여들고 있소. 새 나라에 깃발을 올린다지?"</div>`);
+      A.questStart("c5_flag");
+      return A.card("말갈 노인", `<div class="letter">"고구려 사람도, 우리 말갈 사람도 이 산으로 모여들고 있소. 새 나라에 깃발을 올린다지?<br>저 <b>빈 깃대</b>에 깃발이 오르는 것을 꼭 보고 싶구려. 부탁하오."</div>`);
+    }
     if (id === "gate") return A.card("새 성문", A.has("c5_gate") ? `<p>새 문짝이 달린 성문. 한낮의 해를 마주 보는 남쪽 문이다.</p>` : `<p>돌로 쌓은 문틀은 섰지만 아직 문짝이 없다. 문지도리 돌에 해를 새겨야 문짝을 단다고 한다.</p>`);
     if (id === "flag") {
       if (A.has("c5_flag")) return A.card("깃대", `<p>깃발이 바람에 펄럭인다.</p>`);
       if (!A.has("c5_gate") || !A.has("c5_dig")) return A.card("빈 깃대", `<p>깃발을 만드는 이가 말한다. "성문이 서고, 이 산의 옛 기와를 찾은 다음에 깃발을 올립시다."</p>`);
       A.card("빈 깃대", `<p>깃발 만드는 이가 초안을 보여 준다. 첫 글자가 먹물에 번졌다.</p>${BIG("□ 國")}<div class="letter">"나라 이름의 첫 글자는, 어른의 <b>아버님</b>께서 황제에게서 받으셨던 <b>칭호의 첫 글자</b>와 같다고들 하오. 둘째 글자는 보다시피 '나라 국'이고."</div>`);
       return A.textLock("나라 이름 (두 글자, 소리)", ["진국", "震國", "振國"], () => {
-        A.flag("c5_flag");
+        A.flag("c5_flag"); A.questDone("c5_flag");
         A.note("새 나라의 이름: 진국 — 기록에 따라 振國(떨칠 진), 震國(우레 진)으로 적는다.");
         A.closeModal(); E.lockInput(); sfx("buk"); toast("깃발이 깃대 끝까지 올라간다…", 2400); setTimeout(A.clearChapter, 2000);
       }, "깃발 만드는 이가 고개를 젓는다. 3장 수첩에서 아버님의 칭호를 찾아보자.");
@@ -874,6 +945,10 @@ function hangDoors() {
 /* ───────────── 제6장 · 궁궐의 서고 (759 상경) ───────────── */
 const C6_ORDER = [{ label: "高王 大□□", desc: "고왕" }, { label: "武王 大武藝", desc: "무왕" }, { label: "文王 大欽茂", desc: "문왕" }, { label: "貞惠公主", desc: "정혜공주" }];
 CHAPTERS.push({
+  quests: {
+    c6_letter: { title: "쓰다 만 국서의 빈칸 채우기", desc: "바다 건너 보낼 국서 첫 줄의 두 글자가 비어 있다. 옛 국서 사본과 서가에서 실마리를 찾자.", from: "letter", when: (A) => !A.has("c6_letter") },
+    c6_name: { title: "성문을 다시 세운 이의 이름 부르기", desc: "서고에서 할 일을 마친 뒤, 수막새 뒷면의 세 자리를 채워 그의 이름을 불러 주자.", from: "tiles" },
+  },
   place: "궁궐의 서고", when: "759년 무렵 · 북쪽 나라의 도읍 상경", woodFloor: true,
   atmosphere: { top: 0x1a1410, mid: 0x3a2a1a, low: 0x5a4028, sun: [0.4, 0.7, 0.3], sunCol: 0xffc080, glow: 0.2, fog: 0x2a1f16, fogNear: 30, fogFar: 80, hemiSky: 0xffe0b8, hemiGround: 0x5a3a20, hemiI: 1.5, light: 0xffd8a0, lightI: 0.5, exposure: 1.25 },
   items: {},
@@ -964,16 +1039,18 @@ CHAPTERS.push({
     }
     if (id === "letter") {
       if (A.has("c6_letter")) return letterCard(A);
+      A.questStart("c6_letter");
       A.card("쓰다 만 국서", `<p>바다 건너 일본에 보낼 국서. 첫 줄의 두 글자가 비어 있다.</p>${BIG("□□國王 大欽茂 言", 24)}<div class="letter">"…아버지 <b>武王</b>께서 처음으로 그대 나라와 사신을 주고받으시며 보내신 글의 뜻을, 이 아들 大欽茂가 그대로 잇습니다…"</div><p class="note">일본의 기록에도 이 나라 사신을 이 두 글자를 붙여 '○○ 사신'이라 적은 대목이 있다.</p>`);
-      return A.textLock("빈칸 두 글자 (소리)", ["고려", "高麗"], () => { A.flag("c6_letter"); A.note("국서 첫 줄: 高麗國王 大欽茂 — 문왕은 스스로 '고려(고구려)의 왕'이라 했다. (759년 무렵 일본에 보낸 국서)"); letterCard(A, true); }, "붓이 멈춘다. 옛 국서 사본과 서가의 두루마리를 다시 보자. 빈칸은 두 글자다.");
+      return A.textLock("빈칸 두 글자 (소리)", ["고려", "高麗"], () => { A.flag("c6_letter"); A.questDone("c6_letter"); A.note("국서 첫 줄: 高麗國王 大欽茂 — 문왕은 스스로 '고려(고구려)의 왕'이라 했다. (759년 무렵 일본에 보낸 국서)"); letterCard(A, true); }, "붓이 멈춘다. 옛 국서 사본과 서가의 두루마리를 다시 보자. 빈칸은 두 글자다.");
     }
     if (id === "ondol") return A.card("구들 놓은 자리", `<p>방바닥 한쪽에 구들을 놓아 따뜻하다. 영주의 고구려 사람들 집에서 본 그 구들이다.</p>`);
     if (id === "window") return A.card("마당으로 난 문", `<p>마당 건너 전각 지붕 끝마다 <b>연꽃무늬 수막새</b>가 줄지어 있다. 평양성에서 보던 기와와 꼭 닮았다.</p>`);
     if (id === "tiles") {
+      A.questStart("c6_name");
       const ready = A.has("c6_order") && A.has("c6_letter");
       if (!ready) return A.card("연꽃무늬 수막새", `<p>받침 위에 깨진 수막새가 놓여 있다. 발굴 현장에서 본 그 수막새다. 뒷면 세 자리 가운데 첫 자리가 아직 비어 있다.</p>${tileSvg(["?", "祚", "榮"])}<p class="note">이 서고에서 할 일을 먼저 마치자.</p>`);
       A.card("연꽃무늬 수막새", `<p>조각들을 맞추자 첫 자리에 들어갈 마지막 조각이 받침 밑에서 나왔다. 왕실의 성이 새겨질 자리다.</p>${tileSvg(["?", "祚", "榮"])}<div class="letter">"무너진 성문을 다시 세운 이를 기억해 다오. 그의 이름을 불러 다오."</div><p class="note">첫 자리는 위패와 국서에서, 둘째·셋째 자리는 수첩(3장·5장)에서.</p>`);
-      return A.textLock("세 글자", ["대조영", "大祚榮"], () => { A.closeModal(); toast("수막새가 하나로 붙고, 멀리서 성문이 열리는 소리가 들린다…", 3000); setTimeout(A.endGame, 1500); }, "수막새가 조용하다. 위패의 성과 수첩의 두 조각을 다시 보자.");
+      return A.textLock("세 글자", ["대조영", "大祚榮"], () => { A.questDone("c6_name"); A.closeModal(); toast("수막새가 하나로 붙고, 멀리서 성문이 열리는 소리가 들린다…", 3000); setTimeout(A.endGame, 1500); }, "수막새가 조용하다. 위패의 성과 수첩의 두 조각을 다시 보자.");
     }
   },
   clear: null,
