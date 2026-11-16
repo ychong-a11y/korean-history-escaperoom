@@ -685,6 +685,7 @@ function noryangSky() {
 export default {
   id: "diary",
   saveKey: "diary-full-v1",
+  coopLatch: true,   // 함께하기에서 장 끝마다 '두 사람 빗장'
   title: "이름 없는 일기장",
   startLabel: "일기장 속으로",
   nextLabel: "일기장의 다음 장이 넘어갔다.",

@@ -1092,6 +1092,7 @@ function replyCard(A, fresh) {
 export default {
   id: "snowfort",
   saveKey: "snowfort-v1",
+  coopLatch: true,   // 함께하기에서 장 끝마다 '두 사람 빗장'
   title: "눈 덮인 산성",
   startLabel: "종이를 펼친다",
   nextLabel: "이어 붙인 종이에서 찬 바람 소리가 들렸다.",

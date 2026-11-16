@@ -105,6 +105,8 @@ button { font: inherit; cursor: pointer; color: inherit; }
 .theme.big h2 { font-size: 28px; } .theme.big p { flex: none; font-size: 15px; }
 .theme .pnote { font-size: 13px !important; color: var(--ink-soft); }
 .badge.people { background: var(--blue); color: var(--paper); font-weight: 700; }
+.badge.people.must { background: var(--red); }
+.tl-dot .ic { position: relative; } .tl-dot .ic small { position: absolute; right: -14px; top: -4px; font-size: 13px; }
 .theme .go { display: flex; justify-content: flex-end; margin-top: 4px; }
 .btn-go { border: 0; border-radius: 10px; padding: 11px 18px; font-weight: 700; background: var(--red); color: var(--paper); font-size: 15px; }
 @media (max-width: 640px) { .theme.big { flex-direction: column; } .theme.big .cover { flex: none; min-height: 0; height: 120px; font-size: 56px; } .theme.big h2 { font-size: 24px; } .btn-go { width: 100%; } }
@@ -385,7 +387,7 @@ function renderHub() {
   const eras = [];
   info.forEach((x) => { const last = eras[eras.length - 1]; if (last && last.name === x.t.era) last.items.push(x); else eras.push({ name: x.t.era, items: [x] }); });
   $("tl").innerHTML = eras.map((e) => `<div class="tl-era" style="flex:${e.items.length}"><div class="tl-era-name">${e.name || ""}</div><div class="tl-dots">${e.items.map((x) =>
-    `<button class="tl-dot${x.cleared ? " cleared" : ""}${x.saved ? " going" : ""}" data-i="${x.idx}" aria-label="${x.t.title}"><span class="dot">${x.cleared ? "✓" : ""}</span><span class="ic">${x.t.icon}</span><span class="nm">${x.t.title}</span></button>`).join("")}</div></div>`).join("");
+    `<button class="tl-dot${x.cleared ? " cleared" : ""}${x.saved ? " going" : ""}" data-i="${x.idx}" aria-label="${x.t.title}"><span class="dot">${x.cleared ? "✓" : ""}</span><span class="ic">${x.t.icon}${x.t.minPlayers > 1 ? `<small>👥</small>` : ""}</span><span class="nm">${x.t.title}</span></button>`).join("")}</div></div>`).join("");
   const select = (i, scroll) => {
     const x = info[i], t = x.t;
     try { sessionStorage.setItem("hub-sel", String(i)); } catch (e) {}
@@ -400,7 +402,7 @@ function renderHub() {
         ${t.role ? `<div class="role">🎭 이번에 따라갈 사람 — <b>${t.role}</b></div>` : ""}
         ${t.tags ? `<div class="tags">${t.tags.map((s) => `<span>${s}</span>`).join("")}</div>` : ""}
         <div class="meta">
-          ${t.players ? `<span class="badge people">👥 추천 ${t.players}</span>` : ""}
+          ${t.players ? `<span class="badge people${t.minPlayers > 1 ? " must" : ""}">👥 ${t.minPlayers > 1 ? `${t.minPlayers}명 이상 필수 (${t.players})` : `추천 ${t.players}`}</span>` : ""}
           <span class="badge">⏱ ${t.playtime}</span>
           ${x.cleared ? `<span class="badge cleared">탈출 성공 · ${String(x.cleared).replace(/"/g, "")}</span>` : ""}
         </div>

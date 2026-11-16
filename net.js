@@ -399,7 +399,7 @@ const duoDone = (ch) => core.S.flags.includes(`duoOK|${ch}`);
 let duoNext = 0;   // 빗장 창을 다시 띄울 수 있는 시각
 function duoGate() {   // 엔진이 장을 끝내기 직전에 묻는다. true = 그냥 통과
   const S = core.S, ch = S.ch;
-  if (!others.size || duoDone(ch)) return true;
+  if (!core.THEME.coopLatch || !others.size || duoDone(ch)) return true;   // 빗장은 coopLatch를 켠 테마에만
   let f = duoFlag(ch);
   if (!f) {
     const n = Math.min(5, 3 + Math.floor(ch / 2)), pool = [0, 1, 2, 3, 4, 5], seq = [];
@@ -499,7 +499,10 @@ async function connect(code, nick, create) {
 function begin(res) {
   coopRoot = new core.THREE.Group(); core.scene.add(coopRoot);
   const S = core.fresh();
-  core.setCoop({ gate: duoGate, onSave: () => publish(false), elapsed: (S) => Math.max(0, (T.now() - (meta.t0 || T.now())) / 1000) + S.hints * 60, tick, onEnd: () => { core.S.done = true; ended = true; publish(true); } });
+  core.setCoop({ gate: duoGate,
+    n: () => others.size + 1,
+    role: () => [String(T.id), ...[...others.keys()].map(String)].sort().indexOf(String(T.id)) % 2,
+    at: (x, z, r) => { let c = 0; for (const o of others.values()) if (Math.hypot(o.tx - x, o.tz - z) < r) c++; return c; }, onSave: () => publish(false), elapsed: (S) => Math.max(0, (T.now() - (meta.t0 || T.now())) / 1000) + S.hints * 60, tick, onEnd: () => { core.S.done = true; ended = true; publish(true); } });
   const P = res.state ? sanitize(res.state) : null;
   if (P) { Object.assign(S, { ch: Math.min(P.ch, core.CHAPTERS.length - 1), flags: P.flags, inv: P.inv, used: P.used, journal: P.journal, hintIdx: P.hintIdx, hints: P.hints, wrong: P.wrong }); }
   ui();
@@ -576,14 +579,17 @@ export function openCoop(c) {
       <p class="note">${host ? "친구들에게 이 코드를 알려 주세요. 들어오면 아래에 이름이 나타나요." : "같은 방에 들어왔어요. 함께할 친구를 확인하세요."}</p>
       <div class="who" id="cd-who"></div>
       <p class="note" id="cd-wait"></p>
-      <p class="note">🔐 함께하면 장 끝마다 <b>두 사람 빗장</b>이 나와요. 한 명에게만 보이는 무늬 순서를 말로 알려 줘야 열려요.</p>
+      ${core.THEME.coopLatch ? `<p class="note">🔐 이 문은 함께하면 장 끝마다 <b>두 사람 빗장</b>이 나와요. 한 명에게만 보이는 무늬 순서를 말로 알려 줘야 열려요.</p>` : ""}
       <div class="actions"><button class="btn red" id="cd-go">시작하기</button></div>`;
     const draw = () => {
       const row = (nick, color, tag) => `<span><i style="background:${CSS_COLOR(color)}"></i>${esc(clean(String(nick || "친구").slice(0, NICK_MAX)))}${tag ? ` <small>${tag}</small>` : ""}</span>`;
       const list = [row(me.nick, me.color, host ? "나 · 방장" : "나")];
       lobby.forEach((d, id) => list.push(row(d.nick, Number.isInteger(d.color) ? d.color : 0, id === meta?.host ? "방장" : "")));
       $("cd-who").innerHTML = list.join("");
-      $("cd-wait").textContent = lobby.size ? `지금 ${lobby.size + 1}명. 모두 모였으면 시작하기를 누르세요. (나중에 들어오는 친구도 이어서 할 수 있어요)` : "아직 혼자예요. 친구가 들어오기를 기다리는 중…";
+      const need = core.THEME.minPlayers || 1, short = lobby.size + 1 < need;
+      $("cd-go").disabled = short; $("cd-go").style.opacity = short ? 0.45 : 1;
+      $("cd-wait").textContent = short ? `이 문은 ${need}명 이상이 모여야 열려요. 친구가 들어오기를 기다리는 중… (지금 ${lobby.size + 1}명)`
+        : lobby.size ? `지금 ${lobby.size + 1}명. 모두 모였으면 시작하기를 누르세요. (나중에 들어오는 친구도 이어서 할 수 있어요)` : "아직 혼자예요. 친구가 들어오기를 기다리는 중…";
     };
     onLobby = draw; draw();
     $("cd-go").onclick = () => { onLobby = null; close(); begin(res); };

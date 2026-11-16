@@ -895,7 +895,18 @@ const store = { get() { try { return JSON.parse(localStorage.getItem(SAVE)); } c
 let COOP = null;
 function save() { if (S) { S.pos = [targetPos.x, targetPos.z, targetYaw]; if (COOP) COOP.onSave(S); else store.set(S); } }
 const ITEMS = {};
+/* 함께하기 도구 (테마용). 혼자일 때는 n()=1, role()=0, at()=나만 센다.
+   n(): 지금 방에 있는 사람 수 · role(): 내 역할 0 또는 1 (둘 이상이면 0과 1이 반드시 한 명씩은 있음)
+   at(x, z, r): (x,z)에서 r 안에 서 있는 사람 수 (나 포함) — '둘이 동시에 발판 밟기' 같은 퍼즐용 */
+let FAKE_COOP = null;   // 자동 검사용 (window.__game.fakeCoop)
+const COOP_API = {
+  n: () => FAKE_COOP?.n ?? COOP?.n?.() ?? 1,
+  role: () => FAKE_COOP?.role ?? COOP?.role?.() ?? 0,
+  at: (x, z, r = 1.2) => (FAKE_COOP?.all ? FAKE_COOP.n : (Math.hypot(targetPos.x - x, targetPos.z - z) < r ? 1 : 0) + (COOP?.at?.(x, z, r) ?? 0)),
+  active: () => !!COOP || !!FAKE_COOP,
+};
 const A = {
+  coop: COOP_API,
   card, textLock, codeLock, dirLock, choiceLock, orderLock, matchLock, toast, ok, closeModal, formation, GANJI_TABLE,
   has: (f) => S.flags.includes(f),
   flag: (f) => { if (!S.flags.includes(f)) S.flags.push(f); save(); },
@@ -1253,7 +1264,7 @@ const TIPS = `<div class="tip-grid">
   <div><i>👥</i><b>친구와 나눠 맡기</b><span>한 명은 조사, 한 명은 수첩 정리. 함께하기에서는 진행이 같이 열려요.</span></div>
 </div>
 <p class="ctl-foot">💾 진행 상황은 이 기기에 자동으로 저장돼요. 한 장(약 10분)씩 끊어서 해도 좋아요.</p>`;
-let introPage = 0;
+let introPage = 0, SOLO_OK = true;   // SOLO_OK: 혼자서도 시작할 수 있는 테마인가 (theme.minPlayers)
 function buildIntroPages() {
   const body = document.querySelector("#intro .card-body"), howto = body.querySelector(".howto");
   const p0 = document.createElement("div"); p0.className = "ipage"; p0.dataset.p = "0";
@@ -1280,7 +1291,8 @@ function setIntroPage(p) {
   if (introPage === 2) lsSet(SEEN_KEY, "1");
   // 처음 온 사람은 세 쪽을 차례로 넘겨 본 뒤에 시작 (본 적이 있으면 어느 쪽에서든 바로 시작)
   const guided = !lsGet(SEEN_KEY) && introPage < 2;
-  $("btn-nextpage").classList.toggle("hidden", !guided); $("btn-start").classList.toggle("hidden", guided);
+  $("btn-nextpage").classList.toggle("hidden", !guided); $("btn-start").classList.toggle("hidden", guided || !SOLO_OK);
+  $("btn-coop").classList.toggle("hidden", guided && !SOLO_OK);
   $("btn-nextpage").textContent = introPage === 0 ? "다음: 조작법 →" : "다음: 잘 푸는 법 →";
   $("intro").scrollTop = 0;
 }
@@ -1335,7 +1347,7 @@ function refreshIntro() {
   const s = store.get();
   progressBar("intro-progress", s ? s.ch : 0); renderPath(s ? s.ch : 0);
   $("btn-start").textContent = s ? `이어서 하기 (제${s.ch + 1}장)` : (THEME.startLabel || "시작하기");
-  $("btn-restart").classList.toggle("hidden", !s);
+  $("btn-restart").classList.toggle("hidden", !s || !SOLO_OK);
 }
 export function start(theme) {
   THEME = theme; CHAPTERS = theme.chapters; SAVE = theme.saveKey;
@@ -1344,7 +1356,12 @@ export function start(theme) {
   $("intro-tag").textContent = theme.introTag || `3D 방탈출 · 전 ${CHAPTERS.length}장`;
   $("intro-title").textContent = theme.title;
   $("intro-story").innerHTML = theme.intro;
+  SOLO_OK = !(theme.minPlayers > 1);
   buildIntroPages();
+  if (!SOLO_OK) {
+    $("btn-coop").className = "btn red"; $("btn-coop").textContent = "👥 친구와 함께 들어가기";
+    $("intro-path").insertAdjacentHTML("beforebegin", `<div class="need-n">👥 이 문은 <b>${theme.minPlayers}명 이상</b>이 함께 들어가야 열려요. 서로 다른 것을 보고, 말로 알려 줘야 풀리는 문제가 나와요.</div>`);
+  }
   const en = theme.ending;
   $("end-tag").textContent = en.tag; $("end-name").textContent = en.name; $("end-sub").textContent = en.sub;
   $("end-story").innerHTML = en.story; $("end-tl-title").textContent = en.timelineTitle;
@@ -1378,7 +1395,7 @@ const CORE = {
 /* 테마 파일에서 쓰는 도구 모음 */
 export const E = {
   THREE, TEX, MAT, M, MN, C, canvasTex, textTex, speckle, rand: () => rand(),
-  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, photoMat, stoneBlocks, crowdBody: PG.crowd, faceMat: FACE_MAT,
+  box, cyl, sphere, group, ground, board, person, horse, tree, postLine, tent, lowTable, paper, ship, water, hill, wallSeg, jar, grass, hanokRoof, tbox, normalFrom, photoMat, coop: COOP_API, stoneBlocks, crowdBody: PG.crowd, faceMat: FACE_MAT,
   tag, collectClickables, toast, sfx, setAtmosphere, setMusic, formation, GANJI_TABLE, REACH, $,
   get S() { return S; }, get ROOT() { return ROOT; }, get CH() { return CH; }, get camera() { return camera; },
   lockInput() { inputLocked = true; },
@@ -1388,6 +1405,7 @@ export const E = {
 };
 
 window.__game = {
+  fakeCoop(n = 2, role = 0, all = true) { FAKE_COOP = n ? { n, role, all } : null; },   // 검사용: 사람 수 · 내 역할 · at()이 늘 n을 돌려줌
   get S() { return S; }, A, get CH() { return CH; }, camera, loadChapter, play,
   interact: (id) => CH.interact(id, A, null),
   step: (n = 1, dt = 1 / 60) => { for (let i = 0; i < n; i++) frame(dt); },   // 테스트용: 화면이 숨겨져 있어도 프레임 진행

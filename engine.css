@@ -225,3 +225,5 @@ body.coaching .toast { top: 112px; }
 .phone-screen .n4 { right: 28px; bottom: 38px; } .phone-screen .n3 { left: 78%; top: 34%; }
 .wasd kbd:nth-child(2) { grid-column: 1; }
 .ctl .pic .aim { font: 700 28px/1 monospace; color: var(--red); margin-right: 2px; }
+
+.need-n { margin: 12px 0 0; padding: 10px 12px; border-radius: 10px; background: #e6eef5; border: 1px solid #9db7cc; font-size: 14px; line-height: 1.6; }
