@@ -978,6 +978,7 @@ addEventListener("keydown", (e) => {
   }
   if (open) return;
   if (!inputLocked && S && /^[1-9]$/.test(e.key)) { const k = S.inv.filter((x) => !S.used.includes(x))[+e.key - 1]; if (k) hold(k); return; }
+  if (ADMIN_SOLO && !e.repeat && e.key.toLowerCase() === "r") { adminSwap(); return; }
   if (e.code === "Space" && !e.repeat) { e.preventDefault(); doJump(); return; }
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
 });
@@ -1167,11 +1168,32 @@ const ITEMS = {};
    n(): 지금 방에 있는 사람 수 · role(): 내 역할 0 또는 1 (둘 이상이면 0과 1이 반드시 한 명씩은 있음)
    at(x, z, r): (x,z)에서 r 안에 서 있는 사람 수 (나 포함) — '둘이 동시에 발판 밟기' 같은 퍼즐용 */
 let FAKE_COOP = null;   // 자동 검사용 (window.__game.fakeCoop)
+/* 관리자 혼자 하기: 주소 끝에 ?admin=1 을 한 번 붙여 들어오면 이 기기에 기억된다(?admin=0 으로 끈다).
+   함께하기 전용 테마도 혼자 시작할 수 있고, 없는 짝은 '서 있어야 하는 자리'를 늘 채워 준다. 내 몫은 R 키나 🔧 단추로 바꾼다. */
+const ADMIN = (() => { try { const q = new URLSearchParams(location.search).get("admin"); if (q === "1") localStorage.setItem("hk-admin", "1"); else if (q === "0") localStorage.removeItem("hk-admin"); return localStorage.getItem("hk-admin") === "1"; } catch (e) { return false; } })();
+let ADMIN_SOLO = false;
+function adminChip() {
+  let b = $("admin-chip");
+  if (!ADMIN_SOLO) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement("button"); b.id = "admin-chip"; b.type = "button"; b.onclick = (ev) => { ev.stopPropagation(); adminSwap(); b.blur(); }; document.body.appendChild(b); }
+  b.textContent = "🔧 관리자 혼자 하기 · 몫 바꾸기" + (isTouch ? "" : " (R)");
+}
+function adminSolo() {   // 혼자 시작할 때 부른다
+  if (!ADMIN || !(THEME.minPlayers > 1) || COOP) return;
+  ADMIN_SOLO = true; FAKE_COOP = { n: THEME.minPlayers, role: FAKE_COOP?.role ?? 0, all: true }; adminChip();
+}
+function adminSwap() {
+  if (!ADMIN_SOLO || !FAKE_COOP) return;
+  FAKE_COOP.role = 1 - FAKE_COOP.role; sfx("item");
+  if ($("overlay").classList.contains("open") && !bagOpen) { closeModal(); toast("몫을 바꿨다. 같은 물건을 다시 살펴보자."); }
+}
 const COOP_API = {
   n: () => FAKE_COOP?.n ?? COOP?.n?.() ?? 1,
   role: () => FAKE_COOP?.role ?? COOP?.role?.() ?? 0,
   at: (x, z, r = 1.2) => (FAKE_COOP?.all ? FAKE_COOP.n : (Math.hypot(targetPos.x - x, targetPos.z - z) < r ? 1 : 0) + (COOP?.at?.(x, z, r) ?? 0)),
   active: () => !!COOP || !!FAKE_COOP,
+  admin: () => ADMIN_SOLO,   // 관리자가 혼자 하는 중인가
+  me: (x, z, r = 1.2) => Math.hypot(targetPos.x - x, targetPos.z - z) < r,   // 내가 그 자리에 서 있는가
 };
 /* ── 부탁(퀘스트) ── 장에 quests: { id: { title, desc, from: 부탁하는 대상 objId, to: 받은 뒤 찾아갈 대상(없으면 from · (A) => objId 함수도 됨), when?: (A) => 받을 수 있는지 } }
    상태는 깃발로 저장한다(함께하기에서도 그대로 나뉜다): "q+id" 받음 · "q-id" 끝냄. id는 테마 안에서 겹치지 않게. */
@@ -1750,7 +1772,8 @@ function startCoach() {
 function refreshIntro() {
   const s = store.get();
   progressBar("intro-progress", s ? s.ch : 0); renderPath(s ? s.ch : 0);
-  $("btn-start").textContent = s ? `이어서 하기 (제${s.ch + 1}장)` : (THEME.startLabel || "시작하기");
+  const soloAdmin = ADMIN && THEME.minPlayers > 1;
+  $("btn-start").textContent = (soloAdmin ? "🔧 혼자 " : "") + (s ? `이어서 하기 (제${s.ch + 1}장)` : (soloAdmin ? "들어가기 (관리자)" : THEME.startLabel || "시작하기"));
   $("btn-restart").classList.toggle("hidden", !s || !SOLO_OK);
 }
 export function start(theme) {
@@ -1760,11 +1783,12 @@ export function start(theme) {
   $("intro-tag").textContent = theme.introTag || `3D 방탈출 · 전 ${CHAPTERS.length}장`;
   $("intro-title").textContent = theme.title;
   $("intro-story").innerHTML = theme.intro;
-  SOLO_OK = !(theme.minPlayers > 1);
+  SOLO_OK = !(theme.minPlayers > 1) || ADMIN;
   buildIntroPages();
-  if (!SOLO_OK) {
+  if (theme.minPlayers > 1) {
     $("btn-coop").className = "btn red"; $("btn-coop").textContent = "👥 친구와 함께 들어가기";
     $("intro-path").insertAdjacentHTML("beforebegin", `<div class="need-n">👥 이 문은 <b>${theme.minPlayers}명 이상</b>이 함께 들어가야 열려요. 서로 다른 것을 보고, 말로 알려 줘야 풀리는 문제가 나와요.</div>`);
+    if (ADMIN) $("intro-path").insertAdjacentHTML("beforebegin", `<div class="need-n admin">🔧 <b>관리자 모드</b>가 켜져 있어 혼자서도 들어갈 수 있어요. 없는 짝은 서 있어야 하는 자리를 늘 채워 주고, 내 몫(붓 · 활)은 <b>R 키</b>나 화면의 <b>🔧 단추</b>로 바꿔 가며 양쪽을 다 볼 수 있어요. 끄려면 주소 끝에 <b>?admin=0</b>.</div>`);
   }
   const en = theme.ending;
   $("end-tag").textContent = en.tag; $("end-name").textContent = en.name; $("end-sub").textContent = en.sub;
@@ -1773,12 +1797,12 @@ export function start(theme) {
   $("end-note").textContent = en.note || "";
   refreshIntro();
   $("btn-start").onclick = () => {
-    goLandscape(); audioInit(); setSoundOn(AU.on);
+    goLandscape(); audioInit(); setSoundOn(AU.on); adminSolo();
     S = store.get() || fresh();
     loadChapter(S.ch, S.pos);
     save(); play();
   };
-  $("btn-restart").onclick = () => { goLandscape(); audioInit(); setSoundOn(AU.on); store.del(); S = fresh(); loadChapter(0); save(); play(); };
+  $("btn-restart").onclick = () => { goLandscape(); audioInit(); setSoundOn(AU.on); adminSolo(); store.del(); S = fresh(); loadChapter(0); save(); play(); };
   $("loading").textContent = "";
   $("btn-coop").onclick = () => import("./net.js").then((m) => m.openCoop(CORE));
   try { if (sessionStorage.getItem("coop-go")) import("./net.js").then((m) => m.openCoop(CORE)); } catch (e) {}
@@ -1787,7 +1811,7 @@ export function start(theme) {
 const CORE = {
   THREE, scene, camera, person, C, toast, sfx, $, isTouch, A,
   get THEME() { return THEME; }, get CHAPTERS() { return CHAPTERS; }, get S() { return S; },
-  setCoop(c) { COOP = c; }, fresh, save, renderInv, loadChapter, clearChapter, endGame,
+  setCoop(c) { COOP = c; if (c && ADMIN_SOLO) { ADMIN_SOLO = false; FAKE_COOP = null; adminChip(); } }, fresh, save, renderInv, loadChapter, clearChapter, endGame,
   begin(s) { goLandscape(); audioInit(); setSoundOn(AU.on); S = s; loadChapter(S.ch, S.pos); save(); play(); },
   pos: () => [targetPos.x, targetPos.z, targetYaw],
   get feet() { return feet; },

@@ -97,7 +97,10 @@ function marker(x, z, r = 1.0, y = 0.04) {
   const m = new THREE.Mesh(new THREE.RingGeometry(r - 0.16, r, 36), new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.8, side: THREE.DoubleSide, depthWrite: false }));
   m.rotation.x = -PI / 2; m.position.set(x, y, z); m.userData.noPick = true; m.userData.spot = [x, z, r]; E.ROOT.add(m); return m;
 }
-function markTick(A, list) { let all = true; for (const m of list) { const on = A.coop.at(...m.userData.spot) >= 1; m.material.color.setHex(on ? 0x6dff8a : 0xffd27a); if (!on) all = false; } return all; }
+function markTick(A, list) {
+  // 관리자 혼자 하기: 자리가 둘 이상이면 내가 그중 한 곳에 서야 짝이 나머지를 채운다
+  const solo = A.coop.admin() && list.length > 1, mine = solo && list.some((m) => A.coop.me(...m.userData.spot));
+  let all = true; for (const m of list) { const on = solo ? mine : A.coop.at(...m.userData.spot) >= 1; m.material.color.setHex(on ? 0x6dff8a : 0xffd27a); if (!on) all = false; } return all; }
 // 내가 표시(flag)를 세운 뒤, 친구 화면과 똑같이 장면을 flag에서 다시 그린다 (시선은 그대로)
 function redraw() {
   const G = window.__game, S = E.S; if (!G || !S) return;
@@ -119,13 +122,13 @@ function roleTick(A) {
     const d = document.createElement("div"); d.id = "gw-role"; document.body.appendChild(d);
   }
   document.getElementById("gw-role").textContent = `${ROLE[r].icon} 나는 ${ROLE[r].name}`;
-  if (lastRole >= 0 && r !== lastRole) toast(`사람이 드나들어 내 몫이 바뀌었다 → ${ROLE[r].icon} ${ROLE[r].name}`, 4000);
+  if (lastRole >= 0 && r !== lastRole) toast(A.coop.admin() ? `내 몫을 바꿨다 → ${ROLE[r].icon} ${ROLE[r].name}` : `사람이 드나들어 내 몫이 바뀌었다 → ${ROLE[r].icon} ${ROLE[r].name}`, A.coop.admin() ? 2200 : 4000);
   lastRole = r;
 }
 // 같은 물건을 눌러도 붓과 활에게 서로 다른 것이 보인다 (parts = [붓에게, 활에게]). 수첩에는 적지 않는다.
 function splitCard(A, title, common, parts) {
   const r = A.coop.role(), me = ROLE[r], you = ROLE[1 - r];
-  A.card(title, `${common}<div style="border:2px solid ${me.col};border-radius:8px;padding:8px 10px;margin:8px 0"><p style="margin:0 0 6px;font-weight:700;color:${me.col}">${me.icon} ${me.name}인 나에게만 보이는 것</p>${parts[r]}</div><p class="note">${you.icon} ${you.name}에게는 다른 것이 보여요. 이 내용은 수첩에 적히지 않으니, <b>본 것을 말로 알려 주세요.</b>${A.coop.n() < 2 ? " (지금은 방에 혼자예요. 친구가 돌아와야 나머지 반쪽을 볼 수 있어요.)" : ""}</p>`);
+  A.card(title, `${common}<div style="border:2px solid ${me.col};border-radius:8px;padding:8px 10px;margin:8px 0"><p style="margin:0 0 6px;font-weight:700;color:${me.col}">${me.icon} ${me.name}인 나에게만 보이는 것</p>${parts[r]}</div><p class="note">${you.icon} ${you.name}에게는 다른 것이 보여요. 이 내용은 수첩에 적히지 않으니, <b>본 것을 말로 알려 주세요.</b>${A.coop.admin() ? ` <b>🔧 관리자 혼자 하기:</b> 화면 오른쪽 위의 🔧 단추(창을 닫은 뒤에는 R 키)로 몫을 바꾸면 ${you.name}의 것도 볼 수 있어요.` : A.coop.n() < 2 ? " (지금은 방에 혼자예요. 친구가 돌아와야 나머지 반쪽을 볼 수 있어요.)" : ""}</p>`);
 }
 const FONT_SVG = `font-family="Gowun Batang,serif" font-weight="700"`;
 const SVG_T = (x, y, s, t, c = "#2b2118", a = "middle") => `<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" fill="${c}" ${FONT_SVG}>${t}</text>`;

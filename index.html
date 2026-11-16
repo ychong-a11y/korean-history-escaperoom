@@ -354,6 +354,18 @@ window.formation = function (rows) {
 </script>
 <script src="themes/upcoming.js"></script>
 <script>
+/* 관리자 모드: 주소 끝에 ?admin=1 을 한 번 붙여 들어오면 이 기기에 기억된다. 함께하기 전용 테마도 혼자 해 볼 수 있다. */
+try {
+  const q = new URLSearchParams(location.search).get("admin");
+  if (q === "1") localStorage.setItem("hk-admin", "1"); else if (q === "0") localStorage.removeItem("hk-admin");
+  if (localStorage.getItem("hk-admin") === "1") {
+    const b = document.createElement("button");
+    b.textContent = "🔧 관리자 모드 켜짐 · 끄기";
+    b.style.cssText = "position:fixed;right:12px;bottom:12px;z-index:50;padding:7px 12px;border-radius:14px;border:1px solid #d9b45a;background:#fff3d6;color:#4a3410;font:700 13px 'Noto Sans KR',sans-serif;cursor:pointer";
+    b.onclick = () => { localStorage.removeItem("hk-admin"); location.replace(location.pathname); };
+    document.body.appendChild(b);
+  }
+} catch (e) {}
 /* ===================== 공통 ===================== */
 const $ = (id) => document.getElementById(id);
 const has = (arr, v) => arr.includes(v);
