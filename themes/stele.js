@@ -522,15 +522,17 @@ CHAPTERS.push({
 /* ───────────── 제3장 · 아리수를 건너 (396) ───────────── */
 CHAPTERS.push({
   place: "아리수 강가", when: "병신년(396) · 한강 가의 진영",
+  combos: [["rope", "logs", "raft", "통나무를 밧줄로 엮었다. 물에 띄우면 배다리가 될 것이다."]],
   atmosphere: { hdri: "qwantani_morning_puresky", hdrExposure: 0.8, top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [0.5, 0.55, -0.6], sunCol: 0xffe0a0, glow: 0.7, fog: 0xb0c4d4, fogNear: 50, fogFar: 170, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff0d8, lightI: 2.3, waterColor: 0x1a4a58 },
   items: {
     rope: { icon: "🪢", name: "굵은 밧줄", desc: "보급 천막에서 얻은 굵은 밧줄. 무언가를 묶어 엮을 수 있다." },
-    logs: { icon: "🪵", name: "통나무", desc: "강 가운데 모래섬에 쌓여 있던 통나무. 물에 잘 뜬다." },
+    logs: { icon: "🪵", name: "통나무", desc: "강 가운데 모래섬에 쌓여 있던 통나무. 물에 잘 뜬다. 하지만 하나씩 띄우면 물살에 흩어질 것이다." },
+    raft: { icon: "🛶", name: "엮은 통나무", desc: "통나무를 밧줄로 줄줄이 엮은 것. 물에 띄워 이으면 다리가 된다." },
   },
   hints: [
     "서기의 책상은 한자 숫자로만 적혀 있어요. 보급 천막 기둥의 군량 장부에 한자 숫자 읽는 법이 있어요.",
     "강을 건너려면 통나무와 밧줄이 필요해요. 밧줄은 오른쪽 보급 천막에, 통나무는 강 가운데 모래섬에 있어요. 물에 들어가 헤엄쳐 모래섬 가까이 간 뒤 Space로 올라가세요.",
-    "나루터에서 통나무와 밧줄을 차례로 쓰면 배다리가 놓여요. 걸어서 건너편으로 가세요.",
+    "가방(Tab)에서 통나무를 고르고 '다른 물건과 합치기'로 밧줄과 합친 다음, 나루터에서 쓰면 배다리가 놓여요. 걸어서 건너편으로 가세요.",
     "항복 문서의 왕은 396년에 왕위에 있던 왕. 계보 조각을 이어 보면 근초고 → 근구수 → 침류 → 진사(392년에 세상을 떠남) → 침류의 맏아들. 그 이름은?",
     "백제 성문: 五十八 = 58, 七百 = 700. 둘을 더하면 758."
   ],
@@ -631,8 +633,7 @@ CHAPTERS.push({
     }
     if (id === "ferry") {
       if (A.has("s3_bridge")) return A.card("나루터", `<p>통나무를 밧줄로 이어 만든 배다리가 건너편까지 놓여 있다.</p>`);
-      if (!A.needItem(id, "logs", "나루터", `<p>강물이 넓고 깊다. 배가 모자라 군사들이 건너지 못하고 있다. 사공이 중얼거린다. "물에 뜨는 것을 줄줄이 엮으면 다리가 될 텐데…"</p><p class="note">${A.owns("logs") ? "" : "강 가운데 모래섬에 무언가 쌓여 있다."}</p>`, "통나무 띄우기")) return;
-      if (!A.needItem(id, "rope", "나루터", `<p>통나무를 물에 띄웠다. 물살에 흩어지기 전에 서로 묶어야 한다.</p>`, "밧줄로 엮기")) return;
+      if (!A.needItem(id, "raft", "나루터", `<p>강물이 넓고 깊다. 배가 모자라 군사들이 건너지 못하고 있다. 사공이 중얼거린다. "물에 뜨는 것을 줄줄이 <b>엮으면</b> 다리가 될 텐데… 낱개로 띄우면 다 떠내려가 버려."</p><p class="note">${A.owns("logs") && A.owns("rope") ? "가진 것들을 가방(Tab)에서 먼저 하나로 만들어야 할 것 같다." : A.owns("logs") ? "통나무는 있다. 엮을 것이 필요하다." : "강 가운데 모래섬에 무언가 쌓여 있다."}</p>`)) return;
       A.flag("s3_bridge"); makeBridge(); collectClickables(); sfx("splash");
       A.note("통나무와 밧줄로 아리수에 배다리를 놓았다.");
       return A.card("배다리", `<p class="msg ok">군사들이 달려와 통나무를 밧줄로 엮어 나갔다. 아리수를 가로지르는 배다리가 놓였다!</p>`);
@@ -954,9 +955,12 @@ const FACE_TEXT = [
 ];
 CHAPTERS.push({
   place: "동쪽 언덕의 큰 비석", when: "갑인년(414) · 국내성 동쪽 언덕",
+  combos: [["inkstick", "pad", "ink"]],
   atmosphere: { hdri: "qwantani_sunrise_puresky", hdrExposure: 0.6, top: 0x3b4a6a, mid: 0x8a8ea0, low: 0xd8a888, sun: [0.55, 0.22, 0.8], sunCol: 0xff9a60, fog: 0x9a98a0, fogNear: 40, fogFar: 160, hemiSky: 0xc8d0e8, hemiGround: 0x4a4a40, hemiI: 1.1, light: 0xffd0a8, lightI: 1.9 },
   items: {
-    ink: { icon: "🖌️", name: "먹과 솜방망이", desc: "비석에 종이를 대고 두드려 글씨를 떠내는(탁본) 도구." },
+    inkstick: { icon: "⚫", name: "먹물 그릇", desc: "곱게 갈아 놓은 먹물. 무언가에 묻혀서 쓴다." },
+    pad: { icon: "🧶", name: "마른 솜방망이", desc: "솜을 천으로 싸서 묶은 방망이. 아직 보송보송하다. 이대로 두드리면 아무것도 묻어나지 않는다." },
+    ink: { icon: "🖌️", name: "먹 묻힌 솜방망이", desc: "먹물을 머금은 솜방망이. 비석에 종이를 대고 두드리면 글씨가 떠진다(탁본)." },
   },
   hints: [
     "젊은 왕의 말대로 읽어야 글이 이어져요. 첫 면은 아침 해가 비추는 면, 그다음은 해가 하늘을 지나가는 쪽(왼쪽으로 돌며)이에요.",
@@ -1032,10 +1036,10 @@ CHAPTERS.push({
       return A.card("비석의 " + T[0], `<p>${T[1]}</p><div class="doc" style="font-size:18px">${T[2]}</div><p class="note">${T[3]}</p>`);
     }
     if (id === "inkbox") {
-      if (A.owns("ink")) return A.card("먹 상자", `<p>먹을 꺼낸 빈 상자다.</p>`);
+      if (A.owns("pad")) return A.card("먹 상자", `<p>먹을 꺼낸 빈 상자다.</p>`);
       A.card("먹 상자", `<p>탁본 도구가 든 상자. 두 자리 숫자 자물쇠가 달려 있다.</p><div class="doc">"깨뜨린 성."</div>`);
       return A.codeLock("64", () => {
-        A.card("먹 상자", `<p class="msg ok">상자가 열렸다.</p><p>먹물을 머금은 솜방망이가 들어 있다. 종이를 비석에 대고 두드리면 글씨가 하얗게, 바탕이 까맣게 떠진다.</p>`); A.give("ink");
+        A.card("먹 상자", `<p class="msg ok">상자가 열렸다.</p><p><b>먹물 그릇</b>과 <b>마른 솜방망이</b>가 따로 들어 있다. 솜방망이에 먹을 묻혀 종이를 두드리면 글씨가 하얗게, 바탕이 까맣게 떠진다.</p>`); A.give("inkstick"); A.give("pad");
       }, "열리지 않는다.");
     }
     if (id === "base") {
@@ -1049,7 +1053,7 @@ CHAPTERS.push({
     }
     if (id === "rubbing") {
       if (!A.has("s6_glyph")) return A.card("탁본 종이", `<p>1면 아래쪽에 하얀 종이가 붙어 있다. 이름이 있어야 할 자리를 덮고 있다.</p><p class="note">무엇을 떠내야 할지 아직 모른다. 받침돌의 홈부터 채우자.</p>`);
-      if (!A.needItem(id, "ink", "탁본 종이", `<p>비석에 붙인 하얀 종이. 먹으로 두드리면 아래 새겨진 글씨가 떠오를 것이다.</p><p class="note">${A.owns("ink") ? "" : "먹과 솜방망이가 필요하다. 먹 상자를 열자."}</p>`, "먹으로 두드리기")) return;
+      if (!A.needItem(id, "ink", "탁본 종이", `<p>비석에 붙인 하얀 종이. 먹으로 두드리면 아래 새겨진 글씨가 떠오를 것이다.</p><p class="note">${A.owns("ink") ? "" : A.owns("pad") ? "마른 솜방망이로는 아무것도 떠지지 않는다. 가방(Tab)에서 먹을 묻히자." : "먹과 솜방망이가 필요하다. 먹 상자를 열자."}</p>`, "먹으로 두드리기")) return;
       L.paper.material = new THREE.MeshStandardMaterial({ map: textTex("□□□□□", { w: 256, h: 280, size: 46, bg: "#1e1c1a", color: "#e9e1cc", border: null }), roughness: 1 });
       A.card("탁본", `<p>솜방망이로 종이를 톡톡 두드리자 까만 바탕에 글자 자리 다섯 개가 하얗게 떠올랐다. 하지만 글자는 아직 비어 있다.</p><div class="letter">"내 이름을 다시 새겨라."</div><p class="note">받침돌의 다섯 글자를 한글로 읽어 이름을 써 넣자.</p>`);
       return A.textLock("비석 주인의 이름 (한글 다섯 글자)", ["광개토대왕", "광개토왕", "광개토태왕", "국강상광개토경평안호태왕", "廣開土大王"], () => {

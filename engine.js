@@ -945,7 +945,16 @@ const A = {
 const josa = (n, x, y) => { const c = n.charCodeAt(n.length - 1) - 0xac00; return c >= 0 && c <= 11171 && c % 28 ? x : y; };
 const eul = (n) => n + josa(n, "을", "를");
 let HELD = null;      // 손에 든 물건 (알맞은 곳을 누르면 바로 쓴다)
-let bagSel = 0, escAt = 0;
+let bagSel = 0, escAt = 0, bagMix = null;
+// 물건 합치기: 장(chapter)에 combos: [[a, b, 결과, 수첩에 적을 말?]] 을 두면 가방에서 a와 b를 합쳐 결과를 만든다.
+function combine(a, b) {
+  const r = (CH.combos || []).find(([x, y]) => (x === a && y === b) || (x === b && y === a));
+  const ok = (k) => S.inv.includes(k) && !S.used.includes(k);
+  if (!r || !ok(a) || !ok(b)) return null;
+  A.use(a); A.use(b); A.give(r[2]); if (r[3]) A.note(r[3]);
+  toast(`🔗 ${ITEMS[r[2]].icon} ${eul(ITEMS[r[2]].name)} 만들었다`);
+  return r[2];
+}
 const BAG_SLOTS = 32;
 const JOURNEY = { icon: "📖", name: "여정 기록", desc: "지나온 곳과 찾아낸 단서를 적어 둔 수첩. 펼치면 언제든 다시 읽을 수 있다. 앞 장의 단서가 뒤에서 다시 쓰이기도 한다." };
 function hold(k) {
@@ -966,28 +975,41 @@ function bagSlots() {
   for (let c = S.ch - 1; c >= 0; c--) for (const k in (CHAPTERS[c].items || {})) past.push({ k, it: CHAPTERS[c].items[k], type: "past", ch: c });   // 지나온 장의 물건
   return [{ k: "__journey", it: JOURNEY, type: "journey" }, ...cur, ...used, ...past].slice(0, BAG_SLOTS);
 }
-function openBag(sel) {
-  const slots = bagSlots();
+function openBag(sel, say = "") {
+  const slots = bagSlots(), mix = bagMix; bagMix = null;
+  const nCur = slots.filter((x) => x.type === "cur").length;
   bagSel = sel ?? (bagSel < slots.length ? bagSel : 0);
   const cells = Array.from({ length: BAG_SLOTS }, (_, i) => {
     const s = slots[i]; if (!s) return `<div class="slot empty"></div>`;
     const held = s.type === "cur" && HELD === s.k;
     const bd = held ? "✋" : s.type === "used" ? "✔" : s.type === "past" ? `${s.ch + 1}장` : s.type === "journey" && S.journal.length ? S.journal.length : "";
-    return `<button class="slot ${s.type} ${i === bagSel ? "on" : ""} ${held ? "held" : ""}" data-i="${i}" aria-label="${s.it.name}"><span class="ic">${s.it.icon}</span>${bd ? `<i class="bd">${bd}</i>` : ""}</button>`;
+    return `<button class="slot ${s.type} ${i === bagSel ? "on" : ""} ${held ? "held" : ""} ${mix && s.type === "cur" && s.k !== mix ? "mixable" : ""}" data-i="${i}" aria-label="${s.it.name}"><span class="ic">${s.it.icon}</span>${bd ? `<i class="bd">${bd}</i>` : ""}</button>`;
   }).join("");
   const s = slots[bagSel], it = s.it;
   const status = s.type === "cur" ? "지금 쓸 수 있는 물건" : s.type === "used" ? "이미 쓴 물건" : s.type === "past" ? `제${s.ch + 1}장 · ${CHAPTERS[s.ch].place}에서 지녔던 물건` : `적어 둔 단서 ${S.journal.length}개`;
   const act = s.type === "journey" ? `<button class="btn gold" id="bag-act">📖 펼쳐 보기</button>`
-    : s.type === "cur" ? `<button class="btn gold" id="bag-act">${HELD === s.k ? "가방에 넣기" : "✋ 손에 들기"}</button> <span class="note">손에 들고 알맞은 곳을 누르면 바로 써요.</span>` : "";
+    : s.type === "cur" ? `<button class="btn gold" id="bag-act">${HELD === s.k ? "가방에 넣기" : "✋ 손에 들기"}</button> ${nCur > 1 ? `<button class="btn ghost" id="bag-mix">🔗 다른 물건과 합치기</button>` : ""}<p class="note" style="margin:8px 0 0">${mix ? "🔗 <b>합칠 물건을 위 칸에서 눌러 보세요.</b>" : "손에 들고 알맞은 곳을 누르면 바로 써요."}</p>` : "";
+  const look = s.type !== "journey" && it.look ? (typeof it.look === "function" ? it.look(A) : it.look) : "";
   openModal(`<h2>🎒 가방 <span class="note" style="font-size:13px">${slots.length} / ${BAG_SLOTS}칸</span></h2>
     <div class="bag-wrap"><div class="bag-grid">${cells}</div>
-    <div class="bag-detail"><div class="big">${it.icon}</div><div class="txt"><b>${it.name}</b> <span class="note">· ${status}</span><p>${it.desc || ""}</p>${s.type !== "journey" && it.look ? `<div class="doc">${it.look}</div>` : ""}${act}</div></div></div>
+    <div class="bag-detail"><div class="big">${it.icon}</div><div class="txt"><b>${it.name}</b> <span class="note">· ${status}</span><p>${it.desc || ""}</p>${look ? `<div class="doc">${look}</div>` : ""}${act}</div></div></div>
     <div class="msg" id="msg"></div><div class="actions">${CLOSE}</div>
     <p class="note" style="margin:10px 0 0">물건을 누르면 살펴볼 수 있어요.${isTouch ? "" : " · 숫자 키(1~9)로 가방을 열지 않고도 손에 들 수 있어요 · Tab으로 닫기"}</p>`);
   $("overlay").querySelector(".modal").classList.add("wide");
   bagOpen = true;
   const primary = () => { if (s.type === "journey") openJourney(); else if (s.type === "cur") { hold(s.k); openBag(bagSel); } };
-  $("modal-body").querySelectorAll(".slot[data-i]").forEach((el) => (el.onclick = () => { const i = +el.dataset.i; if (i === bagSel) primary(); else openBag(i); }));
+  if (say) $("msg").textContent = say;
+  $("modal-body").querySelectorAll(".slot[data-i]").forEach((el) => (el.onclick = () => {
+    const i = +el.dataset.i, t = slots[i];
+    if (mix) {
+      if (t.k === mix) return openBag(i);
+      const made = t.type === "cur" ? combine(mix, t.k) : null;
+      if (!made) { sfx("wrong"); return openBag(bagSel, `${ITEMS[mix].icon} ${ITEMS[mix].name}${josa(ITEMS[mix].name, "과", "와")} ${t.it.icon} ${t.it.name}${josa(t.it.name, "은", "는")} 서로 어울리지 않는 것 같다.`); }
+      return openBag(Math.max(0, bagSlots().findIndex((x) => x.k === made && x.type === "cur")), `🔗 ${eul(ITEMS[made].name)} 만들었다!`);
+    }
+    if (i === bagSel) primary(); else openBag(i);
+  }));
+  if ($("bag-mix")) $("bag-mix").onclick = () => { bagMix = s.k; openBag(bagSel); };
   if ($("bag-act")) $("bag-act").onclick = primary;
 }
 function openJourney() {
@@ -1477,6 +1499,7 @@ export const E = {
 };
 
 window.__game = {
+  combine: (a, b) => combine(a, b),   // 검사용: 물건 합치기
   fakeCoop(n = 2, role = 0, all = true) { FAKE_COOP = n ? { n, role, all } : null; },   // 검사용: 사람 수 · 내 역할 · at()이 늘 n을 돌려줌
   get S() { return S; }, A, get CH() { return CH; }, camera, loadChapter, play,
   interact: (id) => CH.interact(id, A, null),
