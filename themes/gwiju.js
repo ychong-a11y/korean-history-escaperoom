@@ -128,7 +128,7 @@ function roleTick(A) {
 // 같은 물건을 눌러도 붓과 활에게 서로 다른 것이 보인다 (parts = [붓에게, 활에게]). 수첩에는 적지 않는다.
 function splitCard(A, title, common, parts) {
   const r = A.coop.role(), me = ROLE[r], you = ROLE[1 - r];
-  A.card(title, `${common}<div style="border:2px solid ${me.col};border-radius:8px;padding:8px 10px;margin:8px 0"><p style="margin:0 0 6px;font-weight:700;color:${me.col}">${me.icon} ${me.name}인 나에게만 보이는 것</p>${parts[r]}</div><p class="note">${you.icon} ${you.name}에게는 다른 것이 보여요. 이 내용은 수첩에 적히지 않으니, <b>본 것을 말로 알려 주세요.</b>${A.coop.admin() ? ` <b>🔧 관리자 혼자 하기:</b> 화면 오른쪽 위의 🔧 단추(창을 닫은 뒤에는 R 키)로 몫을 바꾸면 ${you.name}의 것도 볼 수 있어요.` : A.coop.n() < 2 ? " (지금은 방에 혼자예요. 친구가 돌아와야 나머지 반쪽을 볼 수 있어요.)" : ""}</p>`);
+  A.card(title, `${common}<div style="border:2px solid ${me.col};border-radius:8px;padding:8px 10px;margin:8px 0"><p style="margin:0 0 6px;font-weight:700;color:${me.col}">${me.icon} ${me.name}인 나에게만 보이는 것</p>${parts[r]}</div><p class="note">${you.icon} ${you.name}에게는 다른 것이 보여요. 이 내용은 수첩에 적히지 않으니, <b>본 것을 말로 알려 주세요.</b>${A.coop.admin() ? ` <b>관리자 혼자 하기:</b> 화면 오른쪽 위의 몫 바꾸기 단추(창을 닫은 뒤에는 R 키)로 몫을 바꾸면 ${you.name}의 것도 볼 수 있어요.` : A.coop.n() < 2 ? " (지금은 방에 혼자예요. 친구가 돌아와야 나머지 반쪽을 볼 수 있어요.)" : ""}</p>`);
 }
 const FONT_SVG = `font-family="Gowun Batang,serif" font-weight="700"`;
 const SVG_T = (x, y, s, t, c = "#2b2118", a = "middle") => `<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" fill="${c}" ${FONT_SVG}>${t}</text>`;

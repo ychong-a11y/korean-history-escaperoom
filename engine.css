@@ -328,3 +328,75 @@ button.slot:hover { background: rgba(243,234,216,.24); }
 .screen .reveal .name { font-family: "Noto Serif KR", serif; font-weight: 900; color: #a3281f; }
 .screen .timeline li b.y { color: #a3281f; font-family: "Noto Serif KR", serif; }
 @media (max-width: 600px) { .screen .card-body { padding: 24px 20px 20px; } .screen .card h1 { font-size: 27px; } }
+
+/* ===== 게임 안: 옛 책 느낌 ===== (한지 빛 꼬리표 · 먹색 테두리 · 붉은 낙관. 물건 아이콘은 그대로) */
+/* 위쪽 줄 */
+.place { font-family: "Noto Serif KR", serif; font-weight: 900; letter-spacing: .04em; }
+.place small { font-family: "Gowun Batang", serif; opacity: .85; letter-spacing: 0; }
+.chip { background: rgba(244,236,217,.94); color: #2a2118; border: 1px solid #2a2118; border-radius: 2px; padding: 6px 11px; font: 700 13.5px/1.25 "Noto Serif KR", serif; backdrop-filter: none; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+button.chip { cursor: pointer; } button.chip:hover { background: #fff8e6; }
+.chip.timer { font-variant-numeric: tabular-nums; letter-spacing: .04em; }
+.key-hint { border: 1px solid rgba(42,33,24,.4); border-radius: 2px; color: #6a5a46; opacity: 1; font-family: "Noto Sans KR", sans-serif; font-weight: 500; }
+#btn-sound.off { color: #9a8a74; text-decoration: line-through; }
+#hint-n { background: #a3281f; color: #f6ead2; border-radius: 2px; font-family: "Noto Serif KR", serif; }
+#admin-chip { border-radius: 2px; border: 1px solid #2a2118; background: rgba(244,236,217,.94); color: #a3281f; font: 700 13px "Noto Serif KR", serif; }
+#swim span { border-radius: 2px; background: rgba(16,36,52,.82); font-family: "Gowun Batang", serif; }
+/* 아래쪽 소지품 */
+.inv-label { font-family: "Noto Serif KR", serif; font-weight: 700; opacity: .85; }
+.item { border-radius: 2px; border: 1px solid #2a2118; background: rgba(244,236,217,.95); color: #2a2118; font-family: "Gowun Batang", serif; font-weight: 700; }
+.item.held { outline: 2px solid #a3281f; }
+/* 알림 · 이름표 · 안내 */
+.toast { border-radius: 2px; background: rgba(26,20,14,.93); border: 1px solid rgba(244,236,217,.5); font: 700 14.5px/1.5 "Gowun Batang", serif; padding: 10px 18px; }
+.tip { border-radius: 2px; background: rgba(244,236,217,.95); color: #2a2118; border: 1px solid #2a2118; font: 700 13px "Gowun Batang", serif; }
+.guide { font-family: "Gowun Batang", serif; }
+.lockhint { border-radius: 2px; background: rgba(244,236,217,.95); color: #2a2118; border: 1px solid #2a2118; font: 700 15px "Gowun Batang", serif; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+.quests div { border-radius: 0; background: rgba(244,236,217,.93); color: #2a2118; border-left: 4px solid #a3281f; font: 700 13px/1.5 "Gowun Batang", serif; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+.quests .qnote { background: #a3281f; color: #f6ead2; border-left-color: #2a2118; }
+.quests .qnote.done { background: #2f5a3f; color: #f6ead2; }
+.coach { border-radius: 2px; background: rgba(244,236,217,.96); color: #2a2118; border: 1px solid #2a2118; font-family: "Gowun Batang", serif; font-weight: 700; }
+.coach .c-n { color: #a3281f; font-family: "Noto Serif KR", serif; }
+.coach .c-ic { font: 900 16px/1 "Noto Serif KR", serif; color: #a3281f; }
+.coach .aim { color: #a3281f; }
+.coach.ok { background: #2f5a3f; color: #f6ead2; border-color: #2f5a3f; } .coach.ok .c-n, .coach.ok .c-ic { color: #f6ead2; }
+.coach button { border-radius: 2px; border-color: rgba(42,33,24,.45); color: #6a5a46; font-family: "Gowun Batang", serif; }
+/* 휴대폰 단추 */
+.act button { font-family: "Noto Serif KR", serif; border-color: rgba(244,236,217,.55); }
+.act button b { font-weight: 900; font-size: 22px; line-height: 1; } .act #btn-run b { font-size: 18px; }
+#rotate button { border-radius: 2px; }
+/* 창 */
+.overlay .dancheong { display: none; }
+.modal { border-radius: 0; color: #2a2118; font-family: "Gowun Batang", "Noto Serif KR", serif; background: linear-gradient(#f6eedc, #f0e6d0); border: 2px solid #2a2118; outline: 1px solid #2a2118; outline-offset: -7px; }
+.modal-body { padding: 26px 26px 22px; }
+.modal h2 { font: 900 22px/1.3 "Noto Serif KR", serif; letter-spacing: .03em; margin: 0 0 14px; padding-bottom: 10px; border-bottom: 2px solid #2a2118; box-shadow: 0 3px 0 -2px #2a2118; }
+.modal h3 { font-family: "Noto Serif KR", serif; font-weight: 900; }
+.doc { border-radius: 0; background: rgba(255,252,242,.6); border: 1px solid rgba(42,33,24,.3); border-left: 4px solid #a3281f; }
+.letter { border-radius: 0; background: rgba(255,252,242,.6); border: 1px solid rgba(42,33,24,.35); box-shadow: none; }
+.btn { border-radius: 0; background: #2a2118; color: #f4ecd9; font: 700 15px/1.2 "Noto Serif KR", serif; letter-spacing: .04em; cursor: pointer; }
+.btn:hover { background: #a3281f; }
+.btn.ghost { background: transparent; color: #2a2118; border: 1px solid rgba(42,33,24,.55); } .btn.ghost:hover { background: transparent; border-color: #2a2118; }
+.btn.gold { background: #a3281f; color: #f4ecd9; } .btn.gold:hover { background: #2a2118; }
+.btn.red { background: #2a2118; color: #f4ecd9; } .btn.red:hover { background: #a3281f; }
+.btn[disabled] { opacity: .6; cursor: default; }
+/* 자물쇠 */
+.code-display span { border-radius: 0; background: #2a2118; color: #f4ecd9; font-family: "Noto Serif KR", serif; }
+.dirpad button, .keypad button { border-radius: 0; background: rgba(255,252,242,.7); border: 1px solid rgba(42,33,24,.45); color: #2a2118; font-family: "Noto Serif KR", serif; cursor: pointer; }
+.dirpad button:hover, .keypad button:hover { background: #fffaf0; border-color: #2a2118; }
+.dirpad .ok, .keypad button[data-k="✓"] { background: #a3281f; color: #f4ecd9; border-color: #a3281f; }
+.choices button, .order-pool button { border-radius: 0; background: rgba(255,252,242,.7); border: 1px solid rgba(42,33,24,.45); color: #2a2118; font-family: inherit; cursor: pointer; }
+.choices button:hover, .order-pool button:not([disabled]):hover { border-color: #a3281f; background: #fffaf0; }
+.order-slots { border-radius: 0; border: 1px dashed rgba(42,33,24,.5); }
+.order-slots .placed { border-radius: 0; background: #2a2118; color: #f4ecd9; } .order-slots .placed b { color: #e8b9a6; }
+.match-row .left { font-family: "Noto Serif KR", serif; }
+.match-row select, input.text-answer { border-radius: 0; border: 1px solid rgba(42,33,24,.5); background: rgba(255,252,242,.8); color: #2a2118; font-family: "Gowun Batang", serif; }
+input.text-answer:focus, .match-row select:focus { outline: 2px solid #a3281f; outline-offset: 1px; }
+.msg.bad { color: #a3281f; } .msg.ok { color: #2f5a3f; }
+input[type="range"] { accent-color: #a3281f; }
+/* 가방 */
+.bag-grid { border-radius: 0; background: #33291f; border: 1px solid #2a2118; }
+.slot { border-radius: 2px; } .slot.on { outline-color: #e9d6a0; } .slot.held { box-shadow: inset 0 0 0 2px #c8443a; }
+.slot .bd { border-radius: 2px; font-family: "Noto Serif KR", serif; }
+.bag-detail { border-radius: 0; border: 1px solid rgba(42,33,24,.35); background: rgba(255,252,242,.45); }
+.usebox { border-radius: 0; border: 1px dashed #a3281f; background: rgba(163,40,31,.06); }
+.qline { border-radius: 0; border-left: 4px solid #a3281f; background: rgba(163,40,31,.07); }
+.timeline li b.y { color: #a3281f; }
+@media (max-width: 600px) { .chip { padding: 6px 9px; font-size: 12.5px; } .modal-body { padding: 22px 20px 18px; } }
