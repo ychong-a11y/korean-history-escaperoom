@@ -1110,6 +1110,7 @@ function placeGlyphs(p) {
 
 export default {
   id: "stele",
+  seal: "碑",   // 시작 화면의 낙관 글자
   saveKey: "stele-v1",
   title: "돌에 새긴 이름",
   startLabel: "탁본 속으로",

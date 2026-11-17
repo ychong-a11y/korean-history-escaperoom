@@ -953,6 +953,7 @@ CHAPTERS.push({
 
 export default {
   id: "hwarang",
+  seal: "盟",   // 시작 화면의 낙관 글자
   saveKey: "hwarang-v1",
   title: "열다섯의 맹세",
   startLabel: "맹세 속으로",

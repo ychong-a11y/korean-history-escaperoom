@@ -1165,6 +1165,7 @@ function replyCard(A, fresh) {
 
 export default {
   id: "snowfort",
+  seal: "雪",   // 시작 화면의 낙관 글자
   saveKey: "snowfort-v1",
   coopLatch: true,   // 함께하기에서 장 끝마다 '두 사람 빗장'
   title: "눈 덮인 산성",

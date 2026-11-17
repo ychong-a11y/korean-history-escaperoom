@@ -1092,6 +1092,7 @@ CHAPTERS.push({
 export default {
   modern: true,   // 사람: 맨머리에 상투를 올리지 않는다
   id: "paper",
+  seal: "紙",   // 시작 화면의 낙관 글자
   saveKey: "paper-v1",
   title: "숨겨진 종이 뭉치",
   startLabel: "종이 뭉치를 펼치다",

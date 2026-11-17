@@ -1089,6 +1089,7 @@ function spawnIsland() {
 
 export default {
   id: "river",
+  seal: "江",   // 시작 화면의 낙관 글자
   saveKey: "river-v1",
   title: "물이 빠진 강",
   startLabel: "서함을 연다",

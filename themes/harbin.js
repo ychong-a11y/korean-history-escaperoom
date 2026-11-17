@@ -1107,6 +1107,7 @@ function sealCard(A, fresh) {
 export default {
   modern: true,   // 사람: 맨머리에 상투를 올리지 않는다
   id: "harbin",
+  seal: "時",   // 시작 화면의 낙관 글자
   saveKey: "harbin-v1",
   title: "아침 아홉 시 반",
   startLabel: "시계 속으로",

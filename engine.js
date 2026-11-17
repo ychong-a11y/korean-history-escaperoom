@@ -11,7 +11,7 @@ import { OutputPass } from "three/addons/postprocessing/OutputPass.js";
 import { RGBELoader } from "three/addons/loaders/RGBELoader.js";
 import { mergeGeometries, mergeVertices } from "three/addons/utils/BufferGeometryUtils.js";
 const $ = (id) => document.getElementById(id);
-document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"quests hidden\" id=\"quests\"></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n  <button class=\"chip\" id=\"btn-set\" aria-label=\"설정\">⚙️ <span class=\"key-hint\">Esc</span></button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\" aria-label=\"걷기 조이스틱\"><i id=\"joy-knob\"></i></div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·여정 기록), <b>Esc</b> 설정. 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">👥 친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
+document.body.insertAdjacentHTML("afterbegin", "<div id=\"view\"></div>\n<div id=\"fade\"></div>\n<div id=\"swim\" class=\"hidden\"><span>🏊 헤엄치는 중 · 가까이 가서 <span class=\"k-up\">Space</span>로 올라가기</span></div>\n<div class=\"quests hidden\" id=\"quests\"></div>\n<div class=\"hud-top hidden\" id=\"hud-top\">\n  <div class=\"place\" id=\"place\"></div>\n  <span class=\"chip timer\" id=\"timer\">⏱ 00:00</span>\n  <button class=\"chip\" id=\"btn-bag\">🎒 가방 <span class=\"key-hint\">Tab</span></button>\n  <button class=\"chip\" id=\"btn-hint\">💡 힌트</button>\n  <button class=\"chip\" id=\"btn-sound\" aria-label=\"소리 켜기/끄기\">🔊</button>\n  <button class=\"chip\" id=\"btn-set\" aria-label=\"설정\">⚙️ <span class=\"key-hint\">Esc</span></button>\n</div>\n<div class=\"cross hidden\" id=\"cross\"></div>\n<button class=\"lockhint hidden\" id=\"lockhint\">🖱️ 화면을 클릭하면 마우스로 둘러볼 수 있어요</button>\n<div class=\"move hidden\" id=\"move\" aria-label=\"걷기 조이스틱\"><i id=\"joy-knob\"></i></div>\n<div class=\"act hidden\" id=\"act\">\n  <button id=\"btn-run\" aria-label=\"달리기\">🏃<small>달리기</small></button>\n  <button id=\"btn-jump\" aria-label=\"점프\">⤒<small>점프</small></button>\n</div>\n<div id=\"rotate\"><div>📱↻<p>휴대폰을 <b>가로로</b> 돌려 주세요</p><span>가로 화면에서 훨씬 넓게 보여요</span><button id=\"rotate-skip\">세로로 계속하기</button></div></div>\n<div class=\"hud-bottom hidden\" id=\"hud-bottom\"><span class=\"inv-label\">소지품</span><span id=\"inv\"></span></div>\n<div class=\"guide hidden\" id=\"guide\"></div>\n<div class=\"tip hidden\" id=\"tip\"></div>\n<div class=\"toast hidden\" id=\"toast\"></div>\n<div class=\"overlay\" id=\"overlay\">\n  <div class=\"modal\" role=\"dialog\" aria-modal=\"true\"><div class=\"dancheong\"></div><div class=\"modal-body\" id=\"modal-body\"></div></div>\n</div>\n<section class=\"screen\" id=\"intro\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"intro-tag\">3D 방탈출 · 전 6장</div>\n    <h1 id=\"intro-title\"></h1>\n    <div id=\"intro-story\"></div>\n    <div class=\"howto\"><ul>\n      <li><b>PC:</b> 화면을 클릭하면 <b>마우스로 둘러보고</b>, <b>방향키(WASD)로 걸어요</b>. <b>Shift</b> 달리기, <b>Space</b> 점프, <b>Tab</b> 가방(소지품·여정 기록), <b>Esc</b> 설정. 가운데 조준점(+)을 물건에 맞추고 클릭하면 조사해요.</li>\n      <li><b>휴대폰:</b> <b>가로로</b> 돌려서 해요. 화면을 끌어서 둘러보고, 왼쪽 아래 버튼으로 걸어요. 오른쪽 아래는 점프·달리기. 물건은 직접 눌러요.</li>\n      <li>물건은 <b>가까이 가야</b> 조사할 수 있어요. 읽은 단서는 수첩에 모이고, 앞 장의 단서가 뒤에서 다시 쓰여요.</li>\n      <li>막히면 <b>힌트</b>(1개당 +1분). 진행 상황은 이 기기에 자동 저장돼요. 🔊 버튼이나 <b>M</b> 키로 소리를 켜고 끌 수 있어요.</li>\n    </ul></div>\n    <div class=\"chapters\" id=\"intro-progress\"></div>\n    <div class=\"actions\">\n      <a class=\"btn ghost\" href=\"index.html\">← 나가기</a>\n      <button class=\"btn ghost hidden\" id=\"btn-restart\">처음부터</button>\n      <button class=\"btn gold\" id=\"btn-coop\">친구와 함께하기</button>\n      <button class=\"btn red\" id=\"btn-start\">시작하기</button>\n    </div>\n    <p class=\"note\" id=\"loading\" style=\"color:var(--ink-soft)\">장면을 불러오는 중…</p>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"clear\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"clear-tag\"></div>\n    <h1 id=\"clear-title\"></h1>\n    <div id=\"clear-text\"></div>\n    <div class=\"chapters\" id=\"clear-progress\"></div>\n    <p class=\"note\" id=\"clear-stats\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">잠시 쉬기</a><button class=\"btn red\" id=\"btn-next\">다음 장으로 →</button></div>\n  </div></div>\n</section>\n<section class=\"screen hidden\" id=\"ending\">\n  <div class=\"card\"><div class=\"dancheong\"></div><div class=\"card-body\">\n    <div class=\"tag\" id=\"end-tag\"></div>\n    <div class=\"reveal\"><div class=\"name\" id=\"end-name\"></div><div class=\"sub\" id=\"end-sub\"></div></div>\n    <div id=\"end-story\"></div>\n    <div class=\"stats\">\n      <div><b id=\"end-time\">-</b><span>걸린 시간</span></div>\n      <div><b id=\"end-hints\">-</b><span>쓴 힌트</span></div>\n      <div><b id=\"end-wrong\">-</b><span>헛손질</span></div>\n    </div>\n    <h3 class=\"serif\" id=\"end-tl-title\"></h3>\n    <ul class=\"timeline\" id=\"end-timeline\"></ul>\n    <p class=\"note\" style=\"margin-top:12px\" id=\"end-note\"></p>\n    <div class=\"actions\"><a class=\"btn ghost\" href=\"index.html\">처음 화면</a><button class=\"btn red\" id=\"btn-replay\">처음부터 다시</button></div>\n  </div></div>\n</section>");
 let THEME = null, CHAPTERS = [];
 
 /* ================================================================
@@ -1710,16 +1710,16 @@ const CTL_TOUCH = `<div class="phone"><div class="phone-screen">
   <li><b>달리기 · 점프</b> — 오른쪽 아래 버튼</li>
   <li><b>가방 · 힌트</b> — 위쪽 버튼 (모은 물건과 단서)</li>
 </ol>
-<p class="ctl-foot">📱 휴대폰은 <b>가로로</b> 돌리면 훨씬 넓게 보여요.</p>`;
+<p class="ctl-foot">휴대폰은 <b>가로로</b> 돌리면 훨씬 넓게 보여요.</p>`;
 const TIPS = `<div class="tip-grid">
-  <div><i>🔍</i><b>보이는 건 전부 조사</b><span>벽의 글, 상자, 사람까지. 가까이 가면 이름이 떠요.</span></div>
-  <div><i>📖</i><b>단서는 여정 기록에 자동으로</b><span>외울 필요 없어요. 가방(Tab) 속 📖 여정 기록을 펼치면 언제든 다시 볼 수 있어요.</span></div>
-  <div><i>🔢</i><b>숫자 · 방향 · 순서를 눈여겨보기</b><span>자물쇠의 답은 늘 주변 단서 안에 있어요. 찍지 말고 이유를 찾아요.</span></div>
-  <div><i>🔗</i><b>앞 장의 단서가 다시 쓰여요</b><span>지나간 장의 기록도 여정 기록에 남아 있어요.</span></div>
-  <div><i>💡</i><b>5분 넘게 막히면 힌트</b><span>힌트는 처음에 3개. 방을 하나 탈출할 때마다 1개씩 받아요. 하나 쓰면 기록 +1분.</span></div>
-  <div><i>👥</i><b>친구와 나눠 맡기</b><span>한 명은 조사, 한 명은 여정 기록 읽기. 함께하기에서는 진행이 같이 열려요.</span></div>
+  <div><i>一</i><b>보이는 건 전부 조사</b><span>벽의 글, 상자, 사람까지. 가까이 가면 이름이 떠요.</span></div>
+  <div><i>二</i><b>단서는 여정 기록에 자동으로</b><span>외울 필요 없어요. 가방(Tab) 속 여정 기록을 펼치면 언제든 다시 볼 수 있어요.</span></div>
+  <div><i>三</i><b>숫자 · 방향 · 순서를 눈여겨보기</b><span>자물쇠의 답은 늘 주변 단서 안에 있어요. 찍지 말고 이유를 찾아요.</span></div>
+  <div><i>四</i><b>앞 장의 단서가 다시 쓰여요</b><span>지나간 장의 기록도 여정 기록에 남아 있어요.</span></div>
+  <div><i>五</i><b>5분 넘게 막히면 힌트</b><span>힌트는 처음에 3개. 방을 하나 탈출할 때마다 1개씩 받아요. 하나 쓰면 기록 +1분.</span></div>
+  <div><i>六</i><b>친구와 나눠 맡기</b><span>한 명은 조사, 한 명은 여정 기록 읽기. 함께하기에서는 진행이 같이 열려요.</span></div>
 </div>
-<p class="ctl-foot">💾 진행 상황은 이 기기에 자동으로 저장돼요. 한 장(약 10분)씩 끊어서 해도 좋아요.</p>`;
+<p class="ctl-foot">진행 상황은 이 기기에 자동으로 저장돼요. 한 장(약 10분)씩 끊어서 해도 좋아요.</p>`;
 let introPage = 0, SOLO_OK = true;   // SOLO_OK: 혼자서도 시작할 수 있는 테마인가 (theme.minPlayers)
 function buildIntroPages() {
   const body = document.querySelector("#intro .card-body"), howto = body.querySelector(".howto");
@@ -1730,9 +1730,9 @@ function buildIntroPages() {
   p1.innerHTML = `<div id="ctl-box"></div><button class="linkbtn" id="ctl-swap"></button>`;
   const p2 = document.createElement("div"); p2.className = "ipage hidden"; p2.dataset.p = "2"; p2.innerHTML = TIPS;
   howto.replaceWith(p1, p2);
-  p0.insertAdjacentHTML("beforebegin", `<div class="itabs" id="intro-tabs"><button data-p="0"><i>1</i>이야기</button><button data-p="1"><i>2</i>조작법</button><button data-p="2"><i>3</i>잘 푸는 법</button></div>`);
+  p0.insertAdjacentHTML("beforebegin", `<div class="itabs" id="intro-tabs"><button data-p="0"><i>一</i>이야기</button><button data-p="1"><i>二</i>조작법</button><button data-p="2"><i>三</i>잘 푸는 법</button></div>`);
   let touchView = isTouch;
-  const drawCtl = () => { $("ctl-box").innerHTML = touchView ? CTL_TOUCH : CTL_PC; $("ctl-swap").textContent = touchView ? "🖥️ 컴퓨터 조작법 보기" : "📱 휴대폰 조작법 보기"; };
+  const drawCtl = () => { $("ctl-box").innerHTML = touchView ? CTL_TOUCH : CTL_PC; $("ctl-swap").textContent = touchView ? "컴퓨터 조작법 보기" : "휴대폰 조작법 보기"; };
   $("ctl-swap").onclick = () => { touchView = !touchView; drawCtl(); };
   drawCtl();
   $("intro-tabs").querySelectorAll("button").forEach((b) => (b.onclick = () => setIntroPage(+b.dataset.p)));
@@ -1754,7 +1754,7 @@ function setIntroPage(p) {
 }
 function renderPath(done) {
   const el = $("intro-path"); if (!el) return;
-  el.innerHTML = CHAPTERS.map((c, i) => `<li class="${i < done ? "done" : i === done ? "now" : "lock"}"><i>${i < done ? "✓" : i === done ? i + 1 : "🔒"}</i><span>${i <= done ? c.place : "???"}</span></li>`).join("");
+  el.innerHTML = CHAPTERS.map((c, i) => `<li class="${i < done ? "done" : i === done ? "now" : "lock"}"><i>${i < done ? "脫" : i === done ? "一二三四五六七八九十"[i] || i + 1 : "封"}</i><span>${i <= done ? c.place : "???"}</span></li>`).join("");
 }
 
 /* 첫 판 연습 안내: 한 번에 한 가지씩, 해 보면 다음으로 넘어간다 (이 기기에서 한 번만) */
@@ -1803,7 +1803,7 @@ function refreshIntro() {
   const s = store.get();
   progressBar("intro-progress", s ? s.ch : 0); renderPath(s ? s.ch : 0);
   const soloAdmin = ADMIN && THEME.minPlayers > 1;
-  $("btn-start").textContent = (soloAdmin ? "🔧 혼자 " : "") + (s ? `이어서 하기 (제${s.ch + 1}장)` : (soloAdmin ? "들어가기 (관리자)" : THEME.startLabel || "시작하기"));
+  $("btn-start").textContent = (soloAdmin ? "혼자 " : "") + (s ? `이어서 하기 (제${s.ch + 1}장)` : (soloAdmin ? "들어가기 (관리자)" : THEME.startLabel || "시작하기"));
   $("btn-restart").classList.toggle("hidden", !s || !SOLO_OK);
 }
 export function start(theme) {
@@ -1812,13 +1812,14 @@ export function start(theme) {
   document.title = theme.title;
   $("intro-tag").textContent = theme.introTag || `3D 방탈출 · 전 ${CHAPTERS.length}장`;
   $("intro-title").textContent = theme.title;
+  if (theme.seal && !$("intro-seal")) { const w = document.createElement("div"); w.className = "ihead"; $("intro-tag").before(w); w.innerHTML = `<span class="seal" id="intro-seal">${theme.seal}</span>`; w.append($("intro-tag")); }
   $("intro-story").innerHTML = theme.intro;
   SOLO_OK = !(theme.minPlayers > 1) || ADMIN;
   buildIntroPages();
   if (theme.minPlayers > 1) {
-    $("btn-coop").className = "btn red"; $("btn-coop").textContent = "👥 친구와 함께 들어가기";
-    $("intro-path").insertAdjacentHTML("beforebegin", `<div class="need-n">👥 이 문은 <b>${theme.minPlayers}명 이상</b>이 함께 들어가야 열려요. 서로 다른 것을 보고, 말로 알려 줘야 풀리는 문제가 나와요.</div>`);
-    if (ADMIN) $("intro-path").insertAdjacentHTML("beforebegin", `<div class="need-n admin">🔧 <b>관리자 모드</b>가 켜져 있어 혼자서도 들어갈 수 있어요. 없는 짝은 서 있어야 하는 자리를 늘 채워 주고, 내 몫(붓 · 활)은 <b>R 키</b>나 화면의 <b>🔧 단추</b>로 바꿔 가며 양쪽을 다 볼 수 있어요. 끄려면 주소 끝에 <b>?admin=0</b>.</div>`);
+    $("btn-coop").className = "btn red"; $("btn-coop").textContent = "친구와 함께 들어가기";
+    $("intro-path").insertAdjacentHTML("beforebegin", `<div class="need-n">이 문은 <b>${theme.minPlayers}명 이상</b>이 함께 들어가야 열려요. 서로 다른 것을 보고, 말로 알려 줘야 풀리는 문제가 나와요.</div>`);
+    if (ADMIN) $("intro-path").insertAdjacentHTML("beforebegin", `<div class="need-n admin"><b>관리자 모드</b>가 켜져 있어 혼자서도 들어갈 수 있어요. 없는 짝은 서 있어야 하는 자리를 늘 채워 주고, 내 몫(붓 · 활)은 <b>R 키</b>나 화면의 <b>🔧 단추</b>로 바꿔 가며 양쪽을 다 볼 수 있어요. 끄려면 주소 끝에 <b>?admin=0</b>.</div>`);
   }
   const en = theme.ending;
   $("end-tag").textContent = en.tag; $("end-name").textContent = en.name; $("end-sub").textContent = en.sub;

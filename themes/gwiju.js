@@ -1197,6 +1197,7 @@ CHAPTERS.push({
 
 export default {
   id: "gwiju",
+  seal: "星",   // 시작 화면의 낙관 글자
   saveKey: "gwiju-v1",
   minPlayers: 2,   // 함께하기 전용: 붓과 활, 둘 이상이 있어야 풀린다
   title: "별이 떨어진 집",

@@ -742,6 +742,7 @@ function noryangSky() {
 
 export default {
   id: "diary",
+  seal: "記",   // 시작 화면의 낙관 글자
   saveKey: "diary-full-v1",
   coopLatch: true,   // 함께하기에서 장 끝마다 '두 사람 빗장'
   title: "이름 없는 일기장",
