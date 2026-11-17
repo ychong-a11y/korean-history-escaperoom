@@ -834,7 +834,7 @@ function updateAim() {
 // Esc 직후에는 브라우저가 1초쯤 다시 고정을 막는데, 이때는 끌기 모드로 바꾸지 않고 "클릭하면 다시 둘러보기" 안내만 띄운다.
 let lockFailed = false, lockWorked = false;
 function requestLock() {
-  if (isTouch || lockFailed || inputLocked) return;
+  if (isTouch || lockFailed || inputLocked || window.__watching) return;   // __watching: 개발용 자동 풀이 보기 중에는 마우스를 잡지 않는다
   try { const p = renderer.domElement.requestPointerLock(); if (p && p.catch) p.catch(lockFail); } catch (e) { lockFail(); }
   setTimeout(() => { if (!locked() && !inputLocked && !document.hidden) lockFail(); }, 800);
 }
@@ -847,7 +847,7 @@ function lockFail() {
 }
 document.addEventListener("pointerlockerror", lockFail);
 renderer.domElement.addEventListener("click", () => {
-  if (inputLocked || isTouch || lockFailed) return;
+  if (inputLocked || isTouch || lockFailed || window.__watching) return;
   if (!locked()) { requestLock(); return; }
   tryInteract(pick(innerWidth / 2, innerHeight / 2));
 });
@@ -1375,12 +1375,41 @@ function openSettings() {
 }
 $("btn-set").onclick = () => S && openSettings();
 $("btn-bag").onclick = () => S && openBag();
+/* ── 힌트 개수 ── 이 기기에 저장하고 모든 테마가 함께 쓴다. 처음 HINT_START개, 방(장)을 처음 탈출할 때마다 +1.
+   다 떨어지면 hintRefill()로 1개를 받는다. 지금은 잠깐 기다리는 것으로 대신하고, 나중에 '광고 보고 받기'를 붙일 자리다. */
+const HINT_KEY = "hk-hints", HINT_EARN_KEY = "hk-hints-earned", HINT_START = 3, HINT_WAIT = 30;
+const hintLeft = () => { const v = parseInt(lsGet(HINT_KEY), 10); return Number.isFinite(v) && v >= 0 ? v : HINT_START; };
+function hintSet(n) { lsSet(HINT_KEY, String(Math.max(0, n))); hintBadge(); }
+function hintBadge() {
+  const b = $("btn-hint"); if (!b) return;
+  let n = $("hint-n"); if (!n) { b.insertAdjacentHTML("beforeend", `<b id="hint-n"></b>`); n = $("hint-n"); }
+  n.textContent = ADMIN ? "∞" : hintLeft();
+}
+function hintEarn(tag) {   // 같은 방으로 두 번 받지 않는다 (처음부터 다시 해도 늘지 않게)
+  let got = []; try { got = JSON.parse(lsGet(HINT_EARN_KEY)) || []; } catch (e) {}
+  if (!Array.isArray(got)) got = [];
+  if (got.includes(tag)) return false;
+  got.push(tag); lsSet(HINT_EARN_KEY, JSON.stringify(got)); hintSet(hintLeft() + 1); return true;
+}
+// 힌트가 다 떨어졌을 때 1개 받기. 나중에 광고를 붙일 때는 이 함수 안의 기다림을 '보상형 광고 보기'로 바꾸고, 다 본 뒤 done()을 부르면 된다.
+function hintRefill(btn, done) {
+  let left = HINT_WAIT; btn.disabled = true;
+  const tick = () => {
+    if (!document.body.contains(btn)) return;   // 창을 닫으면 그만둔다
+    if (left <= 0) { hintSet(hintLeft() + 1); sfx("item"); done(); return; }
+    btn.textContent = `⏳ ${left}초 뒤에 힌트 1개를 받아요`; left--; setTimeout(tick, 1000);
+  };
+  tick();
+}
 function openHint() {
-  const H = CH.hints, idx = S.hintIdx[S.ch] ?? 0;
+  const H = CH.hints, idx = S.hintIdx[S.ch] ?? 0, left = hintLeft(), can = ADMIN || left > 0;
   const shown = H.slice(0, idx).map((h, i) => `<div class="doc">힌트 ${i + 1}. ${h}</div>`).join("");
-  const more = idx < H.length ? `<button class="btn gold" id="more">${idx ? "다음 힌트" : "힌트 보기"} (+1분)</button>` : "";
-  card("💡 힌트", shown || `<p>정말 막혔을 때만 써 보세요. 가방(Tab)의 📖 여정 기록을 다시 읽어 보는 것도 방법이에요.</p><p class="note">힌트를 볼 때마다 기록에 1분이 더해져요.</p>`, more);
-  if (more) $("more").onclick = () => { S.hintIdx[S.ch] = idx + 1; S.hints++; S.elapsed += 60; save(); openHint(); };
+  const have = `<p class="note hint-left">남은 힌트 <b>${ADMIN ? "제한 없음 (관리자)" : left + "개"}</b> · 처음에 ${HINT_START}개, 방을 하나 탈출할 때마다 1개를 받아요.</p>`;
+  const more = idx >= H.length ? "" : can ? `<button class="btn gold" id="more">${idx ? "다음 힌트" : "힌트 보기"} (힌트 1개 · +1분)</button>` : `<button class="btn gold" id="hint-wait">⏳ ${HINT_WAIT}초 기다리고 힌트 1개 받기</button>`;
+  const none = idx < H.length && !can ? `<p class="note">힌트가 다 떨어졌어요. 이 방을 탈출하면 1개를 받고, 급하면 잠깐 기다려서 1개를 받을 수 있어요.</p>` : "";
+  card("💡 힌트", (shown || `<p>정말 막혔을 때만 써 보세요. 가방(Tab)의 📖 여정 기록을 다시 읽어 보는 것도 방법이에요.</p><p class="note">힌트를 볼 때마다 기록에 1분이 더해져요.</p>`) + have + none, more);
+  if ($("more")) $("more").onclick = () => { if (!ADMIN) { if (hintLeft() < 1) return openHint(); hintSet(hintLeft() - 1); } S.hintIdx[S.ch] = idx + 1; S.hints++; S.elapsed += 60; save(); openHint(); };
+  if ($("hint-wait")) $("hint-wait").onclick = () => hintRefill($("hint-wait"), openHint);
 }
 $("btn-hint").onclick = () => S && openHint();
 $("btn-sound").onclick = () => { audioInit(); setSoundOn(!AU.on); };
@@ -1439,7 +1468,7 @@ function showHUD(on) {
 }
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
-  showHUD(true);
+  showHUD(true); hintBadge();
   $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 조이스틱으로 걷기 · 오른쪽 아래 점프·달리기 · 가까이 가서 물건 누르기"
     : lockFailed ? "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방"
     : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 설정";
@@ -1453,13 +1482,13 @@ function clearChapter(force) {
   if (COOP && COOP.gate && force !== true && !COOP.gate()) { inputLocked = false; return; }   // 함께하기: 두 사람 빗장이 먼저
   clearInterval(tickT); inputLocked = true;
   $("overlay").classList.remove("open"); showHUD(false);
-  const c = CH.clear, took = S.elapsed - (S.chStart || 0);
+  const c = CH.clear, took = S.elapsed - (S.chStart || 0), gotHint = hintEarn(SAVE + ":" + S.ch);
   sfx("clear"); setMusic("rest");
   $("clear-tag").textContent = `제${S.ch + 1}장 탈출`;
   $("clear-title").textContent = c.title;
   $("clear-text").innerHTML = `<p class="serif">${c.text}</p>${c.next ? `<div class="letter">${THEME.nextLabel ?? "다음 장면이 떠오른다."}<br>${c.next}</div>` : ""}`;
   progressBar("clear-progress", S.ch + 1);
-  $("clear-stats").textContent = `이번 장 ${fmt(took)} · 전체 ${fmt(S.elapsed)} · 힌트 ${S.hints}개`;
+  $("clear-stats").textContent = `이번 장 ${fmt(took)} · 전체 ${fmt(S.elapsed)} · 쓴 힌트 ${S.hints}개` + (gotHint ? ` · 힌트 +1 (남은 ${hintLeft()}개)` : "");
   S.ch++; S.inv = []; S.used = []; HELD = null; S.chStart = S.elapsed; delete S.pos; save();
   $("fade").style.opacity = 1;
   setTimeout(() => { $("clear").classList.remove("hidden"); $("fade").style.opacity = 0; }, 800);
@@ -1469,6 +1498,7 @@ function endGame() {
   clearInterval(tickT); inputLocked = true;
   $("overlay").classList.remove("open"); showHUD(false);
   sfx("clear"); setMusic("ending");
+  hintEarn(SAVE + ":" + S.ch);
   $("end-time").textContent = fmt(S.elapsed); $("end-hints").textContent = S.hints + "개"; $("end-wrong").textContent = S.wrong + "번";
   lsSet("escape-cleared-" + SAVE, fmt(S.elapsed));   // 테마 고르는 화면의 '탈출 성공' 표시용
   if (COOP) COOP.onEnd(); else store.del();
@@ -1686,7 +1716,7 @@ const TIPS = `<div class="tip-grid">
   <div><i>📖</i><b>단서는 여정 기록에 자동으로</b><span>외울 필요 없어요. 가방(Tab) 속 📖 여정 기록을 펼치면 언제든 다시 볼 수 있어요.</span></div>
   <div><i>🔢</i><b>숫자 · 방향 · 순서를 눈여겨보기</b><span>자물쇠의 답은 늘 주변 단서 안에 있어요. 찍지 말고 이유를 찾아요.</span></div>
   <div><i>🔗</i><b>앞 장의 단서가 다시 쓰여요</b><span>지나간 장의 기록도 여정 기록에 남아 있어요.</span></div>
-  <div><i>💡</i><b>5분 넘게 막히면 힌트</b><span>힌트는 조금씩만 알려 줘요. 하나에 기록 +1분.</span></div>
+  <div><i>💡</i><b>5분 넘게 막히면 힌트</b><span>힌트는 처음에 3개. 방을 하나 탈출할 때마다 1개씩 받아요. 하나 쓰면 기록 +1분.</span></div>
   <div><i>👥</i><b>친구와 나눠 맡기</b><span>한 명은 조사, 한 명은 여정 기록 읽기. 함께하기에서는 진행이 같이 열려요.</span></div>
 </div>
 <p class="ctl-foot">💾 진행 상황은 이 기기에 자동으로 저장돼요. 한 장(약 10분)씩 끊어서 해도 좋아요.</p>`;
@@ -1806,6 +1836,8 @@ export function start(theme) {
   $("loading").textContent = "";
   $("btn-coop").onclick = () => import("./net.js").then((m) => m.openCoop(CORE));
   try { if (sessionStorage.getItem("coop-go")) import("./net.js").then((m) => m.openCoop(CORE)); } catch (e) {}
+  // 개발용 자동 풀이 보기: 주소 끝에 ?watch=1 (배포본에는 _dev 폴더가 없어 아무 일도 일어나지 않는다)
+  if (/[?&]watch=1/.test(location.search)) import("./_dev/watch.js").then((m) => m.auto(location.pathname.split("/").pop().replace(".html", ""))).catch(() => {});
 }
 // 함께하기(net.js)에 넘겨 주는 엔진 내부 손잡이. 혼자 할 때는 쓰이지 않는다.
 const CORE = {

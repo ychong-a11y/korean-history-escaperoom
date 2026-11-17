@@ -2,6 +2,8 @@ THEMES.push(
   {
     id: "stele", players: "1~2명", playersNote: "혼자서도 차근차근 풀 수 있어요. 처음이라면 이 문부터!", era: "삼국 시대", save: "stele-v1", available: true, href: "stele.html", icon: "🪨", year: "???",
     title: "돌에 새긴 이름",
+    grade: "쉬움", stars: 2, seal: "碑", genre: "모험", minutes: 60,
+    teaser: "아버지의 이름을 돌에 새겼다. 천오백 년이 지나도 지워지지 않도록……",
     summary: "거대한 비석을 떠낸 탁본. 왕의 이름이 있어야 할 자리만 닳아 지워져 있다.",
     role: "열여덟에 왕이 된 사람",
     tags: ["🖌️ 탁본 읽기", "🐎 말 달리는 벌판", "👑 지워진 왕의 이름"],
@@ -11,6 +13,8 @@ THEMES.push(
   {
     id: "river", players: "2~3명", playersNote: "지도와 숫자를 맞춰 보는 문제가 많아 둘이 나눠 보면 빨라요.", era: "삼국 시대", save: "river-v1", available: true, href: "river.html", icon: "🌊", year: "???",
     title: "물이 빠진 강",
+    grade: "어려움", stars: 4, seal: "江", genre: "전략", minutes: 60,
+    teaser: "백만이 온다고 했다. 나는 강을 보고 있었다……",
     summary: "강물이 얕아졌다. 강을 건너오는 대군, 그리고 상류에 숨겨진 비밀.",
     role: "백만 대군을 맞은 장수",
     tags: ["🗺️ 지도 탁자", "✉️ 적에게 보낸 시", "🌊 얕아진 강"],
@@ -20,6 +24,8 @@ THEMES.push(
   {
     id: "hwarang", players: "1~2명", playersNote: "혼자서도 좋아요. 둘이면 동굴에서 서로 길을 봐 줄 수 있어요.", era: "삼국 시대", save: "hwarang-v1", available: true, href: "hwarang.html", icon: "🪶", year: "???",
     title: "열다섯의 맹세",
+    grade: "쉬움", stars: 2, seal: "盟", genre: "성장", minutes: 60,
+    teaser: "열다섯에 한 맹세는 말이야, 일흔아홉까지 따라오더군……",
     summary: "두 젊은이가 하늘에 맹세한 작은 돌. 옆 진열장 화랑 명패의 이름이 지워져 있다.",
     role: "열다섯에 화랑이 된 소년",
     tags: ["🪶 화랑의 수련", "🔥 동굴의 횃불", "🤝 하늘에 한 맹세"],
@@ -29,6 +35,8 @@ THEMES.push(
   {
     id: "gate668", players: "2~3명", playersNote: "넓은 성 안을 나눠서 살펴보면 좋아요.", era: "삼국 시대", save: "gate668-v1", available: true, href: "gate668.html", icon: "🏯", year: "???",
     title: "무너지는 성문",
+    grade: "어려움", stars: 4, seal: "門", genre: "생존", minutes: 60,
+    teaser: "성문이 무너지던 날, 나는 다시 세울 문을 생각했다……",
     summary: "성 밖을 가득 메운 두 나라의 깃발. 성문이 열리기 전에 무엇을 지켜야 할까?",
     role: "무너지는 성에서 살아남은 젊은이",
     tags: ["🏯 포위된 성", "🚩 두 나라의 깃발", "🎒 먼 길 떠나기"],
@@ -38,6 +46,8 @@ THEMES.push(
   {
     id: "gwiju", minPlayers: 2, players: "2~4명", playersNote: "2명 이상 필수! 서로 다른 것이 보여서, 본 것을 말로 알려 줘야 풀려요.", era: "고려 시대", save: "gwiju-v1", available: true, href: "gwiju.html", icon: "🌠", year: "???",
     title: "별이 떨어진 집",
+    grade: "어려움", stars: 4, seal: "星", genre: "협동", minutes: 60,
+    teaser: "별이 떨어진 밤에 태어났다지. 어느 별인지는 아무도 몰랐어……",
     summary: "큰 별이 떨어진 밤에 태어난 아이. 옛 집터의 돌탑에서 이름 세 글자가 떨어져 나갔다.",
     role: "별이 떨어진 집에서 태어난 사람",
     tags: ["🌠 별이 떨어진 밤", "🐂 쇠가죽으로 막은 강", "🚩 바람이 바뀐 벌판"],
@@ -45,8 +55,10 @@ THEMES.push(
     playtime: "전 6장 · 약 1시간", level: "3D",
   },
   {
-    id: "diary", players: "2~4명", playersNote: "가장 어려운 문. 여럿이 머리를 맞대는 걸 추천해요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "조선 시대", save: "diary-full-v1", available: true, href: "diary.html", icon: "📓", year: "???",
+    id: "diary", players: "2~4명", playersNote: "여럿이 머리를 맞대는 걸 추천해요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "조선 시대", save: "diary-full-v1", available: true, href: "diary.html", icon: "📓", year: "???",
     title: "이름 없는 일기장",
+    grade: "보통", stars: 3, seal: "記", genre: "드라마", minutes: 60,
+    teaser: "오늘도 적는다. 이름은 지워져도 하루는 남으니까……",
     summary: "주인의 이름이 긁혀 지워진 낡은 일기장. 첫 장을 펼치는 순간, 낯선 집 마당에서 눈을 떴다.",
     role: "날마다 일기를 쓴 장수",
     tags: ["🏹 활쏘기 시험", "⛵ 바다와 배", "📓 긁혀 지워진 이름"],
@@ -56,6 +68,8 @@ THEMES.push(
   {
     id: "snowfort", players: "2~3명", playersNote: "문서 조각과 단서가 여러 곳에 흩어져 있어요. 함께하면 장 끝마다 '두 사람 빗장'이 나와요.", era: "조선 시대", save: "snowfort-v1", available: true, href: "snowfort.html", icon: "❄️", year: "???",
     title: "눈 덮인 산성",
+    grade: "어려움", stars: 5, seal: "雪", genre: "추리", minutes: 60,
+    teaser: "찢는 사람도 있어야 하고, 붙이는 사람도 있어야 하오……",
     summary: "산성에 갇힌 지 수십 일. 성안의 식량은 줄어들고, 결정을 내려야 한다.",
     role: "찢긴 문서를 다시 이어 붙인 신하",
     tags: ["❄️ 눈 속의 산성", "🔥 꺼지지 않는 봉화", "📜 찢긴 문서"],
@@ -65,6 +79,8 @@ THEMES.push(
   {
     id: "harbin", players: "1~2명", playersNote: "이야기를 따라가는 맛이 커서 혼자 해도 좋아요.", era: "나라를 되찾으려던 때", save: "harbin-v1", available: true, href: "harbin.html", icon: "🕘", year: "???",
     title: "아침 아홉 시 반",
+    grade: "보통", stars: 3, seal: "時", genre: "드라마", minutes: 60,
+    teaser: "시계는 아홉 시 반에 멈췄다. 나는 그 시간을 오래 기다려 왔다……",
     summary: "아홉 시 반에 멈춘 회중시계, 넷째 손가락이 짧은 손도장. 태엽을 감자 시간이 거꾸로 흐른다.",
     role: "넷째 손가락이 짧은 사람",
     tags: ["🕘 멈춘 회중시계", "🚂 기차역", "✋ 손도장"],
@@ -74,6 +90,8 @@ THEMES.push(
   {
     id: "paper", players: "2~3명", playersNote: "찾을 것이 많아 역할을 나누면 좋아요.", era: "나라를 되찾으려던 때", save: "paper-v1", available: true, href: "paper.html", icon: "📜", year: "???",
     title: "숨겨진 종이 뭉치",
+    grade: "보통", stars: 3, seal: "紙", genre: "잠입", minutes: 60,
+    teaser: "종이 한 장이 이렇게 무거울 줄은 몰랐어……",
     summary: "인쇄소 바닥 밑에 숨긴 종이 수만 장. 날이 밝기 전에 전해야 한다.",
     role: "종이 뭉치를 품고 달린 학생",
     tags: ["🖨️ 한밤의 인쇄소", "📜 숨긴 종이", "📣 장터의 함성"],
