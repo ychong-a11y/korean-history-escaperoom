@@ -414,3 +414,4 @@ body:not(.playing) #battle-bar { display: none; }
 .chip.incense.low { color: #a3281f; animation: incense 1s ease-in-out infinite alternate; } @keyframes incense { to { background: #ffe1d6; } }
 .chip.incense.out { color: #9a8a74; } .chip.incense.out i { display: none; }
 @media (max-width: 600px) { #battle-bar { top: 50px; font-size: 12.5px; padding: 6px 10px; } }
+body:has(#battle-bar) .toast { top: 132px; }

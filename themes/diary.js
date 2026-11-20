@@ -271,7 +271,7 @@ CHAPTERS.push({
     c3_gate: { title: "차림을 갖춰 문지기에게 답하기", desc: "문지기는 벼슬을 잃은 자에 맞는 차림을 하라고 한다. 판결문을 찾아 읽고 알맞은 옷을 입은 뒤, 문지기의 물음에 답하자.", from: "gate" },
     c3_reply: { title: "농부에게 답장 읽어 주기", desc: "농부는 글을 읽을 줄 모른다. 군막 책상의 편지에 윗분이 뭐라고 답했는지 보고 와서 알려 주자.", from: "farmer", to: (A) => (A.has("c3_read") ? "farmer" : "desk") },
   },
-  hero: { robe: 0x34506e, helmet: true },
+  hero: (A) => (A.used("whiteRobe") ? { robe: 0xd8d2c2 } : { robe: 0x34506e, helmet: true }),   // 목책 문에서 흰 옷을 입은 뒤에는 흰 옷 차림
   place: "국경의 섬", when: "정해년 가을 · 두만강 녹둔도",
   atmosphere: { hdri: "belfast_sunset_puresky", hdrExposure: 0.6,  top: 0x2b335c, mid: 0xb0705a, low: 0xff9a4d, sun: [-1, 0.12, 0.25], sunCol: 0xff6a20, fog: 0x8a6a60, fogNear: 25, fogFar: 90, hemiSky: 0xe0b090, hemiGround: 0x4a3a28, hemiI: 0.95, light: 0xff9a5a, lightI: 2.0 },
   items: {
@@ -495,11 +495,14 @@ CHAPTERS.push({
       }, "\"그 모양으로는 적을 감쌀 수 없소.\"", true);
     }
     if (id === "gangway") {
+      // 바다 싸움: 바다는 북쪽(z < -2)이라 dir 0. 매어 둔 우리 배(z -6 ~ -16)와 겹치지 않게 조금 멀리(20) 세운다
+      const fight = () => A.battle({ title: "바다 위 적선의 깃발을 쏘아 떨어뜨려라", afloat: true, dir: 0, dist: 20 }, () => { toast("지휘선에 올랐다! 북소리가 울린다."); setTimeout(A.clearChapter, 1000); });
+      if (A.has("c4_fightok")) return fight();   // 배다리의 물음에 답한 뒤 다시 들어왔을 때: 싸움부터
       A.questStart("c4_board");
       if (!A.has("c4_form")) return A.card("지휘선 배다리", `<p>군사가 막는다. "아직 출전 명령이 없소. 진형부터 정하시오."</p>`);
       if (!A.needItem(id, "signalFlag", "지휘선 배다리", `<p>군사가 막는다. "지휘선에 오르려면 신호 깃발을 가져오시오."</p>`, "신호 깃발 보여 주기")) return;
       A.card("지휘선 배다리", `<p>군사가 묻는다. "한산도에서 무찌른 적선은 모두 몇 척이오? (가라앉힌 배 + 빼앗은 배)"</p>`);
-      return A.codeLock("59", () => { A.questDone("c4_board"); A.closeModal(); toast("지휘선에 올랐다! 북소리가 울린다."); setTimeout(A.clearChapter, 1000); }, "\"틀렸소.\" 진형판의 기록을 다시 보자.");
+      return A.codeLock("59", () => { A.questDone("c4_board"); A.flag("c4_fightok"); A.closeModal(); toast("군사가 길을 비킨다. 그때, 앞바다에 나타난 적선 한 무리가 활을 쏜다!", 2600); setTimeout(fight, 1200); }, "\"틀렸소.\" 진형판의 기록을 다시 보자.");
     }
   },
   clear: { title: "바다를 지키다", text: "한산도에서 진 적은 서해로 물자를 나르려던 계획을 이루지 못했다. 그는 세 도의 수군을 이끄는 삼도 수군통제사가 되었다. 그러나 5년 뒤, 정유년…", next: "\"정유년 봄. 모함을 받았다. 쇠사슬에 묶여 한양으로 끌려간다. 옥에 갇힌 지 며칠째인가…\"" },
@@ -511,7 +514,7 @@ CHAPTERS.push({
     c5_days: { title: "갇힌 날 수를 옥리에게 말하기", desc: "옥리는 갇힌 지 며칠째인지 말하면 문을 열어 주겠다고 한다. 옥 안에 남은 자국을 빠짐없이 세어 보자.", from: "guard", when: (A) => !A.has("c5_open") },
     c5_out: { title: "명령대로 길 떠날 채비하기", desc: "책상의 문서는 벼슬 없이 싸움터로 가라고 한다. 옥 밖에 놓인 소식을 차례로 읽고, 차림을 갖춰 옥사 문을 나서자.", from: "desk", to: "exit", when: (A) => A.has("c5_open") },
   },
-  hero: { robe: 0x9a8f7a },
+  hero: (A) => (A.owns("robe5") ? { robe: 0xd8d2c2 } : { robe: 0x9a8f7a }),   // 벽의 흰 옷을 걷어 입은 뒤에는 흰 옷 차림
   place: "어두운 옥", when: "정유년 봄 · 한양 의금부",
   atmosphere: { top: 0x05070f, mid: 0x0b1020, low: 0x161c30, sun: [0.3, 0.6, 0.5], sunCol: 0x8090c0, glow: 0.3, fog: 0x0b0d14, fogNear: 14, fogFar: 45, hemiSky: 0x8a9ac0, hemiGround: 0x4a3a2a, hemiI: 1.6, light: 0x8aa0d0, lightI: 0.5, exposure: 1.45 },
   items: {

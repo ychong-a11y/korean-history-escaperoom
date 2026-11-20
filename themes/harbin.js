@@ -604,9 +604,29 @@ CHAPTERS.push({
       return A.give("compass");
     }
     if (id === "treenote") {
+      // 숨어 지나가기: 쪽지가 꽂힌 소나무(9, -4)는 뗏목(5, -9.4)에서 5m밖에 안 되어 곧은 길이 나오지 않는다.
+      // 그래서 서쪽 강가(-10.6, -4.2)로 자리를 옮겨, 강가 길을 따라 뗏목 앞(5.6, -6.2)까지 16m를 가게 한다.
+      // 순찰 둘은 x = -5.2, 0.2 에서 강둑(z -7.6)과 진지 앞(z -2.8) 사이를 오간다. 천막 · 탁자 · 깃대(-1, -4)에 닿지 않는다.
+      const hide = () => {
+        if (A.has("c3_sneakdone") || A.sneakOn()) return;
+        const G = window.__game; if (!G || !G.teleport) return A.flag("c3_sneakdone");   // 자리를 옮길 수 없으면 장면 없이 넘어간다
+        G.teleport(-10.6, -4.2, -PI / 2);
+        A.sneak({ title: "수색하는 불빛을 피해 뗏목이 묶인 강가까지", to: [5.6, -6.2], guards: 2, width: 2.1, robe: 0x2b2f3a }, () => { A.flag("c3_sneakdone"); toast("불빛이 멀어진다. 뗏목이 바로 앞이다.", 2600); });
+      };
+      if (A.has("c3_sneakok") && !A.has("c3_sneakdone")) return hide();   // 쪽지를 읽은 뒤 다시 들어왔을 때: 숨어 지나가기부터
       A.note("소나무의 쪽지: 지도 위쪽에 南이라 적혀 있다. 그려진 길: ↓ ↓ → ↓ ← ← (모닥불 → 뗏목). 뗏목 자물쇠도 이 길대로.");
-      return A.card("소나무에 꽂힌 쪽지", `<div class="letter">"흩어진 동료들에게. 적이 강가 큰길을 지킨다. 모닥불에서 뗏목까지 아래 그림대로 오라. 뗏목 매듭의 자물쇠도 <b>걸어온 길</b>대로 열린다."</div>
+      A.card("소나무에 꽂힌 쪽지", `<div class="letter">"흩어진 동료들에게. 적이 강가 큰길을 지킨다. 모닥불에서 뗏목까지 아래 그림대로 오라. 뗏목 매듭의 자물쇠도 <b>걸어온 길</b>대로 열린다."</div>
         <div class="doc" style="text-align:center"><div style="font-size:22px;font-weight:700">南</div><div style="font-size:34px;letter-spacing:10px">↓ ↓ → ↓ ← ←</div><div class="note">(급히 그린 지도. 맨 위에 南 한 글자만 적혀 있다)</div></div>`);
+      if (!A.has("c3_sneakdone")) {   // 쪽지를 처음 읽고 창을 닫으면 숨어 지나가기가 열린다
+        A.flag("c3_sneakok");
+        const ch = E.CH, wait = () => {
+          if (E.CH !== ch || A.has("c3_sneakdone") || A.sneakOn()) return;
+          if (E.$("overlay").classList.contains("open")) return setTimeout(wait, 120);
+          toast("숲을 돌아 서쪽 강가로 나오니 수색하는 불빛이 오간다.", 2600); setTimeout(() => { if (E.CH === ch) hide(); }, 1200);
+        };
+        setTimeout(wait, 120);
+      }
+      return;
     }
     if (id === "raft") {
       if (!A.has("c3_freed")) return A.card("강가의 뗏목", `<p>강가에 묶인 뗏목. 아직 떠날 때가 아니다. 붙잡은 포로 문제부터 매듭지어야 한다.</p>`);

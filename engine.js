@@ -1093,7 +1093,7 @@ function buildHero(o = {}) {
   g.visible = false; scene.add(g); HERO = g;
 }
 function heroTick(dt, moved, air) {
-  const want = CH.hero || (THEME && THEME.hero) || {}, key = JSON.stringify(want) + S.ch;
+  const hv = typeof CH.hero === "function" ? CH.hero(A) : CH.hero, want = hv || (THEME && THEME.hero) || {}, key = JSON.stringify(want) + S.ch;
   if (!HERO || key !== heroKey) { buildHero(want); heroKey = key; heroYaw = yaw; }
   const u = HERO.userData.hero, show = thirdOn() && TP.cur > 0.9 && document.body.classList.contains("playing");
   HERO.visible = show; if (!show) return;
@@ -1127,6 +1127,14 @@ function startBattle(o = {}, onWin) {
   o = { flags: 5, shields: 3, dist: 17, spread: 8, ...o };
   // 적이 설 쪽: 따로 정하지 않으면 지금 자리에서 가장 멀리까지 트인 쪽(벽 · 울타리 · 물이 없는 쪽)을 고르고, 그쪽을 바라보게 한다
   let dir = o.dir;
+  if (dir === undefined && o.afloat && WORLD.isWater) {   // 바다 싸움: 물이 가장 많이 보이는 쪽
+    let best = -1;
+    for (let i = 0; i < 16; i++) {
+      const a = targetYaw + (i * Math.PI) / 8, ax = -Math.sin(a), az = -Math.cos(a); let n = 0, first = 0;
+      for (let d = 6; d <= 30; d += 2) if (WORLD.isWater(targetPos.x + ax * d, targetPos.z + az * d)) { n++; if (!first) first = d; }
+      if (n - (i ? 0.3 : 0) > best) { best = n - (i ? 0.3 : 0); dir = a; o.dist = Math.max(12, Math.min(24, first + 8)); }
+    }
+  }
   if (dir === undefined) {
     let best = -1;
     for (let i = 0; i < 16; i++) {
@@ -1142,14 +1150,17 @@ function startBattle(o = {}, onWin) {
   const flags = [];
   for (let i = 0; i < o.flags; i++) {
     const t = o.flags > 1 ? i / (o.flags - 1) - 0.5 : 0, bx = cx + rx * t * o.spread * 2 + fx * (i % 2) * 2.5, bz = cz + rz * t * o.spread * 2 + fz * (i % 2) * 2.5;
-    const g = new THREE.Group(); g.position.set(bx, WORLD.groundAt(bx, bz), bz); g.rotation.y = dir + Math.PI; root.add(g);
+    const wet = o.afloat && WORLD.isWater?.(bx, bz), wl = wet ? WORLD.water.level : 0;
+    const g = new THREE.Group(); g.position.set(bx, wet ? wl + 1.25 : WORLD.groundAt(bx, bz), bz); g.rotation.y = dir + Math.PI; root.add(g);
+    let boat = null;
+    if (wet) { boat = ship(bx, bz, dir + Math.PI / 2 + (i % 2 ? 0.25 : -0.2), { scale: 0.85, y: wl - 0.55, mat: MAT.enemy || MAT.hull }); root.add(boat); }
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.055, 4.4, 6).translate(0, 2.2, 0), MAT.black); pole.castShadow = true;
     const cl = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.1).translate(0.9, 3.25, 0), cloth); cl.castShadow = true;
     const hit = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.2, 0.8).translate(0.7, 2.9, 0), FLAG_HIT);
     const man = person(-0.45, 0, 0, manMat, g, { helmet: true, pose: "hold" });
     cl.add(new THREE.Mesh(new THREE.CircleGeometry(0.46, 18).translate(0.9, 3.25, 0.012), FLAG_MARK), new THREE.Mesh(new THREE.CircleGeometry(0.46, 18).translate(0.9, 3.25, -0.012), FLAG_MARK));   // 어두운 곳에서도 보이게 흰 동그라미
     g.add(pole, cl, hit);
-    flags.push({ g, hit, cl, pole, man, bx, bz, ph: i * 1.7, down: false, fall: 0 });
+    flags.push({ g, hit, cl, pole, man, bx, bz, ph: i * 1.7, down: false, fall: 0, boat });
   }
   BATTLE = { o, onWin, root, flags, arrows: [], shots: [], shields: o.shields, t: 0, next: 2.2, cool: 0, rx, rz, fx, fz, pause: 0, ox: targetPos.x, oz: targetPos.z, won: false };
   inputLocked = false; hideGuide(); battleBar(); B_MUSIC = AU.mood; setMusic("battle"); sfx("buk");
@@ -1179,8 +1190,8 @@ function battleTick(dt) {
   B.t += dt; B.cool -= dt;
   const alive = B.flags.filter((f) => !f.down);
   for (const f of B.flags) {   // 깃발은 좌우로 조금씩 움직이고, 맞으면 쓰러진다
-    if (!f.down) { const k = Math.sin(B.t * (0.7 + (B.flags.length - alive.length) * 0.12) + f.ph) * 1.4; f.g.position.x = f.bx + B.rx * k; f.g.position.z = f.bz + B.rz * k; f.cl.rotation.y = Math.sin(B.t * 3 + f.ph) * 0.25; }
-    else if (f.fall < 1) { f.fall = Math.min(1, f.fall + dt * 2.2); f.pole.rotation.x = f.cl.rotation.x = f.fall * 1.45; f.man.position.z += dt * 3.2; f.man.rotation.y = Math.PI; f.man.visible = f.fall < 0.98; }
+    if (!f.down) { const k = Math.sin(B.t * (0.7 + (B.flags.length - alive.length) * 0.12) + f.ph) * (f.boat ? 0.9 : 1.4); f.g.position.x = f.bx + B.rx * k; f.g.position.z = f.bz + B.rz * k; f.cl.rotation.y = Math.sin(B.t * 3 + f.ph) * 0.25; if (f.boat) { f.boat.position.x = f.g.position.x; f.boat.position.z = f.g.position.z; f.boat.rotation.z = Math.sin(B.t * 1.3 + f.ph) * 0.03; } }
+    else if (f.fall < 1) { f.fall = Math.min(1, f.fall + dt * 2.2); f.pole.rotation.x = f.cl.rotation.x = f.fall * 1.45; if (!f.boat) { f.man.position.z += dt * 3.2; f.man.rotation.y = Math.PI; } f.man.visible = f.fall < 0.98; if (f.boat) { f.boat.position.x -= B.fx * dt * 2.2; f.boat.position.z -= B.fz * dt * 2.2; f.g.position.x = f.boat.position.x; f.g.position.z = f.boat.position.z; } }
   }
   for (const s of B.shots) {   // 내가 쏜 화살
     s.t += dt; const k = Math.min(1, s.t / s.T); s.m.position.lerpVectors(s.from, s.to, k); s.m.lookAt(s.to);
@@ -1223,6 +1234,85 @@ function battleTick(dt) {
   }
   for (const a of B.arrows) if (a.gone) { B.root.remove(a.m, a.ring); a.m.geometry.dispose(); a.ring.geometry.dispose(); a.ring.material.dispose(); }
   B.arrows = B.arrows.filter((a) => !a.gone);
+}
+
+/* ── 숨어 지나가기 ── 순찰 도는 사람의 불빛(노란 부채꼴)을 피해 저 앞의 등불까지 간다. 싸우지 않는 긴장 장면.
+   A.sneak({ title, guards: 3, dist: 20, width: 6, to: [x, z](가야 할 곳 · 주면 dir 과 dist 는 여기서 정해진다), dir: 가는 쪽(yaw · 안 주면 가장 트인 쪽), robe: 순찰의 옷 빛깔, helmet: 순찰이 투구를 쓰는가 }, 다 갔을 때 부를 함수)
+   불빛 안에 들어가거나 바짝 다가가면 들킨다. 달리면 발소리 때문에 더 멀리서도 들킨다. 들키면 처음 자리로 돌아간다(헛손질로 세지 않는다). */
+let SNEAK = null;
+function sneakBar() {
+  let el = $("battle-bar");
+  if (!SNEAK) { if (el && !BATTLE) el.remove(); return; }
+  if (!el) { document.body.insertAdjacentHTML("beforeend", `<div id="battle-bar"></div>`); el = $("battle-bar"); }
+  if (!$("hitflash")) document.body.insertAdjacentHTML("beforeend", `<div id="hitflash"></div>`);
+  el.innerHTML = `<b>${SNEAK.o.title || "들키지 않고 저 등불까지"}</b><small>노란 불빛 안에 들어가면 들켜요 · 달리면 발소리가 들려요 · 등불이 켜진 곳까지 가세요</small>`;
+}
+function startSneak(o = {}, onDone) {
+  if (SNEAK || BATTLE) return;
+  o = { guards: 3, dist: 20, width: 6, ...o };
+  let dir = o.dir;
+  if (o.to) { const tx = o.to[0] - targetPos.x, tz = o.to[1] - targetPos.z; dir = Math.atan2(-tx, -tz); o.dist = Math.max(6, Math.hypot(tx, tz)); }   // to: [x, z] 로 가야 할 곳을 정해 줄 수 있다
+  if (dir === undefined) {
+    let best = -1;
+    for (let i = 0; i < 16; i++) {
+      const a = targetYaw + (i * Math.PI) / 8, ax = -Math.sin(a), az = -Math.cos(a); let d = 0;
+      for (; d < 30; d++) { const x = targetPos.x + ax * (d + 1), z = targetPos.z + az * (d + 1); if (WORLD.isWater?.(x, z) || WORLD.blocked(x, z, WORLD.groundAt(x, z))) break; }
+      if (d - (i ? 0.6 : 0) > best) { best = d - (i ? 0.6 : 0); dir = a; o.dist = Math.min(o.dist, Math.max(10, d - 1)); }
+    }
+  }
+  const fx = -Math.sin(dir), fz = -Math.cos(dir), rx = -fz, rz = fx, sx = targetPos.x, sz = targetPos.z;
+  const root = new THREE.Group(); scene.add(root);
+  const gx = sx + fx * o.dist, gz = sz + fz * o.dist, gy = WORLD.groundAt(gx, gz);
+  const glow = new THREE.MeshBasicMaterial({ color: 0xffd27a }), lamp = new THREE.Group(); lamp.position.set(gx, gy, gz); root.add(lamp);
+  lamp.add(new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.05, 1.5, 6).translate(0, 0.75, 0), MAT.black), new THREE.Mesh(new THREE.SphereGeometry(0.2, 10, 8).translate(0, 1.62, 0), glow));
+  const ring = new THREE.Mesh(new THREE.RingGeometry(0.9, 1.2, 28).rotateX(-Math.PI / 2).translate(0, 0.05, 0), new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0.8, depthWrite: false })); lamp.add(ring);
+  const R = 4.4, HALF = 0.62, robe = C(o.robe ?? 0x2a2a30), guards = [];
+  for (let i = 0; i < o.guards; i++) {
+    const d = (o.dist * (i + 1)) / (o.guards + 1), g = person(0, 0, 0, robe, root, { helmet: !!o.helmet, pose: "hold" });
+    const cone = new THREE.Mesh(new THREE.CircleGeometry(R, 22, Math.PI / 2 - HALF, HALF * 2).rotateX(-Math.PI / 2).translate(0, 0.06, 0), new THREE.MeshBasicMaterial({ color: 0xffd54a, transparent: true, opacity: 0.3, depthWrite: false, side: THREE.DoubleSide }));
+    const lan = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6).translate(0.24, 0.95, -0.28), glow);
+    g.add(cone, lan);
+    guards.push({ g, d, t: (i % 2 ? -1 : 1) * o.width * (0.3 + 0.3 * (i % 3)), sgn: i % 2 ? 1 : -1, v: 1.7 + (i % 3) * 0.35, seen: 0, cone });
+  }
+  SNEAK = { o, onDone, root, guards, lamp, ring, sx, sz, gx, gz, dir, fx, fz, rx, rz, R, HALF, pause: 0.8, t: 0, won: false };
+  inputLocked = false; hideGuide(); targetYaw = dir; pitch = 0.02; sneakBar(); sfx("page");
+  toast("들키지 않게 저 앞의 등불까지 가자. 노란 불빛을 피해야 한다.", 4200);
+}
+function sneakEnd(win) {
+  const N = SNEAK; if (!N) return;
+  scene.remove(N.root); N.root.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); });
+  N.guards.forEach((q) => { const i = PEOPLE.indexOf(q.g); if (i >= 0) PEOPLE.splice(i, 1); });
+  SNEAK = null; sneakBar();
+  if (win) N.onDone?.();
+}
+function sneakTick(dt, moved) {
+  const N = SNEAK; if (!N || N.won || $("overlay").classList.contains("open")) return;
+  N.t += dt; N.ring.material.opacity = 0.55 + Math.sin(N.t * 4) * 0.3;
+  for (const q of N.guards) {   // 순찰: 길을 가로질러 오간다. 가는 쪽으로 불빛을 비춘다.
+    q.t += q.sgn * q.v * dt; if (Math.abs(q.t) > N.o.width) { q.t = Math.sign(q.t) * N.o.width; q.sgn = -q.sgn; }
+    const x = N.sx + N.fx * q.d + N.rx * q.t, z = N.sz + N.fz * q.d + N.rz * q.t;
+    q.g.position.set(x, WORLD.groundAt(x, z), z); q.g.rotation.y = Math.atan2(-N.rx * q.sgn, -N.rz * q.sgn);
+  }
+  if (N.pause > 0) { N.pause -= dt; return; }
+  const px = targetPos.x, pz = targetPos.z, loud = running && moved > 0.01;
+  let why = "";
+  for (const q of N.guards) {
+    const dx = px - q.g.position.x, dz = pz - q.g.position.z, d = Math.hypot(dx, dz);
+    const ang = Math.abs(((Math.atan2(-dx, -dz) - q.g.rotation.y + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+    const inLight = d < N.R && ang < N.HALF, near = d < 1.1, heard = loud && d < 6;
+    q.seen = inLight || near || heard ? q.seen + dt : Math.max(0, q.seen - dt * 2);
+    q.cone.material.opacity = inLight ? 0.6 : 0.3;
+    if (q.seen > 0.3) why = near ? "바짝 다가갔다가 들켰다!" : heard && !inLight ? "발소리를 들켰다! 걸어서 가자." : "불빛에 들켰다!";
+  }
+  const along = (px - N.sx) * N.fx + (pz - N.sz) * N.fz, side = (px - N.sx) * N.rx + (pz - N.sz) * N.rz;
+  if (!why && (Math.abs(side) > N.o.width + 3.5 || along < -5)) why = "길에서 너무 벗어났다.";
+  if (why) {
+    sfx("wrong"); toast(why + " 처음 자리에서 다시.", 2600); N.pause = 1.3; N.guards.forEach((q) => { q.seen = 0; });
+    targetPos.x = N.sx; targetPos.z = N.sz; camera.position.x = N.sx; camera.position.z = N.sz; targetYaw = yaw = N.dir; pitch = 0.02; feet = WORLD.groundAt(N.sx, N.sz); vy = 0;
+    const v = $("hitflash"); if (v) { v.classList.remove("on"); void v.offsetWidth; v.classList.add("on"); }
+    return;
+  }
+  if (Math.hypot(px - N.gx, pz - N.gz) < 1.35) { N.won = true; sfx("solve"); setTimeout(() => sneakEnd(true), 500); }
 }
 
 /* ── 향 시계 ── 장마다 향 한 대가 탄다(기본 10분 · 장에 par 를 분으로 적으면 그만큼). 다 타기 전에 탈출하면 힌트를 하나 더 받는다.
@@ -1268,7 +1358,7 @@ function frame(dt) {
   sky.position.copy(camera.position); hdriSky.position.copy(camera.position);
   CH.tick?.(dt, ELAPSED_T, A);
   COOP?.tick(dt);
-  if (S) { if (BATTLE) battleTick(dt); heroTick(dt, moved, air); }
+  if (S) { if (BATTLE) battleTick(dt); if (SNEAK) sneakTick(dt, moved); heroTick(dt, moved, air); }
   if (GFX.high && PEOPLE.length) animPeople(ELAPSED_T);
   if (talkWho) animTalk(ELAPSED_T);
   if (ELAPSED_T - qRefT > 2) { qRefT = ELAPSED_T; if (CH.quests) refreshQuests(); }   // 뒤늦게 생긴 물체에도 표시가 붙게
@@ -1467,6 +1557,8 @@ const A = {
   quest: (id) => questState(id),
   questStart: (id) => { if (questState(id)) return false; S.flags.push("q+" + id); save(); qNote("새 부탁을 받았다", "new"); refreshQuests(); sfx("item"); return true; },
   battle: (o, onWin) => startBattle(o, onWin),   // 싸움 장면 (화살 피하며 깃발 쏘기)
+  battleOn: () => !!BATTLE, battleStop: () => battleEnd(false),   // 함께하기: 다른 사람이 먼저 이겼을 때 내 싸움을 접는다
+  sneak: (o, onDone) => startSneak(o, onDone), sneakOn: () => !!SNEAK,   // 숨어 지나가기
   questDone: (id) => { if (questState(id) !== 1) return false; S.flags.push("q-" + id); save(); qNote(`들어주었다: ${CH.quests[id].title}`, "done"); refreshQuests(); sfx("solve"); return true; },
   card, textLock, codeLock, dirLock, choiceLock, orderLock, matchLock, toast, ok, closeModal, formation, GANJI_TABLE,
   has: (f) => S.flags.includes(f),
@@ -1659,7 +1751,7 @@ function disposeRoot() {
 }
 let loadedCh = -1;   // 지금 지어진 장. 장 탈출이 두 번 불려도(협동: 친구의 탈출 + 내 연출 타이머) 한 장만 넘어가게
 function loadChapter(i, resumePos) {
-  if (BATTLE) battleEnd(false);
+  if (BATTLE) battleEnd(false); if (SNEAK) sneakEnd(false);
   loadedCh = i;
   disposeRoot();
   ROOT = new THREE.Group(); scene.add(ROOT);
@@ -2098,6 +2190,7 @@ window.__game = {
   combine: (a, b) => combine(a, b),   // 검사용: 물건 합치기
   battleOn: () => !!BATTLE, battleShoot: (x, y) => battleShoot(x, y), battleWin: () => { if (BATTLE) { BATTLE.won = true; battleEnd(true); return true; } return false; },   // 검사용: 싸움 장면을 바로 이긴다
   get BATTLE() { return BATTLE; }, setView, thirdOn,
+  sneakOn: () => !!SNEAK, sneakWin: () => { if (SNEAK) { SNEAK.won = true; sneakEnd(true); return true; } return false; }, get SNEAK() { return SNEAK; },   // 검사용: 숨어 지나가기를 바로 끝낸다
   fakeCoop(n = 2, role = 0, all = true) { FAKE_COOP = n ? { n, role, all } : null; },   // 검사용: 사람 수 · 내 역할 · at()이 늘 n을 돌려줌
   get S() { return S; }, A, get CH() { return CH; }, camera, loadChapter, play,
   interact: (id) => CH.interact(id, A, null),

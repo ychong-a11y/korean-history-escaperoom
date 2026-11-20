@@ -803,6 +803,26 @@ const map5Tex = () => canvasTex(512, 512, (g, w, h) => {
   g.strokeStyle = "#9e2b25"; g.lineWidth = 8; g.beginPath(); g.moveTo(382, 110); g.lineTo(422, 150); g.moveTo(422, 110); g.lineTo(382, 150); g.stroke();
   g.fillStyle = "#5a4a3a"; g.font = FONT(20); g.fillText("장 터", 256, 276); g.fillText("(약도)", 256, 300);
 });
+/* 숨어 지나가기 (전날 밤 · 게임을 위해 꾸민 장면): 밤 장터를 도는 순찰의 불빛을 피해 동쪽 매봉산 쪽 어귀까지 간다.
+   길은 주막 앞에서 장터 한가운데를 서에서 동으로 가로지른다. 네 구석의 가게는 z ±6.6 바깥이라 폭 5로 오가는 순찰과 겹치지 않는다.
+   새로 고침 뒤 봉화에서 다시 열릴 때는 선 자리가 다를 수 있다. 남북으로 치우쳐 있으면 폭을 줄이고,
+   이미 동쪽 끝 가까이면(도착 등불이 장터 밖에 서게 되므로) 지나온 것으로 친다. 깃발: p5_sneakok(열림) · p5_snuck(지나감) */
+const EDGE5 = [11.5, 0];
+const cardOpen5 = () => E.$("overlay").classList.contains("open");
+function sneak5(A) {
+  if (!A.has("p5_sneakok") || A.has("p5_snuck")) return;
+  if (A.sneakOn()) return toast("먼저 등불이 켜진 곳까지 가자.");
+  if (cardOpen5()) return setTimeout(() => sneak5(A), 100);   // 읽던 창을 닫은 뒤에 연다
+  const done = () => { A.flag("p5_snuck"); toast("산 쪽 어귀에 닿았다. 이제 매봉산 꼭대기의 봉화에 불을 올리자.", 3600); };
+  const open = () => {
+    if (!A.has("p5_sneakok") || A.has("p5_snuck") || A.sneakOn()) return;
+    if (cardOpen5()) return setTimeout(open, 200);
+    const p = E.camera.position, d = Math.hypot(EDGE5[0] - p.x, EDGE5[1] - p.z);
+    if (d < 7) return done();
+    A.sneak({ title: "순찰의 불빛을 피해 산 쪽 어귀의 등불까지", to: EDGE5, width: Math.abs(p.z) > 4 ? 3 : 5, robe: 0x1e222c }, done);
+  };
+  toast("밤 장터에 순찰의 불빛이 돈다. 들키지 않게 산 쪽 어귀까지 가야 한다.", 2600); setTimeout(open, 1200);
+}
 CHAPTERS.push({
   quests: {
     p5_fire: { title: "주막의 함을 열어 신호 불 올리기", desc: "쪽지가 말한 그날을 알아내 주막 마루의 함을 열고, 불 붙일 것으로 높은 곳에 신호를 올리자.", from: "plan", to: "beacon", when: (A) => !A.has("p5_signal") },
@@ -908,15 +928,18 @@ CHAPTERS.push({
     }
     if (id === "dict5") { A.note("주막 벽 옥편 종이: 大 큰 대 · 韓 나라 한 · 獨 홀로 독 · 立 설 립 · 萬 일만 만 · 歲 해 세"); return A.card("주막 벽의 옥편 종이", `<div class="doc">${noteRow([["大 큰 대", "韓 나라 한", "獨 홀로 독"], ["立 설 립", "萬 일만 만", "歲 해 세"]])}</div>`); }
     if (id === "box5") {
+      if (A.has("p5_sneakok") && !A.has("p5_snuck")) return sneak5(A);   // 함을 연 뒤 다시 들어왔을 때: 숨어 지나가기부터
       if (A.owns("tinder")) return A.card("주막 마루의 함", `<p>함이 비었다.</p>`);
       A.card("주막 마루의 함", `<p>숫자 네 칸 자물쇠가 달린 함.</p><div class="doc" style="text-align:center">○○ 월 ○○ 일</div>`);
       return A.codeLock("0401", () => {
         A.note("만세의 날: 음력 三月 初一日 = 양력 4월 1일, 아우내 장날.");
         A.card("주막 마루의 함", `<p class="msg ok">함이 열렸다.</p><p>안에 <b>부시와 부싯깃</b>, 그리고 쪽지: "<b>전날 밤</b>, 매봉산 꼭대기에 불을 올려라. 둘레 산과 마을이 보고 답할 것이다."</p>`); A.give("tinder");
-      }, "함이 열리지 않는다. 쪽지는 날을 어느 달력으로 고르고, 함은 어느 달력으로 맞추라고 했지?");
+        A.flag("p5_sneakok"); sneak5(A);   // 창을 닫으면 숨어 지나가기가 열린다
+      },"함이 열리지 않는다. 쪽지는 날을 어느 달력으로 고르고, 함은 어느 달력으로 맞추라고 했지?");
     }
     if (id === "beacon") {
       if (A.has("p5_signal")) return A.card("매봉산의 봉화", `<p>밤새 타오른 봉화가 아직 연기를 피워 올린다.</p>`);
+      if (A.owns("tinder") && !A.has("p5_snuck")) { A.flag("p5_sneakok"); return sneak5(A); }   // 산 쪽 어귀까지 숨어 간 뒤에야 불을 올릴 수 있다 (아직이면 여기서 바로 연다)
       if (!A.needItem(id, "tinder", "매봉산 꼭대기의 봉화", `<p>동쪽 매봉산 꼭대기에 장작이 쌓여 있다. 불을 붙일 것이 있으면 신호를 올릴 수 있다.</p>`, "부싯돌을 쳐서 불 붙이기")) return;
       A.flag("p5_signal"); A.questDone("p5_fire"); sfx("buk");
       L.fire = campfire(46, 15, -4, 30, 1.6);

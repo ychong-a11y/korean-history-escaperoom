@@ -891,6 +891,17 @@ function banner(x, z, col, wdir, h = 4.4, y = 0) {
   m.rotation.y = PI / 2; m.position.set(x, y + h - 0.6, z + wdir * 0.9); m.castShadow = true; m.userData.noPick = true; m.userData.w = wdir; m.userData.z0 = z; E.ROOT.add(m);
   (L.cloths ||= []).push(m); return m;
 }
+// 싸움 장면 (함께하기): c5_fightok 이 서면 방의 모든 사람에게 열리고, 누가 먼저 이기면(c5_won) 나머지 사람의 싸움도 접힌다. 적은 북쪽(-z).
+// c5_charge 도 함께 보는 까닭: 이 장면이 생기기 전에 북을 친 채 저장된 방도 싸움을 거쳐 장을 끝낼 수 있게.
+// dist 22: 어디에 서 있든(z -8.5 ~ 12.5) 깃발이 장대 북쪽, 우리 군사가 내달려 비운 벌판(z -9.5 ~ -33)에 선다.
+function fight5(A) {
+  if ((A.has("c5_fightok") || A.has("c5_charge")) && !A.has("c5_won")) {
+    if (!A.battleOn()) {
+      A.battle({ title: "북쪽에 늘어선 적의 깃발을 쏘아 떨어뜨려라", dir: 0, dist: 22, color: 0x26262c, soldier: 0x2b2522 }, () => { A.flag("c5_won"); toast("깃발을 잃은 적이 북쪽으로 달아난다. 장대의 장수에게 가 보자.", 3600); });
+      if (document.getElementById("overlay")?.classList.contains("open")) E.lockInput();   // 창을 읽는 동안에는 움직이지 않게 (창을 닫으면 풀린다)
+    }
+  } else if (A.has("c5_won") && A.battleOn()) A.battleStop();
+}
 CHAPTERS.push({
   hero: { robe: 0x34506e, helmet: true },
   place: "바람이 바뀐 벌판", when: "이듬해 이월 초하루 · 북쪽 성 동쪽의 넓은 벌판",
@@ -970,11 +981,13 @@ CHAPTERS.push({
     roleTick(A); fallTick(L.rain, dt);
     if (L.cloths) L.cloths.forEach((m, i) => { m.rotation.y = PI / 2 + Math.sin(t * 3 + i) * 0.12; });
     if (L.pole) { const held = A.has("c5_charge") || A.coop.at(...SPOT5) >= 1; L.pole.rotation.x = held ? 0 : 1.15; if (L.marks) markTick(A, L.marks); }
+    fight5(A);
   },
   interact(id, A) {
     const reinf = A.has("c5_reinf"), charge = A.has("c5_charge");
     if (id === "general") {
       if (charge) {
+        if (!A.has("c5_won")) return A.card("흰 수염의 으뜸 장수", `<div class="letter">"아직 싸움이 끝나지 않았소, 북쪽에 선 적의 깃발부터 모두 쏘아 떨어뜨리시오!"</div>`);
         A.card("흰 수염의 으뜸 장수", `<p>남풍을 탄 화살이 쏟아지고 온 군사가 한꺼번에 내달렸다. 적은 북쪽으로 달아났고, 십만 가운데 살아 돌아간 적은 몇천뿐이었다.</p><div class="letter">"이긴 것은 내가 아니오. 강을 막은 손, 도성을 지킨 백성, 때맞춰 달려온 원군과 바람이오. <b>큰 싸움은 혼자 이기는 것이 아니오.</b>"</div>${A.has("gw_p3") ? "" : givePiece(A, 3)}`);
         return A.choiceLock(["🏵️ 도성으로 돌아간다"], 0, () => { A.closeModal(); E.lockInput(); toast("이긴 군사들이 남쪽으로, 도성으로 돌아간다…", 3000); setTimeout(A.clearChapter, 1600); }, "");
       }
@@ -1036,10 +1049,11 @@ CHAPTERS.push({
       A.card("큰 북", `<p>장대에 붉은 기가 높이 섰다. 북채를 쥐었다.</p><div class="doc" style="text-align:center">"북 ○번, 나발 ○번" — 두 수를 이어서 누른다</div>`);
       return A.codeLock("73", () => {
         if (A.coop.at(...SPOT5) < 1) return A.card("큰 북", `<p>북을 치려는 순간, 장대의 <b>깃발이 쓰러졌다</b>. 누군가 깃대를 붙들고 있어야 한다. 다시 해 보자.</p>`);
-        A.flag("c5_charge"); A.questDone("c5_signal"); sfx("buk");
+        A.flag("c5_charge"); A.flag("c5_fightok"); A.questDone("c5_signal"); sfx("buk");
         A.note("군령: 남풍 → 붉은 기를 세우고 북 일곱 번, 나발 세 번 = 온 군사가 한꺼번에 나아가 친다.");
-        A.card("큰 북", `<p class="msg ok">둥! 둥! 둥! … 북 일곱 번, 나발 세 번.</p><p>붉은 기 아래, <b>온 군사가 한꺼번에</b> 함성을 지르며 내달린다. 남풍을 탄 화살이 적진으로 쏟아진다.</p><p class="note">장대의 장수에게 가 보자.</p>`);
+        A.card("큰 북", `<p class="msg ok">둥! 둥! 둥! … 북 일곱 번, 나발 세 번.</p><p>붉은 기 아래, <b>온 군사가 한꺼번에</b> 함성을 지르며 내달린다. 남풍을 탄 화살이 적진으로 쏟아진다.</p><p>적도 물러서지 않고 활을 쏘며 맞선다. <b>모두 함께 북쪽에 선 적의 깃발을 쏘아 떨어뜨리자.</b></p><p class="note">싸움이 끝나면 장대의 장수에게 가 보자.</p>`);
         redraw();
+        fight5(A);   // 싸움 장면을 곧바로 연다 (다른 사람에게는 tick 이 깃발을 보고 열어 준다)
       }, "북소리가 어긋나자 군사들이 웅성거린다. 부절의 두 쪽을 같은 줄끼리 다시 맞춰 보자.");
     }
   },
