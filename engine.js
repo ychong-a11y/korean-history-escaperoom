@@ -1056,7 +1056,9 @@ function tpApply(measure) {   // 카메라를 등 뒤로. measure: 벽 · 천장
 function tpRestore() { if (!TP.on) return; camera.position.copy(TP.eye); camera.quaternion.copy(TP.quat); camera.updateMatrixWorld(); TP.on = false; }
 function setView(v) { viewPref = v; try { localStorage.setItem(VIEW_KEY, v); } catch (er) {} toast(v === "third" ? "3인칭 시점 (V 키로 바꾸기)" : "1인칭 시점 (V 키로 바꾸기)", 1800); }
 
-/* 주인공: 팔다리가 따로 움직이는 사람. o: robe(옷 빛깔 숫자) · helmet(투구와 장화) · kid(아이: 땋은 머리, 작은 키) · old(흰 머리) · hat(갓) */
+/* 주인공: 팔다리가 따로 움직이는 사람.
+   o: robe(윗옷 빛깔 숫자) · helmet(투구와 장화) · kid(아이: 땋은 머리, 작은 키) · old(흰 머리와 수염) · hat(갓)
+      long(발목까지 오는 긴 겉옷) · woman(치마저고리 · 쪽 찐 머리, kid 와 함께면 땋은 머리) · skirt(치마 빛깔) · modern(상투 없는 짧은 머리) */
 let HERO = null, heroKey = "", heroPh = 0, heroYaw = 0, heroAmp = 0;
 function buildHero(o = {}) {
   if (HERO) { scene.remove(HERO); HERO.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); }); }
@@ -1064,16 +1066,17 @@ function buildHero(o = {}) {
   const robe = C(o.robe ?? 0x34506e), mk = (geo, mat, par) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; par.add(m); return m; };
   mk(mergeGeometries([
     flatZ(lathe([[0.203, 0.9], [0.208, 1.02], [0.22, 1.16], [0.217, 1.25], [0.18, 1.308], [0.07, 1.348], [0.001, 1.358]], 14), (y) => (y < 1.2 ? 0.73 - ((y - 0.9) / 0.3) * 0.09 : 0.64)),
-    flatZ(lathe([[0.27, 0.5], [0.246, 0.68], [0.213, 0.86], [0.203, 0.92]], 16), (y) => 0.8 - (y - 0.5) * 0.2),
+    ...(o.woman ? [] : [o.long ? flatZ(lathe([[0.3, 0.12], [0.287, 0.26], [0.252, 0.5], [0.215, 0.78], [0.203, 0.92]], 20), (y) => 0.84 - y * 0.12) : flatZ(lathe([[0.27, 0.5], [0.246, 0.68], [0.213, 0.86], [0.203, 0.92]], 16), (y) => 0.8 - (y - 0.5) * 0.2)]),
   ]), robe, body);
+  if (o.woman) mk(flatZ(lathe([[0.35, 0.08], [0.342, 0.22], [0.31, 0.55], [0.255, 0.9], [0.21, 1.08], [0.2, 1.16]], 22), (y) => 0.92 - y * 0.2), C(o.skirt ?? 0x2b2b33), body);
   mk(new THREE.CylinderGeometry(0.21, 0.21, o.helmet ? 0.06 : 0.035, 14).scale(1, 1, 0.745).translate(0, 0.915, 0), MAT.black, body);
   mk(new THREE.CylinderGeometry(0.047, 0.055, 0.09, 8).translate(0, 1.378, 0), MAT.skin, body);
   if (o.helmet) [1, -1].forEach((s) => mk(ballG([s * 0.19, 1.262, 0], 0.092, 1.05, 0.6, 1), MAT.iron, body));
   const head = new THREE.Group(); head.position.y = 1.385; body.add(head);
   mk(PG.head, FACE_MAT, head);
   if (o.helmet) { mk(PG.helm, MAT.iron, head); mk(PG.plume, MAT.red, head); }
-  else { mk(PG.hair[o.kid ? "braid" : o.hat ? "band" : "top"], o.old ? GRAY_MAT : HAIR_MAT, head); if (o.hat) mk(PG.hat, MAT.black, head); }
-  if (o.old) mk(PG.beard, GRAY_MAT, head);
+  else { mk(PG.hair[o.woman ? (o.kid ? "braid" : "bun") : o.kid ? "braid" : o.modern ? "cap" : o.hat ? "band" : "top"], o.old ? GRAY_MAT : HAIR_MAT, head); if (o.hat && !o.woman) mk(PG.hat, MAT.black, head); }
+  if (o.old && !o.woman) mk(PG.beard, GRAY_MAT, head);
   const arms = [1, -1].map((s) => {
     const a = new THREE.Group(); a.position.set(s * 0.19, 1.262, 0); body.add(a);
     mk(mergeGeometries([limbG([0, 0, 0], [s * 0.07, -0.235, 0.01], 0.064, 0.056), limbG([s * 0.07, -0.235, 0.01], [s * 0.085, -0.455, -0.035], 0.056, 0.046), ballG([0, 0, 0], 0.063)]), robe, a);
@@ -1107,10 +1110,11 @@ function heroTick(dt, moved, air) {
 }
 
 /* ── 싸움 장면: 화살을 피하며 적의 깃발을 쏘아 떨어뜨린다 ──
-   A.battle({ flags: 5, shields: 3, dir: 적이 있는 쪽(yaw · 기본은 지금 보는 쪽), dist: 22, title }, 이겼을 때 부를 함수)
+   A.battle({ title, flags: 5, shields: 3, dist: 17, dir: 적이 있는 쪽(yaw · 안 주면 가장 트인 쪽), color: 깃발 빛깔, soldier: 깃발 든 군사의 옷 빛깔 }, 이겼을 때 부를 함수)
    사람을 쏘지 않는다. 화살에 맞으면 방패가 하나 깨지고, 다 깨지면 처음부터 다시 한다(헛손질로 세지 않는다). */
 let BATTLE = null, B_MUSIC = null;
 const FLAG_HIT = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+const FLAG_MARK = new THREE.MeshBasicMaterial({ color: 0xf1e8d2, side: THREE.DoubleSide });
 function battleBar() {
   let el = $("battle-bar");
   if (!BATTLE) { if (el) el.remove(); const v = $("hitflash"); if (v) v.remove(); return; }
@@ -1130,11 +1134,11 @@ function startBattle(o = {}, onWin) {
       for (; d < 28; d++) { const x = targetPos.x + ax * (d + 1), z = targetPos.z + az * (d + 1); if (WORLD.isWater?.(x, z) || WORLD.blocked(x, z, WORLD.groundAt(x, z))) break; }
       if (d - (i ? 0.6 : 0) > best) { best = d - (i ? 0.6 : 0); dir = a; o.dist = Math.min(o.dist, Math.max(9, d - 1.5)); }
     }
-    targetYaw = dir; pitch = 0.04;
   }
+  targetYaw = dir; pitch = 0.04;   // 적이 있는 쪽을 바라보게 한다
   const fx = -Math.sin(dir), fz = -Math.cos(dir), rx = -fz, rz = fx;
   const root = new THREE.Group(); scene.add(root);
-  const cx = targetPos.x + fx * o.dist, cz = targetPos.z + fz * o.dist, cloth = C(o.color ?? 0x8c2a22, { side: THREE.DoubleSide });
+  const cx = targetPos.x + fx * o.dist, cz = targetPos.z + fz * o.dist, cloth = C(o.color ?? 0x8c2a22, { side: THREE.DoubleSide }), manMat = o.soldier === undefined ? MAT.red : C(o.soldier);
   const flags = [];
   for (let i = 0; i < o.flags; i++) {
     const t = o.flags > 1 ? i / (o.flags - 1) - 0.5 : 0, bx = cx + rx * t * o.spread * 2 + fx * (i % 2) * 2.5, bz = cz + rz * t * o.spread * 2 + fz * (i % 2) * 2.5;
@@ -1142,7 +1146,8 @@ function startBattle(o = {}, onWin) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.055, 4.4, 6).translate(0, 2.2, 0), MAT.black); pole.castShadow = true;
     const cl = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.1).translate(0.9, 3.25, 0), cloth); cl.castShadow = true;
     const hit = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.2, 0.8).translate(0.7, 2.9, 0), FLAG_HIT);
-    const man = person(-0.45, 0, 0, MAT.red, g, { helmet: true, pose: "hold" });
+    const man = person(-0.45, 0, 0, manMat, g, { helmet: true, pose: "hold" });
+    cl.add(new THREE.Mesh(new THREE.CircleGeometry(0.46, 18).translate(0.9, 3.25, 0.012), FLAG_MARK), new THREE.Mesh(new THREE.CircleGeometry(0.46, 18).translate(0.9, 3.25, -0.012), FLAG_MARK));   // 어두운 곳에서도 보이게 흰 동그라미
     g.add(pole, cl, hit);
     flags.push({ g, hit, cl, pole, man, bx, bz, ph: i * 1.7, down: false, fall: 0 });
   }
