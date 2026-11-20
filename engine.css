@@ -400,3 +400,17 @@ input[type="range"] { accent-color: #a3281f; }
 .qline { border-radius: 0; border-left: 4px solid #a3281f; background: rgba(163,40,31,.07); }
 .timeline li b.y { color: #a3281f; }
 @media (max-width: 600px) { .chip { padding: 6px 9px; font-size: 12.5px; } .modal-body { padding: 22px 20px 18px; } }
+
+/* ===== 싸움 장면 · 향 시계 ===== */
+#battle-bar { position: fixed; left: 50%; top: 58px; transform: translateX(-50%); z-index: 6; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 4px 16px; max-width: calc(100% - 24px); padding: 8px 16px; background: rgba(244,236,217,.95); color: #2a2118; border: 1px solid #2a2118; box-shadow: 0 4px 14px rgba(0,0,0,.4); font: 700 14px/1.3 "Noto Serif KR", serif; pointer-events: none; }
+#battle-bar b { color: #a3281f; letter-spacing: .04em; } #battle-bar span { white-space: nowrap; letter-spacing: 2px; } #battle-bar i { font-style: normal; opacity: .3; }
+#battle-bar small { flex-basis: 100%; text-align: center; font: 400 12px "Gowun Batang", serif; color: #6a5a46; letter-spacing: 0; }
+#hitflash { position: fixed; inset: 0; z-index: 5; pointer-events: none; opacity: 0; background: radial-gradient(ellipse at center, transparent 45%, rgba(170,30,20,.6)); }
+#hitflash.on { animation: hitflash .55s ease-out; } @keyframes hitflash { 0% { opacity: 1; } 100% { opacity: 0; } }
+body:not(.playing) #battle-bar { display: none; }
+.chip.incense { position: relative; overflow: hidden; padding-bottom: 9px; min-width: 62px; text-align: center; }
+.chip.incense b { font-weight: 700; }
+.chip.incense i { position: absolute; left: 0; bottom: 0; height: 3px; background: linear-gradient(90deg, #6a5a46 calc(100% - 5px), #e0452f 0); transition: width 1s linear; }
+.chip.incense.low { color: #a3281f; animation: incense 1s ease-in-out infinite alternate; } @keyframes incense { to { background: #ffe1d6; } }
+.chip.incense.out { color: #9a8a74; } .chip.incense.out i { display: none; }
+@media (max-width: 600px) { #battle-bar { top: 50px; font-size: 12.5px; padding: 6px 10px; } }

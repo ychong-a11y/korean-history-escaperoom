@@ -725,7 +725,7 @@ function jar(x, z, s = 1) { const g = group(x, 0, z); g.scale.setScalar(s); cons
 /* ================================================================
    4. 조작 (마우스 잠금 · 끌기 · 이동 · 점프)
    ================================================================ */
-let clickable = [], blockers = [];
+let clickable = [], blockers = [], camBlock = [];   // camBlock: 3인칭 카메라가 뚫고 지나가면 안 되는 것 (사람은 뺀다)
 let WORLD = { blocked: () => false, groundAt: () => 0 };
 let feet = 0, vy = 0;   // 발 높이와 위아래 속도 (점프·낙하)
 let yaw = 0, pitch = -0.05, targetYaw = 0;
@@ -741,15 +741,19 @@ function tag(obj, id, label) { obj.traverse((m) => { if (m.isMesh) { m.userData.
 function collectClickables() {
   clickable = []; blockers = [];
   ROOT.traverse((m) => { if (!m.isMesh || m.userData.noPick) return; (m.userData.objId ? clickable : blockers).push(m); });
+  camBlock = [...blockers, ...clickable.filter((m) => { for (let o = m; o; o = o.parent) if (o.userData && o.userData.person) return false; return true; })];
 }
 function pick(cx, cy) {
+  const tp = thirdOn() && document.body.classList.contains("playing"); if (tp) tpApply(false);
   ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
   const hit = ray.intersectObjects([...clickable, ...blockers], false)[0];
+  if (tp) tpRestore();
   lastHit = hit || null;
   if (!hit || !hit.object.userData.objId || hit.distance > 150) { lastPickFar = false; return null; }
   const id = hit.object.userData.objId;
-  lastPickFar = hit.distance > (CH.reach?.(id) ?? REACH);
+  // 3인칭에서는 내 몸(눈 자리)에서 물건까지의 거리로 잰다. 등 뒤 카메라만큼 멀어 보이므로 조금 넉넉하게.
+  lastPickFar = (tp ? hit.point.distanceTo(camera.position) - 0.5 : hit.distance) > (CH.reach?.(id) ?? REACH);
   return hit.object;
 }
 function setHover(m) {
@@ -823,6 +827,7 @@ function tryInteract(m) {
 }
 function updateAim() {
   if (!locked() || inputLocked) return;
+  if (BATTLE) { tipEl.classList.add("hidden"); setHover(null); crossEl.classList.add("on"); return; }
   const m = pick(innerWidth / 2, innerHeight / 2);
   setHover(m && !lastPickFar ? m : null);
   crossEl.classList.toggle("on", !!m && !lastPickFar);
@@ -849,6 +854,7 @@ document.addEventListener("pointerlockerror", lockFail);
 renderer.domElement.addEventListener("click", () => {
   if (inputLocked || isTouch || lockFailed || window.__watching) return;
   if (!locked()) { requestLock(); return; }
+  if (BATTLE) return battleShoot(innerWidth / 2, innerHeight / 2);
   tryInteract(pick(innerWidth / 2, innerHeight / 2));
 });
 document.addEventListener("pointerlockchange", () => {
@@ -887,7 +893,7 @@ renderer.domElement.addEventListener("pointercancel", (e) => { if (drag && drag.
 renderer.domElement.addEventListener("pointerup", (e) => {
   if (!drag || drag.id !== e.pointerId) return;
   const tap = !drag.moved; drag = null;
-  if (tap && !inputLocked) tryInteract(pick(e.clientX, e.clientY));
+  if (tap && !inputLocked) { if (BATTLE) battleShoot(e.clientX, e.clientY); else tryInteract(pick(e.clientX, e.clientY)); }
 });
 
 function walk(forward, side) {
@@ -979,6 +985,7 @@ addEventListener("keydown", (e) => {
   if (open) return;
   if (!inputLocked && S && /^[1-9]$/.test(e.key)) { const k = S.inv.filter((x) => !S.used.includes(x))[+e.key - 1]; if (k) hold(k); return; }
   if (ADMIN_SOLO && !e.repeat && e.key.toLowerCase() === "r") { adminSwap(); return; }
+  if (!e.repeat && e.key.toLowerCase() === "v" && S && !inputLocked) { setView(thirdOn() ? "first" : "third"); return; }
   if (e.code === "Space" && !e.repeat) { e.preventDefault(); doJump(); return; }
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
 });
@@ -1019,6 +1026,214 @@ function animate() {
     if (old !== dprScale) { renderer.setPixelRatio(BASE_DPR * dprScale); composer?.setPixelRatio?.(BASE_DPR * dprScale); }
   }
 }
+/* ── 3인칭 시점 ── 눈 자리(camera.position)는 예전 그대로 두고, 그리기 직전에만 카메라를 등 뒤로 뺐다가 그린 뒤 되돌린다.
+   그래서 충돌 · 거리 계산 · 함께하기는 1인칭 때와 똑같이 움직인다. 물건을 겨눌 때(pick)도 잠깐 3인칭 카메라로 바꿔서 화면 그대로 맞춘다.
+   기본 시점: 테마에 hero 가 있으면 3인칭, 없으면 1인칭. V 키나 설정에서 바꾸면 이 기기에 기억된다. */
+const VIEW_KEY = "hk-view";
+let viewPref = (() => { try { return localStorage.getItem(VIEW_KEY); } catch (er) { return null; } })();
+const thirdOn = () => (viewPref ? viewPref === "third" : !!(THEME && THEME.hero)) && !CH.firstPerson;
+const TP = { dist: 3.4, cur: 3.4, eye: new THREE.Vector3(), quat: new THREE.Quaternion(), on: false, back: new THREE.Vector3(), pivot: new THREE.Vector3(), tick: 0, clear: 3.4, v: new THREE.Vector3(), d: new THREE.Vector3() };
+function tpApply(measure) {   // 카메라를 등 뒤로. measure: 벽 · 천장에 걸리는지 다시 잰다
+  TP.eye.copy(camera.position); TP.quat.copy(camera.quaternion);
+  const cp = Math.cos(pitch);
+  TP.back.set(Math.sin(yaw) * cp, -Math.sin(pitch), Math.cos(yaw) * cp);
+  TP.pivot.set(TP.eye.x, TP.eye.y + 0.45, TP.eye.z);
+  if (measure) {
+    ray.set(TP.pivot, TP.back); ray.far = TP.dist + 0.4;
+    const h = ray.intersectObjects(camBlock, false)[0];
+    TP.clear = h ? Math.max(0, h.distance - 0.35) : TP.dist;
+    // 가슴 높이에서 카메라 쪽으로도 한 번 더 잰다 (나와 카메라 사이에 낮은 물건이 끼어 몸을 가리지 않게)
+    TP.v.set(TP.eye.x, TP.eye.y - 0.5, TP.eye.z); TP.d.copy(TP.pivot).addScaledVector(TP.back, TP.dist).sub(TP.v); const len = TP.d.length(); TP.d.divideScalar(len);
+    ray.set(TP.v, TP.d); ray.far = len; const h2 = ray.intersectObjects(camBlock, false)[0]; ray.far = Infinity;
+    if (h2) TP.clear = Math.min(TP.clear, Math.max(0, h2.distance - 0.5));
+  }
+  TP.cur += (Math.min(TP.dist, TP.clear) - TP.cur) * (TP.clear < TP.cur ? 0.5 : 0.07);
+  camera.position.copy(TP.pivot).addScaledVector(TP.back, TP.cur);
+  const gy = WORLD.groundAt(camera.position.x, camera.position.z) + 0.3; if (camera.position.y < gy) camera.position.y = gy;
+  camera.lookAt(TP.pivot.x - TP.back.x * 8, TP.pivot.y - TP.back.y * 8, TP.pivot.z - TP.back.z * 8);
+  camera.updateMatrixWorld(); TP.on = true;
+}
+function tpRestore() { if (!TP.on) return; camera.position.copy(TP.eye); camera.quaternion.copy(TP.quat); camera.updateMatrixWorld(); TP.on = false; }
+function setView(v) { viewPref = v; try { localStorage.setItem(VIEW_KEY, v); } catch (er) {} toast(v === "third" ? "3인칭 시점 (V 키로 바꾸기)" : "1인칭 시점 (V 키로 바꾸기)", 1800); }
+
+/* 주인공: 팔다리가 따로 움직이는 사람. o: robe(옷 빛깔 숫자) · helmet(투구와 장화) · kid(아이: 땋은 머리, 작은 키) · old(흰 머리) · hat(갓) */
+let HERO = null, heroKey = "", heroPh = 0, heroYaw = 0, heroAmp = 0;
+function buildHero(o = {}) {
+  if (HERO) { scene.remove(HERO); HERO.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); }); }
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const robe = C(o.robe ?? 0x34506e), mk = (geo, mat, par) => { const m = new THREE.Mesh(geo, mat); m.castShadow = true; m.receiveShadow = true; par.add(m); return m; };
+  mk(mergeGeometries([
+    flatZ(lathe([[0.203, 0.9], [0.208, 1.02], [0.22, 1.16], [0.217, 1.25], [0.18, 1.308], [0.07, 1.348], [0.001, 1.358]], 14), (y) => (y < 1.2 ? 0.73 - ((y - 0.9) / 0.3) * 0.09 : 0.64)),
+    flatZ(lathe([[0.27, 0.5], [0.246, 0.68], [0.213, 0.86], [0.203, 0.92]], 16), (y) => 0.8 - (y - 0.5) * 0.2),
+  ]), robe, body);
+  mk(new THREE.CylinderGeometry(0.21, 0.21, o.helmet ? 0.06 : 0.035, 14).scale(1, 1, 0.745).translate(0, 0.915, 0), MAT.black, body);
+  mk(new THREE.CylinderGeometry(0.047, 0.055, 0.09, 8).translate(0, 1.378, 0), MAT.skin, body);
+  if (o.helmet) [1, -1].forEach((s) => mk(ballG([s * 0.19, 1.262, 0], 0.092, 1.05, 0.6, 1), MAT.iron, body));
+  const head = new THREE.Group(); head.position.y = 1.385; body.add(head);
+  mk(PG.head, FACE_MAT, head);
+  if (o.helmet) { mk(PG.helm, MAT.iron, head); mk(PG.plume, MAT.red, head); }
+  else { mk(PG.hair[o.kid ? "braid" : o.hat ? "band" : "top"], o.old ? GRAY_MAT : HAIR_MAT, head); if (o.hat) mk(PG.hat, MAT.black, head); }
+  if (o.old) mk(PG.beard, GRAY_MAT, head);
+  const arms = [1, -1].map((s) => {
+    const a = new THREE.Group(); a.position.set(s * 0.19, 1.262, 0); body.add(a);
+    mk(mergeGeometries([limbG([0, 0, 0], [s * 0.07, -0.235, 0.01], 0.064, 0.056), limbG([s * 0.07, -0.235, 0.01], [s * 0.085, -0.455, -0.035], 0.056, 0.046), ballG([0, 0, 0], 0.063)]), robe, a);
+    mk(ballG([s * 0.088, -0.5, -0.045], 0.047, 0.85, 1, 0.85), MAT.skin, a);
+    return a;
+  });
+  const legs = [1, -1].map((s) => {
+    const l = new THREE.Group(); l.position.set(s * 0.095, 0.72, 0); g.add(l);
+    mk(mergeGeometries([limbG([0, 0, 0], [s * 0.012, -0.31, -0.012], 0.1, 0.086), limbG([s * 0.012, -0.31, -0.012], [s * 0.005, -0.64, 0.02], 0.086, o.helmet ? 0.07 : 0.056), ballG([s * 0.012, -0.31, -0.012], 0.086)]), o.helmet ? MAT.black : MAT.white, l);
+    mk(new THREE.SphereGeometry(0.075, 8, 6).scale(0.82, 0.5, 1.5).translate(s * 0.005, -0.684, -0.05), MAT.black, l);
+    return l;
+  });
+  g.userData.hero = { body, head, arms, legs, base: (o.kid ? 0.8 : 1) };
+  g.visible = false; scene.add(g); HERO = g;
+}
+function heroTick(dt, moved, air) {
+  const want = CH.hero || (THEME && THEME.hero) || {}, key = JSON.stringify(want) + S.ch;
+  if (!HERO || key !== heroKey) { buildHero(want); heroKey = key; heroYaw = yaw; }
+  const u = HERO.userData.hero, show = thirdOn() && TP.cur > 0.9 && document.body.classList.contains("playing");
+  HERO.visible = show; if (!show) return;
+  const dx = targetPos.x - HERO.position.x, dz = targetPos.z - HERO.position.z, sp = Math.hypot(dx, dz);
+  if (BATTLE) heroYaw = yaw; else if (sp > 0.02 && moved > 0.0015) { let d = Math.atan2(-dx, -dz) - heroYaw; d = ((d + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; heroYaw += d * 0.2; }
+  HERO.position.set(camera.position.x, feet, camera.position.z);
+  HERO.rotation.y = heroYaw; HERO.scale.setScalar(((CH.eye ?? 1.6) / 1.6) * u.base / ((CH.eye ?? 1.6) < 1.5 ? u.base : 1));
+  heroAmp += ((air ? 0.5 : Math.min(1, moved * 34)) - heroAmp) * 0.18; heroPh += moved * 5.4 + (swimming ? dt * 4 : 0);
+  const sw = Math.sin(heroPh) * 0.8 * heroAmp;
+  u.legs[0].rotation.x = air ? -0.5 : sw; u.legs[1].rotation.x = air ? 0.35 : -sw;
+  u.arms[0].rotation.x = BATTLE ? -1.35 : -sw * 0.7; u.arms[1].rotation.x = BATTLE ? -1.1 : sw * 0.7;
+  u.body.position.y = Math.abs(Math.sin(heroPh)) * 0.035 * heroAmp; u.body.rotation.x = -0.07 * heroAmp;
+  u.head.rotation.y = BATTLE ? 0 : Math.max(-0.9, Math.min(0.9, (((yaw - heroYaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI))) * 0.6;
+}
+
+/* ── 싸움 장면: 화살을 피하며 적의 깃발을 쏘아 떨어뜨린다 ──
+   A.battle({ flags: 5, shields: 3, dir: 적이 있는 쪽(yaw · 기본은 지금 보는 쪽), dist: 22, title }, 이겼을 때 부를 함수)
+   사람을 쏘지 않는다. 화살에 맞으면 방패가 하나 깨지고, 다 깨지면 처음부터 다시 한다(헛손질로 세지 않는다). */
+let BATTLE = null, B_MUSIC = null;
+const FLAG_HIT = new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false });
+function battleBar() {
+  let el = $("battle-bar");
+  if (!BATTLE) { if (el) el.remove(); const v = $("hitflash"); if (v) v.remove(); return; }
+  if (!el) { document.body.insertAdjacentHTML("beforeend", `<div id="battle-bar"></div><div id="hitflash"></div>`); el = $("battle-bar"); }
+  const B = BATTLE, left = B.flags.filter((f) => !f.down).length;
+  el.innerHTML = `<b>${B.o.title || "적의 깃발을 쏘아 떨어뜨려라"}</b><span>깃발 ${"■".repeat(left)}<i>${"□".repeat(B.flags.length - left)}</i></span><span>방패 ${"●".repeat(B.shields)}<i>${"○".repeat(B.o.shields - B.shields)}</i></span><small>${isTouch ? "깃발을 눌러 쏘기 · 붉은 표시를 피해 움직이기" : "깃발을 겨누고 클릭 · 붉은 표시를 피해 움직이기"}</small>`;
+}
+function startBattle(o = {}, onWin) {
+  if (BATTLE) return;
+  o = { flags: 5, shields: 3, dist: 17, spread: 8, ...o };
+  // 적이 설 쪽: 따로 정하지 않으면 지금 자리에서 가장 멀리까지 트인 쪽(벽 · 울타리 · 물이 없는 쪽)을 고르고, 그쪽을 바라보게 한다
+  let dir = o.dir;
+  if (dir === undefined) {
+    let best = -1;
+    for (let i = 0; i < 16; i++) {
+      const a = targetYaw + (i * Math.PI) / 8, ax = -Math.sin(a), az = -Math.cos(a); let d = 0;
+      for (; d < 28; d++) { const x = targetPos.x + ax * (d + 1), z = targetPos.z + az * (d + 1); if (WORLD.isWater?.(x, z) || WORLD.blocked(x, z, WORLD.groundAt(x, z))) break; }
+      if (d - (i ? 0.6 : 0) > best) { best = d - (i ? 0.6 : 0); dir = a; o.dist = Math.min(o.dist, Math.max(9, d - 1.5)); }
+    }
+    targetYaw = dir; pitch = 0.04;
+  }
+  const fx = -Math.sin(dir), fz = -Math.cos(dir), rx = -fz, rz = fx;
+  const root = new THREE.Group(); scene.add(root);
+  const cx = targetPos.x + fx * o.dist, cz = targetPos.z + fz * o.dist, cloth = C(o.color ?? 0x8c2a22, { side: THREE.DoubleSide });
+  const flags = [];
+  for (let i = 0; i < o.flags; i++) {
+    const t = o.flags > 1 ? i / (o.flags - 1) - 0.5 : 0, bx = cx + rx * t * o.spread * 2 + fx * (i % 2) * 2.5, bz = cz + rz * t * o.spread * 2 + fz * (i % 2) * 2.5;
+    const g = new THREE.Group(); g.position.set(bx, WORLD.groundAt(bx, bz), bz); g.rotation.y = dir + Math.PI; root.add(g);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.055, 4.4, 6).translate(0, 2.2, 0), MAT.black); pole.castShadow = true;
+    const cl = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 2.1).translate(0.9, 3.25, 0), cloth); cl.castShadow = true;
+    const hit = new THREE.Mesh(new THREE.BoxGeometry(2.4, 3.2, 0.8).translate(0.7, 2.9, 0), FLAG_HIT);
+    const man = person(-0.45, 0, 0, MAT.red, g, { helmet: true, pose: "hold" });
+    g.add(pole, cl, hit);
+    flags.push({ g, hit, cl, pole, man, bx, bz, ph: i * 1.7, down: false, fall: 0 });
+  }
+  BATTLE = { o, onWin, root, flags, arrows: [], shots: [], shields: o.shields, t: 0, next: 2.2, cool: 0, rx, rz, fx, fz, pause: 0, ox: targetPos.x, oz: targetPos.z, won: false };
+  inputLocked = false; hideGuide(); battleBar(); B_MUSIC = AU.mood; setMusic("battle"); sfx("buk");
+  toast(isTouch ? "적이 활을 쏜다! 붉은 표시를 피하고, 깃발을 눌러 쏘자." : "적이 활을 쏜다! 붉은 표시를 피하고, 깃발을 겨누어 클릭하자.", 4200);
+}
+function battleEnd(win) {
+  const B = BATTLE; if (!B) return;
+  scene.remove(B.root); B.root.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); });
+  B.flags.forEach((f) => { const i = PEOPLE.indexOf(f.man); if (i >= 0) PEOPLE.splice(i, 1); });
+  BATTLE = null; battleBar(); crossEl.classList.remove("on"); if (B_MUSIC) setMusic(B_MUSIC);
+  if (win) B.onWin?.();
+}
+function battleShoot(cx, cy) {
+  const B = BATTLE; if (!B || B.cool > 0 || B.won || B.pause > 0 || inputLocked) return;
+  B.cool = 0.5; sfx("bow");
+  const tp = thirdOn(); if (tp) tpApply(false);
+  ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1); ray.setFromCamera(ndc, camera);
+  const h = ray.intersectObjects(B.flags.filter((f) => !f.down).map((f) => f.hit), false)[0];
+  const to = h ? h.point.clone() : ray.origin.clone().addScaledVector(ray.direction, 40);
+  if (tp) tpRestore();
+  const from = new THREE.Vector3(camera.position.x, feet + (CH.eye ?? 1.6) * 0.82, camera.position.z);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.012, 0.85, 5).rotateX(Math.PI / 2), MAT.black); B.root.add(m);
+  B.shots.push({ m, from, to, t: 0, T: Math.max(0.12, from.distanceTo(to) / 60), flag: h ? B.flags.find((f) => f.hit === h.object) : null });
+}
+function battleTick(dt) {
+  const B = BATTLE; if (!B || $("overlay").classList.contains("open")) return;
+  B.t += dt; B.cool -= dt;
+  const alive = B.flags.filter((f) => !f.down);
+  for (const f of B.flags) {   // 깃발은 좌우로 조금씩 움직이고, 맞으면 쓰러진다
+    if (!f.down) { const k = Math.sin(B.t * (0.7 + (B.flags.length - alive.length) * 0.12) + f.ph) * 1.4; f.g.position.x = f.bx + B.rx * k; f.g.position.z = f.bz + B.rz * k; f.cl.rotation.y = Math.sin(B.t * 3 + f.ph) * 0.25; }
+    else if (f.fall < 1) { f.fall = Math.min(1, f.fall + dt * 2.2); f.pole.rotation.x = f.cl.rotation.x = f.fall * 1.45; f.man.position.z += dt * 3.2; f.man.rotation.y = Math.PI; f.man.visible = f.fall < 0.98; }
+  }
+  for (const s of B.shots) {   // 내가 쏜 화살
+    s.t += dt; const k = Math.min(1, s.t / s.T); s.m.position.lerpVectors(s.from, s.to, k); s.m.lookAt(s.to);
+    if (k >= 1 && !s.done) { s.done = true; s.m.visible = false; if (s.flag && !s.flag.down) { s.flag.down = true; sfx("solve"); battleBar(); if (B.flags.every((f) => f.down)) { B.won = true; toast("깃발이 모두 쓰러졌다! 적이 물러난다.", 3200); setTimeout(() => battleEnd(true), 1700); } } }
+  }
+  if (B.won) return;
+  if (B.pause > 0) { B.pause -= dt; return; }
+  // 적의 화살: 내가 선 자리와 그 둘레에 떨어진다. 떨어질 자리에 붉은 표시가 먼저 뜬다.
+  B.next -= dt;
+  if (B.next <= 0 && alive.length) {
+    const lost = B.flags.length - alive.length; B.next = Math.max(0.85, 1.9 - lost * 0.22);
+    const n = 1 + (lost >= 2 ? 1 : 0) + (lost >= 4 ? 1 : 0);
+    for (let i = 0; i < n; i++) {
+      const src = alive[Math.floor(Math.random() * alive.length)], a = Math.random() * 6.283, r = i === 0 ? 0 : 1.2 + Math.random() * 2.2;
+      const tx = targetPos.x + Math.cos(a) * r, tz = targetPos.z + Math.sin(a) * r, ty = WORLD.groundAt(tx, tz) + 0.03;
+      const ring = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.78, 24).rotateX(-Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0xd8342a, transparent: true, opacity: 0.85, depthWrite: false })); ring.position.set(tx, ty, tz);
+      const m = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, 0.9, 5).rotateX(Math.PI / 2), MAT.black);
+      B.root.add(ring, m);
+      B.arrows.push({ m, ring, from: new THREE.Vector3(src.g.position.x, src.g.position.y + 1.6, src.g.position.z), to: new THREE.Vector3(tx, ty, tz), t: -i * 0.18, T: 1.35 });
+    }
+  }
+  for (const a of B.arrows) {
+    a.t += dt; const k = Math.max(0, Math.min(1, a.t / a.T));
+    if (!a.landed) {
+      a.m.position.lerpVectors(a.from, a.to, k); a.m.position.y += Math.sin(k * Math.PI) * 4.5;
+      const k2 = Math.min(1, k + 0.03); a.m.lookAt(a.from.x + (a.to.x - a.from.x) * k2, a.from.y + (a.to.y - a.from.y) * k2 + Math.sin(k2 * Math.PI) * 4.5, a.from.z + (a.to.z - a.from.z) * k2);
+      a.ring.scale.setScalar(1.25 - k * 0.25); a.ring.material.opacity = 0.35 + k * 0.6;
+      if (k >= 1) {
+        a.landed = true; a.ring.visible = false; a.m.position.y += 0.3;
+        if (Math.hypot(targetPos.x - a.to.x, targetPos.z - a.to.z) < 0.8) {   // 맞았다
+          B.shields--; sfx("wrong"); battleBar(); const v = $("hitflash"); if (v) { v.classList.remove("on"); void v.offsetWidth; v.classList.add("on"); }
+          if (B.shields <= 0) {
+            toast("방패가 다 깨졌다! 숨을 고르고 다시 맞선다.", 3000); B.pause = 2.4; B.shields = B.o.shields; B.next = 1.5;
+            B.flags.forEach((f) => { f.down = false; f.fall = 0; f.pole.rotation.x = f.cl.rotation.x = 0; f.man.visible = true; f.man.position.set(-0.45, 0, 0); f.man.rotation.y = 0; });
+            B.arrows.forEach((x) => { x.gone = true; }); battleBar();
+          }
+        }
+      }
+    } else if (a.t > a.T + 3.5) a.gone = true;
+  }
+  for (const a of B.arrows) if (a.gone) { B.root.remove(a.m, a.ring); a.m.geometry.dispose(); a.ring.geometry.dispose(); a.ring.material.dispose(); }
+  B.arrows = B.arrows.filter((a) => !a.gone);
+}
+
+/* ── 향 시계 ── 장마다 향 한 대가 탄다(기본 10분 · 장에 par 를 분으로 적으면 그만큼). 다 타기 전에 탈출하면 힌트를 하나 더 받는다.
+   늦어도 벌은 없다. 조금 서두르게 만드는 장치다. */
+const INC_MIN = 10;
+function incenseLeft() { return Math.max(0, (CH.par ?? INC_MIN) * 60 - (S.elapsed - (S.chStart || 0))); }
+function incenseDraw() {
+  let el = $("incense"); const t = $("timer"); if (!t) return;
+  if (!el) { t.insertAdjacentHTML("afterend", `<span class="chip incense" id="incense" title="향이 다 타기 전에 탈출하면 힌트 +1"><i></i><b></b></span>`); el = $("incense"); }
+  const left = incenseLeft(), all = (CH.par ?? INC_MIN) * 60, k = left / all;
+  el.classList.toggle("out", left <= 0); el.classList.toggle("low", left > 0 && left < 60);
+  el.querySelector("i").style.width = Math.round(k * 100) + "%";
+  el.querySelector("b").textContent = left <= 0 ? "향이 다 탔다" : `향 ${Math.ceil(left / 60)}분`;
+  if (left > 0 && left < 60 && S.incWarn !== S.ch) { S.incWarn = S.ch; toast("향이 거의 다 탔다. 서두르자!", 2600); }
+}
+
 function frame(dt) {
   ELAPSED_T += dt;
   const jOn = Math.hypot(joy.x, joy.y) > 0.18;   // 조이스틱은 살짝 밀면 천천히, 끝까지 밀면 보통 걸음
@@ -1048,6 +1263,7 @@ function frame(dt) {
   sky.position.copy(camera.position); hdriSky.position.copy(camera.position);
   CH.tick?.(dt, ELAPSED_T, A);
   COOP?.tick(dt);
+  if (S) { if (BATTLE) battleTick(dt); heroTick(dt, moved, air); }
   if (GFX.high && PEOPLE.length) animPeople(ELAPSED_T);
   if (talkWho) animTalk(ELAPSED_T);
   if (ELAPSED_T - qRefT > 2) { qRefT = ELAPSED_T; if (CH.quests) refreshQuests(); }   // 뒤늦게 생긴 물체에도 표시가 붙게
@@ -1055,7 +1271,10 @@ function frame(dt) {
   if (lantern.intensity > 0) lantern.position.set(camera.position.x, camera.position.y + 0.35, camera.position.z);
   if (++frameNo % 3 === 0) updateAim();
   WATERS.forEach((w) => { w.material.uniforms.time.value += dt * 0.5; });
+  const tp = S && thirdOn() && document.body.classList.contains("playing");
+  if (tp) { tpApply(++TP.tick % 2 === 0); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); } else TP.cur = 0.5;
   if (composer) composer.render(dt); else renderer.render(scene, camera);
+  if (tp) tpRestore();
 }
 
 /* ================================================================
@@ -1242,6 +1461,7 @@ const A = {
   // 부탁: 0 아직 · 1 받음 · 2 끝냄
   quest: (id) => questState(id),
   questStart: (id) => { if (questState(id)) return false; S.flags.push("q+" + id); save(); qNote("새 부탁을 받았다", "new"); refreshQuests(); sfx("item"); return true; },
+  battle: (o, onWin) => startBattle(o, onWin),   // 싸움 장면 (화살 피하며 깃발 쏘기)
   questDone: (id) => { if (questState(id) !== 1) return false; S.flags.push("q-" + id); save(); qNote(`들어주었다: ${CH.quests[id].title}`, "done"); refreshQuests(); sfx("solve"); return true; },
   card, textLock, codeLock, dirLock, choiceLock, orderLock, matchLock, toast, ok, closeModal, formation, GANJI_TABLE,
   has: (f) => S.flags.includes(f),
@@ -1356,14 +1576,16 @@ function openSettings() {
   card("설정", `<p class="note">게임이 잠시 멈췄어요. 닫으면 이어서 할 수 있어요.</p>
     <h3 style="margin:6px 0 6px">소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
+    <h3 style="margin:18px 0 6px">시점 <span class="note">(V 키로 바꾸기)</span></h3><div class="choices grid2" id="view-sel">${[["third", "3인칭", "내 모습이 보여요"], ["first", "1인칭", "내 눈으로 봐요"]].map(([k, t, d]) => `<button data-w="${k}"><b>${(thirdOn() ? "third" : "first") === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">인물 목소리</h3><div class="choices grid2" id="voice-sel">${[["mumble", "웅얼웅얼", "말하는 느낌의 소리"], ...(window.speechSynthesis ? [["tts", "읽어 주기", "기기의 한국어 음성"]] : []), ["off", "끄기", "글만 보기"]].map(([k, t, d]) => `<button data-v="${k}" style="${AU.voice === k ? "border-color:var(--ink);font-weight:700" : ""}">${AU.voice === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     ${`<h3 style="margin:18px 0 6px">${isTouch ? "화면 돌리는 감도" : "마우스 감도"}</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
-    <p class="note" style="margin-top:14px">Tab 가방 · Esc 설정 · M 소리 · 숫자 키 손에 들기</p>`}`,
+    <p class="note" style="margin-top:14px">Tab 가방 · Esc 설정 · M 소리 · V 시점 · 숫자 키 손에 들기</p>`}`,
     `<a class="btn ghost" href="index.html">← 문 고르는 곳으로</a>`);
   $("modal-body").querySelector("[data-close]").textContent = "계속하기";
   $("vol-music").oninput = (e) => { AU.music = +e.target.value; saveSound(); if (AU.ctx) BUS.music.gain.value = AU.music * 0.5; };
   $("vol-fx").oninput = (e) => { AU.fx = +e.target.value; saveSound(); if (AU.ctx) { BUS.fx.gain.value = AU.fx; BUS.amb.gain.value = AU.fx * 0.6; } };
+  $("view-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; setView(b.dataset.w); openSettings(); };
   $("voice-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; AU.voice = b.dataset.v; saveSound(); if (AU.voice === "tts") try { speechSynthesis.getVoices(); } catch (er) {} openSettings(); };
   $("gfx").onclick = (e) => {
     const b = e.target.closest("button"); if (!b) return;
@@ -1418,7 +1640,7 @@ addEventListener("keydown", (e) => { if ((e.key === "m" || e.key === "M") && !$(
 /* ── 타이머 ── */
 let tickT;
 const fmt = (s) => { s = Math.floor(s); const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (h ? h + ":" : "") + String(m).padStart(2, "0") + ":" + String(x).padStart(2, "0"); };
-function startTimer() { clearInterval(tickT); let last = Date.now(); tickT = setInterval(() => { const n = Date.now(); S.elapsed = COOP ? COOP.elapsed(S) : S.elapsed + (n - last) / 1000; last = n; $("timer").textContent = fmt(S.elapsed); if (Math.floor(S.elapsed) % 5 === 0) save(); }, 250); }
+function startTimer() { clearInterval(tickT); let last = Date.now(); tickT = setInterval(() => { const n = Date.now(); S.elapsed = COOP ? COOP.elapsed(S) : S.elapsed + (n - last) / 1000; last = n; $("timer").textContent = fmt(S.elapsed); incenseDraw(); if (Math.floor(S.elapsed) % 5 === 0) save(); }, 250); }
 
 /* ================================================================
    6. 장 불러오기 · 장 끝 · 엔딩
@@ -1432,6 +1654,7 @@ function disposeRoot() {
 }
 let loadedCh = -1;   // 지금 지어진 장. 장 탈출이 두 번 불려도(협동: 친구의 탈출 + 내 연출 타이머) 한 장만 넘어가게
 function loadChapter(i, resumePos) {
+  if (BATTLE) battleEnd(false);
   loadedCh = i;
   disposeRoot();
   ROOT = new THREE.Group(); scene.add(ROOT);
@@ -1482,13 +1705,13 @@ function clearChapter(force) {
   if (COOP && COOP.gate && force !== true && !COOP.gate()) { inputLocked = false; return; }   // 함께하기: 두 사람 빗장이 먼저
   clearInterval(tickT); inputLocked = true;
   $("overlay").classList.remove("open"); showHUD(false);
-  const c = CH.clear, took = S.elapsed - (S.chStart || 0), gotHint = hintEarn(SAVE + ":" + S.ch);
+  const c = CH.clear, took = S.elapsed - (S.chStart || 0), gotHint = hintEarn(SAVE + ":" + S.ch), fast = incenseLeft() > 0 && hintEarn(SAVE + ":fast:" + S.ch);
   sfx("clear"); setMusic("rest");
   $("clear-tag").textContent = `제${S.ch + 1}장 탈출`;
   $("clear-title").textContent = c.title;
   $("clear-text").innerHTML = `<p class="serif">${c.text}</p>${c.next ? `<div class="letter">${THEME.nextLabel ?? "다음 장면이 떠오른다."}<br>${c.next}</div>` : ""}`;
   progressBar("clear-progress", S.ch + 1);
-  $("clear-stats").textContent = `이번 장 ${fmt(took)} · 전체 ${fmt(S.elapsed)} · 쓴 힌트 ${S.hints}개` + (gotHint ? ` · 힌트 +1 (남은 ${hintLeft()}개)` : "");
+  $("clear-stats").textContent = `이번 장 ${fmt(took)} · 전체 ${fmt(S.elapsed)} · 쓴 힌트 ${S.hints}개` + (gotHint ? ` · 힌트 +1` : "") + (fast ? ` · 향이 타기 전에 탈출! 힌트 +1` : "") + (gotHint || fast ? ` (남은 ${hintLeft()}개)` : "");
   S.ch++; S.inv = []; S.used = []; HELD = null; S.chStart = S.elapsed; delete S.pos; save();
   $("fade").style.opacity = 1;
   setTimeout(() => { $("clear").classList.remove("hidden"); $("fade").style.opacity = 0; }, 800);
@@ -1520,6 +1743,7 @@ const SCALES = { pyeong: [0, 2, 5, 7, 9], gyemyeon: [0, 3, 5, 7, 10] };
 const MOODS = {
   rest: { scale: "pyeong", root: 293.66, bpm: 56, pluck: 0.3, flute: 0.2, drum: null, amb: [] },
   ending: { scale: "pyeong", root: 293.66, bpm: 60, pluck: 0.45, flute: 0.35, drum: null, amb: ["birds"] },
+  battle: { scale: "gyemyeon", root: 220.0, bpm: 132, pluck: 0.5, flute: 0.08, drum: "battle", drone: true, amb: ["windStrong"] },   // 싸움 장면
 };
 let NOISE = null, REVERB = null, BUS = {};
 function saveSound() { try { localStorage.setItem(SND_KEY, JSON.stringify({ on: AU.on, music: AU.music, fx: AU.fx, voice: AU.voice })); } catch (e) {} }
@@ -1867,6 +2091,8 @@ export const E = {
 
 window.__game = {
   combine: (a, b) => combine(a, b),   // 검사용: 물건 합치기
+  battleOn: () => !!BATTLE, battleShoot: (x, y) => battleShoot(x, y), battleWin: () => { if (BATTLE) { BATTLE.won = true; battleEnd(true); return true; } return false; },   // 검사용: 싸움 장면을 바로 이긴다
+  get BATTLE() { return BATTLE; }, setView, thirdOn,
   fakeCoop(n = 2, role = 0, all = true) { FAKE_COOP = n ? { n, role, all } : null; },   // 검사용: 사람 수 · 내 역할 · at()이 늘 n을 돌려줌
   get S() { return S; }, A, get CH() { return CH; }, camera, loadChapter, play,
   interact: (id) => CH.interact(id, A, null),
