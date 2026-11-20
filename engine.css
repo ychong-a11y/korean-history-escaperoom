@@ -442,3 +442,10 @@ body:has(#battle-bar) .toast { top: 132px; }
   .code-display span { transform: scale(.8); margin: -4px; }
   .dirpad { grid-template-columns: repeat(3, 52px); grid-template-rows: repeat(3, 40px); gap: 5px; }
 }
+
+/* 관리자: 다음 장 넘기기 단추 */
+#admin-next { position: fixed; right: 14px; top: 62px; z-index: 11; padding: 6px 12px; border-radius: 2px; border: 1px solid #2a2118; background: #a3281f; color: #f6ead2; font: 700 13px "Noto Serif KR", serif; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,.35); }
+#admin-next:hover { background: #2a2118; }
+body:not(.playing) #admin-next { display: none; }
+#admin-chip { top: 98px; }
+@media (max-height: 520px) { #admin-next { top: 50px; padding: 5px 10px; font-size: 12px; } #admin-chip { top: 82px; } }

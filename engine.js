@@ -985,6 +985,7 @@ addEventListener("keydown", (e) => {
   if (open) return;
   if (!inputLocked && S && /^[1-9]$/.test(e.key)) { const k = S.inv.filter((x) => !S.used.includes(x))[+e.key - 1]; if (k) hold(k); return; }
   if (ADMIN_SOLO && !e.repeat && e.key.toLowerCase() === "r") { adminSwap(); return; }
+  if (ADMIN && !e.repeat && e.key.toLowerCase() === "n") { adminNext(); return; }
   if (!e.repeat && e.key.toLowerCase() === "v" && S && !inputLocked) { setView(thirdOn() ? "first" : "third"); return; }
   if (e.code === "Space" && !e.repeat) { e.preventDefault(); doJump(); return; }
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
@@ -1486,6 +1487,28 @@ let FAKE_COOP = null;   // 자동 검사용 (window.__game.fakeCoop)
    함께하기 전용 테마도 혼자 시작할 수 있고, 없는 짝은 '서 있어야 하는 자리'를 늘 채워 준다. 내 몫은 R 키나 화면의 몫 바꾸기 단추로 바꾼다. */
 const ADMIN = (() => { try { const q = new URLSearchParams(location.search).get("admin"); if (q === "1") localStorage.setItem("hk-admin", "1"); else if (q === "0") localStorage.removeItem("hk-admin"); return localStorage.getItem("hk-admin") === "1"; } catch (e) { return false; } })();
 let ADMIN_SOLO = false;
+/* 관리자: 문제를 풀지 않고 넘기기. 주소 끝에 ?admin=1 을 한 번 붙여 들어온 기기에서만 보인다.
+   화면 오른쪽 위 '다음 장 ▶' 단추(또는 N 키): 싸움 · 숨어 지나가기 중이면 그 장면을, 아니면 지금 장을 넘긴다. 설정 창에서는 원하는 장으로 바로 간다. */
+function adminNext() {
+  if (!ADMIN || !S || !document.body.classList.contains("playing")) return;
+  if (BATTLE) { BATTLE.won = true; battleEnd(true); toast("관리자: 싸움 장면을 넘겼다.", 1600); return; }
+  if (SNEAK) { SNEAK.won = true; sneakEnd(true); toast("관리자: 숨어 지나가기를 넘겼다.", 1600); return; }
+  if ($("overlay").classList.contains("open")) closeModal();
+  if (S.ch >= CHAPTERS.length - 1) { endGame(); return; }
+  clearChapter(true);
+}
+function adminGo(i) {   // i번째 장(0부터)으로 바로 간다. 소지품은 비우고, 앞 장의 수첩 글은 생기지 않는다.
+  if (!ADMIN || !S || i < 0 || i >= CHAPTERS.length) return;
+  if (BATTLE) battleEnd(false); if (SNEAK) sneakEnd(false);
+  if ($("overlay").classList.contains("open")) closeModal();
+  S.ch = i; S.inv = []; S.used = []; HELD = null; S.chStart = S.elapsed; delete S.pos; save();
+  loadChapter(i); toast(`관리자: 제${i + 1}장으로 왔다.`, 1800);
+}
+function adminNextChip() {
+  let b = $("admin-next");
+  if (!ADMIN) { if (b) b.remove(); return; }
+  if (!b) { b = document.createElement("button"); b.id = "admin-next"; b.type = "button"; b.textContent = "다음 장 ▶"; b.title = "관리자: 지금 장(또는 싸움 장면)을 넘긴다" + (isTouch ? "" : " · N 키"); b.onclick = (ev) => { ev.stopPropagation(); adminNext(); b.blur(); }; document.body.appendChild(b); }
+}
 function adminChip() {
   let b = $("admin-chip");
   if (!ADMIN_SOLO) { if (b) b.remove(); return; }
@@ -1673,6 +1696,7 @@ function openSettings() {
   card("설정", `<p class="note">게임이 잠시 멈췄어요. 닫으면 이어서 할 수 있어요.</p>
     <h3 style="margin:6px 0 6px">소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
+    ${ADMIN ? `<h3 style="margin:6px 0 6px">관리자 <span class="note">(이 기기에서만 보여요)</span></h3><div class="choices grid2" id="admin-go">${CHAPTERS.map((c, i) => `<button data-c="${i}"><b>${i === S.ch ? "✔ " : ""}제${i + 1}장</b> <span class="note">· ${c.place}</span></button>`).join("")}</div><p class="note" style="margin:8px 0 0">장을 누르면 문제를 풀지 않고 그 장으로 가요. 화면 오른쪽 위의 '다음 장 ▶' 단추${isTouch ? "" : "나 N 키"}로 한 장씩 넘길 수도 있어요.</p>` : ""}
     <h3 style="margin:18px 0 6px">시점 <span class="note">(V 키로 바꾸기)</span></h3><div class="choices grid2" id="view-sel">${[["third", "3인칭", "내 모습이 보여요"], ["first", "1인칭", "내 눈으로 봐요"]].map(([k, t, d]) => `<button data-w="${k}"><b>${(thirdOn() ? "third" : "first") === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">인물 목소리</h3><div class="choices grid2" id="voice-sel">${[["mumble", "웅얼웅얼", "말하는 느낌의 소리"], ...(window.speechSynthesis ? [["tts", "읽어 주기", "기기의 한국어 음성"]] : []), ["off", "끄기", "글만 보기"]].map(([k, t, d]) => `<button data-v="${k}" style="${AU.voice === k ? "border-color:var(--ink);font-weight:700" : ""}">${AU.voice === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
@@ -1682,6 +1706,7 @@ function openSettings() {
   $("modal-body").querySelector("[data-close]").textContent = "계속하기";
   $("vol-music").oninput = (e) => { AU.music = +e.target.value; saveSound(); if (AU.ctx) BUS.music.gain.value = AU.music * 0.5; };
   $("vol-fx").oninput = (e) => { AU.fx = +e.target.value; saveSound(); if (AU.ctx) { BUS.fx.gain.value = AU.fx; BUS.amb.gain.value = AU.fx * 0.6; } };
+  if ($("admin-go")) $("admin-go").onclick = (e) => { const b = e.target.closest("button"); if (b) adminGo(+b.dataset.c); };
   $("view-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; setView(b.dataset.w); openSettings(); };
   $("voice-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; AU.voice = b.dataset.v; saveSound(); if (AU.voice === "tts") try { speechSynthesis.getVoices(); } catch (er) {} openSettings(); };
   $("gfx").onclick = (e) => {
@@ -1788,7 +1813,7 @@ function showHUD(on) {
 }
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
-  showHUD(true); hintBadge();
+  showHUD(true); hintBadge(); adminNextChip();
   $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 조이스틱으로 걷기 · 오른쪽 아래 점프·달리기 · 가까이 가서 물건 누르기"
     : lockFailed ? "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방"
     : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 설정";
@@ -2189,7 +2214,7 @@ export const E = {
 window.__game = {
   combine: (a, b) => combine(a, b),   // 검사용: 물건 합치기
   battleOn: () => !!BATTLE, battleShoot: (x, y) => battleShoot(x, y), battleWin: () => { if (BATTLE) { BATTLE.won = true; battleEnd(true); return true; } return false; },   // 검사용: 싸움 장면을 바로 이긴다
-  get BATTLE() { return BATTLE; }, setView, thirdOn,
+  get BATTLE() { return BATTLE; }, setView, thirdOn, adminNext, adminGo,
   sneakOn: () => !!SNEAK, sneakWin: () => { if (SNEAK) { SNEAK.won = true; sneakEnd(true); return true; } return false; }, get SNEAK() { return SNEAK; },   // 검사용: 숨어 지나가기를 바로 끝낸다
   fakeCoop(n = 2, role = 0, all = true) { FAKE_COOP = n ? { n, role, all } : null; },   // 검사용: 사람 수 · 내 역할 · at()이 늘 n을 돌려줌
   get S() { return S; }, A, get CH() { return CH; }, camera, loadChapter, play,
