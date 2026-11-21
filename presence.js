@@ -71,4 +71,4 @@ export async function readPresence() {
   return { live: live.length, by, today: all.filter((p) => p.at >= day0.getTime()).length, week: all.length };
 }
 
-export const NAMES = { hub: "첫 화면", stele: "돌에 새긴 이름", river: "물이 빠진 강", hwarang: "열다섯의 맹세", gate668: "무너지는 성문", gwiju: "별이 떨어진 집", diary: "이름 없는 일기장", snowfort: "눈 덮인 산성", harbin: "아침 아홉 시 반", paper: "숨겨진 종이 뭉치" };
+export const NAMES = { hub: "첫 화면", stele: "돌에 새긴 이름", river: "물이 빠진 강", hwarang: "열다섯의 맹세", gate668: "무너지는 성문", gwiju: "별이 떨어진 집", sound: "말과 글이 달라서", crane: "가벼워진 돌", diary: "이름 없는 일기장", snowfort: "눈 덮인 산성", harbin: "아침 아홉 시 반", paper: "숨겨진 종이 뭉치" };

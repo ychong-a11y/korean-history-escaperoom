@@ -97,6 +97,10 @@ body.hub-on {
 @keyframes sheetIn { from { transform: translateY(14px); } to { transform: none; } }
 .sheet .x { position: absolute; right: 14px; top: 12px; border: 0; background: none; font: 700 14px "Gowun Batang", serif; color: #6a5a46; padding: 6px 8px; cursor: pointer; }
 .sheet .x:hover { color: #a3281f; }
+.sheet .art { margin: 14px 0 6px; aspect-ratio: 400 / 220; border: 2px solid #2a2118; outline: 1px solid #2a2118; outline-offset: 2px; overflow: hidden; background: #efe5cc; }
+.sheet .art img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.sheet .art + .seal { display: none; }
+@media (max-height: 520px) { .sheet .art { aspect-ratio: 400 / 140; } }
 .sheet h2 { margin: 12px 0 0; font: 900 32px/1.25 "Noto Serif KR", serif; letter-spacing: .04em; word-break: keep-all; }
 .sheet .rule { height: 5px; margin: 16px 0 14px; border-top: 2px solid #2a2118; border-bottom: 1px solid #2a2118; }
 .spec { display: grid; grid-template-columns: auto 1fr; gap: 9px 18px; margin: 0; font-size: 16px; }
@@ -424,13 +428,14 @@ function renderHub() {
     const x = info[i], t = x.t;
     const label = x.saved ? `이어서 하기${typeof x.saved.ch === "number" ? ` · 제${x.saved.ch + 1}장` : ""}` : x.cleared ? "다시 들어가기" : "문 열기";
     $("sheet").innerHTML = `<button class="x" id="sheet-x">닫기</button>
+      <div class="art"><img src="assets/art/${t.id}.svg" alt="" onerror="this.parentNode.remove()"></div>
       <span class="seal">${t.seal || ""}</span>
       <h2>${t.title}</h2>
       <div class="rule"></div>
       <dl class="spec">
         <dt>시대</dt><dd>${t.era}</dd>
         <dt>장르</dt><dd>${t.genre || ""}</dd>
-        <dt>소요 시간</dt><dd>${t.minutes || 60}분<small>전 6장</small></dd>
+        <dt>소요 시간</dt><dd>${t.minutes || 60}분<small>전 ${(String(t.playtime || "").match(/전 ([0-9]+)장/) || [0, 6])[1]}장</small></dd>
         <dt>참여 인원</dt><dd>${t.players || ""}${t.minPlayers > 1 ? `<small class="must">${t.minPlayers}명 이상이어야 열려요</small>` : ""}</dd>
         <dt>난이도</dt><dd><span class="stars">${stars(t.stars || 3)}</span><small>${t.grade || ""}</small></dd>
       </dl>
