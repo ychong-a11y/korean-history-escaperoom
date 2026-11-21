@@ -1102,7 +1102,7 @@ function animate() {
 const VIEW_KEY = "hk-view";
 let viewPref = (() => { try { return localStorage.getItem(VIEW_KEY); } catch (er) { return null; } })();
 const thirdOn = () => (viewPref ? viewPref === "third" : !!(THEME && THEME.hero)) && !CH.firstPerson;
-const TP = { dist: 3.4, cur: 3.4, eye: new THREE.Vector3(), quat: new THREE.Quaternion(), on: false, back: new THREE.Vector3(), pivot: new THREE.Vector3(), tick: 0, clear: 3.4, v: new THREE.Vector3(), d: new THREE.Vector3() };
+const TP = { dist: 3.4, cur: 3.4, eye: new THREE.Vector3(), quat: new THREE.Quaternion(), on: false, back: new THREE.Vector3(), pivot: new THREE.Vector3(), tick: 0, clear: 3.4, v: new THREE.Vector3(), d: new THREE.Vector3(), side: new THREE.Vector3() };
 function tpApply(measure) {   // 카메라를 등 뒤로. measure: 벽 · 천장에 걸리는지 다시 잰다
   TP.eye.copy(camera.position); TP.quat.copy(camera.quaternion);
   const cp = Math.cos(pitch);
@@ -1116,6 +1116,13 @@ function tpApply(measure) {   // 카메라를 등 뒤로. measure: 벽 · 천장
     TP.v.set(TP.eye.x, TP.eye.y - 0.5, TP.eye.z); TP.d.copy(TP.pivot).addScaledVector(TP.back, TP.dist).sub(TP.v); const len = TP.d.length(); TP.d.divideScalar(len);
     ray.set(TP.v, TP.d); ray.far = len; const h2 = ray.intersectObjects(camBlock, false)[0]; ray.far = Infinity;
     if (h2) TP.clear = Math.min(TP.clear, Math.max(0, h2.distance - 0.5));
+    // 카메라 왼쪽 · 오른쪽 · 위로 조금 비켜서도 잰다. 카메라 바로 옆에 나무 잎이나 처마가 붙으면 화면 한쪽을 통째로 덮기 때문이다.
+    TP.side.set(Math.cos(yaw), 0, -Math.sin(yaw));
+    for (const [sx, sy] of [[0.55, 0], [-0.55, 0], [0, 0.45]]) {
+      TP.v.copy(TP.pivot).addScaledVector(TP.side, sx); TP.v.y += sy;
+      ray.set(TP.v, TP.back); ray.far = TP.dist + 0.2; const h3 = ray.intersectObjects(camBlock, false)[0]; ray.far = Infinity;
+      if (h3) TP.clear = Math.min(TP.clear, Math.max(0, h3.distance - 0.3));
+    }
   }
   TP.cur += (Math.min(TP.dist, TP.clear) - TP.cur) * (TP.clear < TP.cur ? 0.5 : 0.07);
   camera.position.copy(TP.pivot).addScaledVector(TP.back, TP.cur);
@@ -1895,7 +1902,7 @@ function loadChapter(i, resumePos) {
   const [sx, sz, syaw] = resumePos || w.start;
   targetPos.set(sx, 1.6, sz); camera.position.set(sx, CH.eye ?? 1.6, sz);
   yaw = targetYaw = syaw; pitch = -0.05; vy = 0; feet = WORLD.groundAt(sx, sz); swimming = false; $("swim").classList.add("hidden");
-  $("place").innerHTML = `${CH.place}<small>제${i + 1}장 · ${CH.when}</small>`;
+  $("place").innerHTML = `${CH.place}<small>제${i + 1}장 · ${CH.when}</small>`; setTimeout(hudMeasure, 40);
   setMusic(CH.musicKey ? CH.musicKey(S) : "ch" + (i + 1));
   hovered = null;
   refreshQuests();
@@ -1909,11 +1916,20 @@ function goLandscape() {
     else lock();
   } catch (e) {}
 }
+/* 위쪽 띠(장소 이름 · 부제 · 단추)의 아래 끝을 재어 --hud-b 로 둔다. 할 일 상자와 알림은 그 아래에 붙는다. */
+function hudMeasure() {
+  const t = $("hud-top"); if (!t || t.classList.contains("hidden")) return;
+  let b = 0; for (const c of t.children) { const r = c.getBoundingClientRect(); if (r.height) b = Math.max(b, r.bottom); }
+  if (b) document.documentElement.style.setProperty("--hud-b", Math.ceil(b) + "px");
+}
+if (window.ResizeObserver) new ResizeObserver(hudMeasure).observe($("hud-top"));
+addEventListener("resize", () => setTimeout(hudMeasure, 50)); document.fonts?.ready?.then(() => setTimeout(hudMeasure, 40));
 function showHUD(on) {
   ["hud-top", "hud-bottom", "guide", "move", "act", "quests"].forEach((x) => $(x).classList.toggle("hidden", !on));
   document.body.classList.toggle("playing", on);
   if (!on) { ["cross", "lockhint", "tip"].forEach((x) => $(x).classList.add("hidden")); if (document.pointerLockElement) document.exitPointerLock(); }
   else if (!isTouch && !lockFailed) $("lockhint").classList.remove("hidden");
+  if (on) setTimeout(hudMeasure, 40);
 }
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
