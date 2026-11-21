@@ -449,3 +449,50 @@ body:has(#battle-bar) .toast { top: 132px; }
 body:not(.playing) #admin-next { display: none; }
 #admin-chip { top: 98px; }
 @media (max-height: 520px) { #admin-next { top: 50px; padding: 5px 10px; font-size: 12px; } #admin-chip { top: 82px; } }
+
+/* ===== 위쪽 줄: 하나로 이어진 먹빛 띠 (화면에 녹아들게) ===== */
+.hud-top { gap: 0; padding: 10px 12px; background: linear-gradient(rgba(14,10,6,.5), rgba(14,10,6,0)); }
+.hud-top .place { margin-right: 12px; }
+.hud-top .chip { margin: 0; border: 0; border-radius: 0; background: rgba(20,15,10,.5); color: #f1e6cf; box-shadow: inset 0 -1px 0 rgba(201,162,39,.35); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); padding: 7px 12px; font: 700 13px/1.25 "Noto Serif KR", serif; position: relative; text-shadow: 0 1px 2px rgba(0,0,0,.4); }
+.hud-top .chip + .chip::before { content: ""; position: absolute; left: 0; top: 24%; bottom: 24%; width: 1px; background: rgba(241,230,207,.2); }
+.hud-top .place + .chip { border-radius: 4px 0 0 4px; }
+.hud-top .chip:last-child { border-radius: 0 4px 4px 0; }
+.hud-top button.chip:hover { background: rgba(70,52,32,.62); }
+.hud-top .key-hint { border: 1px solid rgba(241,230,207,.25); color: rgba(241,230,207,.6); background: none; margin-left: 5px; }
+.hud-top #btn-sound.off { color: #8f8270; text-decoration: line-through; }
+.hud-top .chip.incense i { background: linear-gradient(90deg, rgba(241,230,207,.45) calc(100% - 5px), #e0452f 0); }
+.hud-top .chip.incense.low { color: #ffd9cc; animation-name: incense2; } @keyframes incense2 { to { background: rgba(163,40,31,.72); } }
+.hud-top .chip.incense.out { color: #8f8270; }
+.inv-label { color: #f1e6cf; }
+/* 휴대폰: 띠를 더 얇게 */
+@media (pointer: coarse) {
+  .hud-top { padding: 6px 8px; }
+  .hud-top .place { font-size: 14px; margin-right: 8px; } .hud-top .place small { font-size: 10px; }
+  .hud-top .chip { padding: 6px 9px; font-size: 12px; }
+  .hud-top .chip.incense { min-width: 52px; }
+}
+/* ===== 휴대폰 조작부: 조이스틱 · 점프 · 조사 ===== */
+.move { background: radial-gradient(circle, rgba(20,15,10,.2), rgba(20,15,10,.48)); border: 1px solid rgba(241,230,207,.3); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+.move i { background: rgba(241,230,207,.75); border: 1px solid rgba(255,250,235,.9); transition: background .15s; }
+.move .lock-run { position: absolute; left: 50%; top: -34px; transform: translateX(-50%); white-space: nowrap; padding: 3px 8px; border-radius: 3px; background: rgba(20,15,10,.55); color: rgba(241,230,207,.8); font: 700 11px "Noto Serif KR", serif; pointer-events: none; display: none; }
+.move.on .lock-run { display: block; }
+.move.ready .lock-run, .move.auto .lock-run { display: block; background: #a3281f; color: #fff2e6; }
+.move.ready i, .move.auto i { background: #c8443a; border-color: #ffd9cc; }
+.act { gap: 14px; align-items: center; }
+.act button { background: rgba(20,15,10,.5); border: 1px solid rgba(241,230,207,.42); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); cursor: pointer; }
+.act #btn-jump { width: 60px; height: 60px; }
+.act #btn-use { width: 80px; height: 80px; transition: background .15s, transform .15s; }
+.act #btn-use b { font-size: 28px; }
+.act #btn-use.has { background: rgba(163,40,31,.85); border-color: rgba(255,225,205,.85); transform: scale(1.05); }
+.act button:active { background: rgba(163,40,31,.9); }
+#use-tip { position: fixed; right: 12px; bottom: 150px; max-width: 46vw; padding: 4px 10px; border-radius: 3px; background: rgba(20,15,10,.62); color: #f1e6cf; font: 700 12.5px "Noto Serif KR", serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; z-index: 4; }
+#use-tip::before { content: "조사 · "; color: #e8b9a6; }
+body:not(.playing) #use-tip { display: none; }
+@media (pointer: fine) { #use-tip { display: none !important; } }
+@media (max-height: 520px) { .act #btn-use { width: 70px; height: 70px; } .act #btn-jump { width: 54px; height: 54px; } #use-tip { bottom: 118px; } }
+/* 도움말 표 */
+table.keys { width: 100%; border-collapse: collapse; font-size: 14px; }
+table.keys td { padding: 6px 4px; border-bottom: 1px solid rgba(42,33,24,.15); vertical-align: middle; }
+table.keys td:first-child { white-space: nowrap; width: 1%; padding-right: 14px; font-family: "Noto Serif KR", serif; font-weight: 700; }
+table.keys kbd { min-width: 26px; height: 24px; font-size: 11.5px; border-bottom-width: 2px; margin-right: 2px; }
+@media (pointer: coarse), (max-height: 520px) { table.keys { font-size: 12.5px; } table.keys td { padding: 4px 3px; } }

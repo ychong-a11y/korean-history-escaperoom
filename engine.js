@@ -847,7 +847,7 @@ function lockFail() {
   if (lockFailed) return;
   if (lockWorked) { if (!locked() && !inputLocked) $("lockhint").classList.remove("hidden"); return; }
   lockFailed = true; $("lockhint").classList.add("hidden");
-  $("guide").textContent = "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방";
+  $("guide").textContent = "마우스를 끌어서 둘러보기 · WASD 걷기 · Shift 달리기 · Space 점프 · 클릭이나 E로 조사 · Tab 가방 · H 힌트 · F1 단축키";
   $("guide").style.opacity = 0.85;
 }
 document.addEventListener("pointerlockerror", lockFail);
@@ -942,25 +942,84 @@ function makeWorld({ bounds, circles = [], rects = [], extra, water }) {
     },
   };
 }
-// 휴대폰 조이스틱: 밀어낸 방향과 세기(-1~1)
+// 휴대폰 조이스틱: 밀어낸 방향과 세기(-1~1). 위로 끝까지 밀어 붉게 바뀐 채 손을 떼면 앞으로 달리기가 고정된다(다시 누르면 풀림).
 const joy = { x: 0, y: 0, id: null };
+let autoRun = false;
+function stopAutoRun() { if (!autoRun) return; autoRun = false; running = false; joy.x = joy.y = 0; $("move").classList.remove("auto"); $("joy-knob").style.transform = ""; }
 {
   const base = $("move"), knob = $("joy-knob");
+  base.insertAdjacentHTML("beforeend", `<span class="lock-run">▲ 달리기 고정</span>`);
+  let lockReady = false;
   const set = (ev) => {
     const r = base.getBoundingClientRect(), R = (r.width / 2) * 0.6;
     let dx = (ev.clientX - (r.left + r.width / 2)) / R, dy = (ev.clientY - (r.top + r.height / 2)) / R;
+    lockReady = dy < -1.55 && Math.abs(dx) < 0.85;   // 둥근 판 위쪽 바깥까지 밀었다
+    base.classList.toggle("ready", lockReady);
     const n = Math.hypot(dx, dy); if (n > 1) { dx /= n; dy /= n; }
     joy.x = dx; joy.y = dy;
     knob.style.transform = "translate(" + (dx * R).toFixed(1) + "px," + (dy * R).toFixed(1) + "px)";
   };
-  const end = (ev) => { if (joy.id !== ev.pointerId) return; joy.id = null; joy.x = joy.y = 0; knob.style.transform = ""; base.classList.remove("on"); };
-  base.addEventListener("pointerdown", (ev) => { ev.preventDefault(); if (joy.id !== null) return; joy.id = ev.pointerId; try { base.setPointerCapture(ev.pointerId); } catch (er) {} base.classList.add("on"); set(ev); });
+  const end = (ev) => {
+    if (joy.id !== ev.pointerId) return; joy.id = null; base.classList.remove("on", "ready");
+    if (lockReady && !inputLocked) { autoRun = true; running = true; joy.x = 0; joy.y = -1; base.classList.add("auto"); const R = (base.getBoundingClientRect().width / 2) * 0.6; knob.style.transform = "translate(0px," + (-R).toFixed(1) + "px)"; toast("달리기 고정! 조이스틱을 다시 누르면 풀려요.", 2000); }
+    else { joy.x = joy.y = 0; knob.style.transform = ""; }
+    lockReady = false;
+  };
+  base.addEventListener("pointerdown", (ev) => { ev.preventDefault(); if (joy.id !== null) return; stopAutoRun(); joy.id = ev.pointerId; try { base.setPointerCapture(ev.pointerId); } catch (er) {} base.classList.add("on"); set(ev); });
   base.addEventListener("pointermove", (ev) => { if (joy.id === ev.pointerId) set(ev); });
   ["pointerup", "pointercancel", "lostpointercapture"].forEach((n) => base.addEventListener(n, end));
 }
 function doJump() { if (inputLocked || $("overlay").classList.contains("open")) return; if (swimming) climbOut(); else if (onGround()) { vy = 5.0; hideGuide(); sfx("jump"); } }
+// 오른쪽 아래: 안쪽이 점프, 맨 오른쪽이 조사(데스크탑의 마우스 클릭과 같은 일)
+$("act").innerHTML = `<button id="btn-jump" aria-label="점프"><b>跳</b><small>점프</small></button><button id="btn-use" aria-label="조사하기"><b>査</b><small>조사</small></button>`;
+document.body.insertAdjacentHTML("beforeend", `<div id="use-tip" class="hidden"></div>`);
 $("btn-jump").addEventListener("pointerdown", (e) => { e.preventDefault(); doJump(); });
-$("btn-run").addEventListener("pointerdown", (e) => { e.preventDefault(); running = !running; $("btn-run").classList.toggle("on", running); });
+$("btn-use").addEventListener("pointerdown", (e) => { e.preventDefault(); useAction(); });
+/* 조사하기: 화면 가운데에 걸린 물건이 가까우면 그것, 아니면 내 앞에서 손이 닿는 가장 가까운 물건.
+   데스크탑의 E 키와 휴대폰의 조사 단추가 함께 쓴다. 싸움 중에는 화면 가운데로 활을 쏜다. */
+const NEAR_V = new THREE.Vector3();
+function shown(o) { for (; o; o = o.parent) if (o.visible === false) return false; return true; }
+function findNear() {
+  const m = pick(innerWidth / 2, innerHeight / 2);
+  if (m && !lastPickFar) return m;
+  const ex = camera.position.x, ez = camera.position.z, fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  let best = null, bs = 1e9, bp = null, bd = 0;
+  for (const c of clickable) {
+    if (!shown(c)) continue;
+    const g = c.geometry; if (!g.boundingSphere) g.computeBoundingSphere();
+    NEAR_V.copy(g.boundingSphere.center).applyMatrix4(c.matrixWorld);
+    if (NEAR_V.y > camera.position.y + 3.5 || NEAR_V.y < feet - 1.5) continue;
+    const rad = Math.min(1.4, g.boundingSphere.radius * c.matrixWorld.getMaxScaleOnAxis());
+    const dx = NEAR_V.x - ex, dz = NEAR_V.z - ez, dist = Math.hypot(dx, dz), d = Math.max(0, dist - rad);
+    if (d > (CH.reach?.(c.userData.objId) ?? REACH)) continue;
+    const cos = dist > 0.01 ? (dx * fx + dz * fz) / dist : 1;
+    if (cos < 0.2 && d > 0.6) continue;   // 등 뒤의 것은 고르지 않는다
+    const sc = d + (1 - cos) * 1.6;
+    if (sc < bs) { bs = sc; best = c; bp = NEAR_V.clone(); bd = d; }
+  }
+  if (best) { lastPickFar = false; lastHit = { object: best, point: bp, distance: bd }; return best; }
+  return m;   // 멀리 걸린 것 (너무 멀다고 알려 준다)
+}
+function useAction() {
+  if (inputLocked || !S || $("overlay").classList.contains("open")) return;
+  if (BATTLE) return battleShoot(innerWidth / 2, innerHeight / 2);
+  const m = findNear();
+  if (!m) { toast(isTouch ? "가까이에 살펴볼 것이 없다. 물건 쪽으로 다가가 보자." : "가까이에 살펴볼 것이 없다.", 1600); return; }
+  tryInteract(m);
+}
+let NEAR = null;
+function updateUse() {   // 휴대폰: 조사 단추 위에 지금 조사할 물건 이름을 띄우고, 그 물건을 빛나게 한다
+  const tip = $("use-tip"), btn = $("btn-use");
+  if (!btn || !S || inputLocked || !document.body.classList.contains("playing")) { tip.classList.add("hidden"); return; }
+  if (BATTLE) { btn.innerHTML = "<b>射</b><small>쏘기</small>"; btn.classList.add("has"); tip.classList.add("hidden"); crossEl.classList.remove("hidden"); return; }
+  if (btn.dataset.m !== "use") { btn.innerHTML = "<b>査</b><small>조사</small>"; btn.dataset.m = "use"; crossEl.classList.add("hidden"); }
+  const m = findNear(), ok = m && !lastPickFar;
+  NEAR = ok ? m : null; setHover(NEAR);
+  btn.classList.toggle("has", !!ok);
+  if (ok) { tip.textContent = m.userData.label; tip.classList.remove("hidden"); } else tip.classList.add("hidden");
+}
+
+$("btn-hint").innerHTML = `힌트<span class="key-hint">H</span>`;
 $("rotate-skip").onclick = () => document.body.classList.add("portrait-ok");
 if (isTouch) document.querySelectorAll(".k-up").forEach((el) => (el.textContent = "점프 버튼"));
 const KEYMAP = { arrowup: "fwd", w: "fwd", arrowdown: "back", s: "back", arrowleft: "left", a: "left", arrowright: "right", d: "right" };
@@ -976,6 +1035,11 @@ function climbOut() {
 }
 addEventListener("keydown", (e) => {
   const open = $("overlay").classList.contains("open");
+  if (e.key === "F1" || (e.key === "?" && !open)) {   // 단축키 도움말 (한 번 더 누르면 닫힘)
+    e.preventDefault();
+    if (open && $("modal-body").querySelector(".keys")) closeModal(); else if (S && document.body.classList.contains("playing")) openHelp();
+    return;
+  }
   if (e.key === "Tab") { e.preventDefault(); if (open) { if (bagOpen) closeModal(); } else if (!inputLocked && S) openBag(); return; }
   if (e.key === "Escape") {
     if (open) { if (performance.now() - escAt > 400) closeModal(); }
@@ -984,14 +1048,19 @@ addEventListener("keydown", (e) => {
   }
   if (open) return;
   if (!inputLocked && S && /^[1-9]$/.test(e.key)) { const k = S.inv.filter((x) => !S.used.includes(x))[+e.key - 1]; if (k) hold(k); return; }
-  if (ADMIN_SOLO && !e.repeat && e.key.toLowerCase() === "r") { adminSwap(); return; }
-  if (ADMIN && !e.repeat && e.key.toLowerCase() === "n") { adminNext(); return; }
-  if (!e.repeat && e.key.toLowerCase() === "v" && S && !inputLocked) { setView(thirdOn() ? "first" : "third"); return; }
+  if (ADMIN_SOLO && !e.repeat && e.code === "KeyR") { adminSwap(); return; }
+  if (ADMIN && !e.repeat && e.code === "KeyN") { adminNext(); return; }
+  if (!e.repeat && e.code === "KeyV" && S && !inputLocked) { setView(thirdOn() ? "first" : "third"); return; }
+  if (!e.repeat && S && !inputLocked && document.body.classList.contains("playing")) {
+    if (e.code === "KeyH") { openHint(); return; }
+    if (e.code === "KeyJ") { openJourney(); return; }
+    if (e.code === "KeyE") { useAction(); return; }
+  }
   if (e.code === "Space" && !e.repeat) { e.preventDefault(); doJump(); return; }
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
 });
 addEventListener("keyup", (e) => { const k = KEYMAP[e.key.toLowerCase()]; if (k) keys[k] = 0; });
-addEventListener("blur", () => { for (const k in keys) keys[k] = 0; joy.x = joy.y = 0; running = false; });
+addEventListener("blur", () => { for (const k in keys) keys[k] = 0; if (!autoRun) { joy.x = joy.y = 0; running = false; } });
 const WALK_FWD = 3.6, WALK_SIDE = 3.0;
 let running = false;   // Shift를 누르고 있는 동안 달리기
 addEventListener("keydown", (e) => { if (e.key === "Shift") running = true; });
@@ -1102,11 +1171,13 @@ function heroTick(dt, moved, air) {
   if (BATTLE) heroYaw = yaw; else if (sp > 0.02 && moved > 0.0015) { let d = Math.atan2(-dx, -dz) - heroYaw; d = ((d + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; heroYaw += d * 0.2; }
   HERO.position.set(camera.position.x, feet, camera.position.z);
   HERO.rotation.y = heroYaw; HERO.scale.setScalar(((CH.eye ?? 1.6) / 1.6) * u.base / ((CH.eye ?? 1.6) < 1.5 ? u.base : 1));
-  heroAmp += ((air ? 0.5 : Math.min(1, moved * 34)) - heroAmp) * 0.18; heroPh += moved * 5.4 + (swimming ? dt * 4 : 0);
-  const sw = Math.sin(heroPh) * 0.8 * heroAmp;
+  const spd = moved / Math.max(dt, 1e-3);   // 지금 빠르기 (m/초)
+  heroAmp += ((air ? 0.45 : Math.min(1.25, spd / 3.6)) - heroAmp) * 0.12;
+  heroPh += moved * 2.4 + (swimming ? dt * 2.2 : 0);   // 한 번 왕복(두 걸음)에 약 2.6m
+  const sw = Math.sin(heroPh) * 0.5 * heroAmp;
   u.legs[0].rotation.x = air ? -0.5 : sw; u.legs[1].rotation.x = air ? 0.35 : -sw;
-  u.arms[0].rotation.x = BATTLE ? -1.35 : -sw * 0.7; u.arms[1].rotation.x = BATTLE ? -1.1 : sw * 0.7;
-  u.body.position.y = Math.abs(Math.sin(heroPh)) * 0.035 * heroAmp; u.body.rotation.x = -0.07 * heroAmp;
+  u.arms[0].rotation.x = BATTLE ? -1.35 : -sw * 0.75; u.arms[1].rotation.x = BATTLE ? -1.1 : sw * 0.75;
+  u.body.position.y = Math.abs(Math.sin(heroPh)) * 0.022 * heroAmp; u.body.rotation.x = -0.05 * heroAmp; u.body.rotation.z = Math.sin(heroPh) * 0.025 * heroAmp;
   u.head.rotation.y = BATTLE ? 0 : Math.max(-0.9, Math.min(0.9, (((yaw - heroYaw + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI))) * 0.6;
 }
 
@@ -1171,7 +1242,7 @@ function battleEnd(win) {
   const B = BATTLE; if (!B) return;
   scene.remove(B.root); B.root.traverse((m) => { if (m.geometry && !m.geometry.userData.keep) m.geometry.dispose(); });
   B.flags.forEach((f) => { const i = PEOPLE.indexOf(f.man); if (i >= 0) PEOPLE.splice(i, 1); });
-  BATTLE = null; battleBar(); crossEl.classList.remove("on"); if (B_MUSIC) setMusic(B_MUSIC);
+  BATTLE = null; battleBar(); crossEl.classList.remove("on"); if ($("btn-use")) $("btn-use").dataset.m = ""; if (isTouch) crossEl.classList.add("hidden"); if (B_MUSIC) setMusic(B_MUSIC);
   if (win) B.onWin?.();
 }
 function battleShoot(cx, cy) {
@@ -1366,6 +1437,8 @@ function frame(dt) {
   if (QMARKS) for (const sp of QMARKS.children) sp.position.y = sp.userData.y0 + Math.sin(ELAPSED_T * 2.4 + sp.userData.y0) * 0.05;
   if (lantern.intensity > 0) lantern.position.set(camera.position.x, camera.position.y + 0.35, camera.position.z);
   if (++frameNo % 3 === 0) updateAim();
+  if (isTouch && frameNo % 6 === 0) updateUse();
+  if (autoRun && (inputLocked || !document.body.classList.contains("playing"))) stopAutoRun();
   WATERS.forEach((w) => { w.material.uniforms.time.value += dt * 0.5; });
   const tp = S && thirdOn() && document.body.classList.contains("playing");
   if (tp) { tpApply(++TP.tick % 2 === 0); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); } else TP.cur = 0.5;
@@ -1680,6 +1753,36 @@ function openBag(sel, say = "") {
   if ($("bag-mix")) $("bag-mix").onclick = () => { bagMix = s.k; openBag(bagSel); };
   if ($("bag-act")) $("bag-act").onclick = primary;
 }
+function openHelp() {
+  const K = (...a) => a.map((x) => `<kbd>${x}</kbd>`).join("");
+  const tbl = (rows) => `<table class="keys">${rows.map(([k, t]) => `<tr><td>${k}</td><td>${t}</td></tr>`).join("")}</table>`;
+  const pc = tbl([
+    [K("W", "A", "S", "D") + " " + K("↑", "←", "↓", "→"), "걷기"],
+    [K("Shift"), "달리기 (누르고 있는 동안)"],
+    [K("Space"), "점프 · 물에서 올라가기"],
+    ["클릭 · " + K("E"), "조사하기 · 싸움에서 활 쏘기"],
+    ["마우스", "둘러보기 (화면을 한 번 클릭한 뒤)"],
+    [K("Tab"), "가방"],
+    [K("J"), "여정 기록 (찾은 단서)"],
+    [K("H"), "힌트"],
+    [K("1") + "~" + K("9"), "가방의 물건을 손에 들기"],
+    [K("V"), "시점 바꾸기 (3인칭 · 1인칭)"],
+    [K("M"), "소리 켜고 끄기"],
+    [K("Esc"), "설정 · 창 닫기"],
+    [K("F1"), "이 도움말"],
+    ...(ADMIN ? [[K("N"), "관리자: 다음 장으로"]] : []),
+    ...(ADMIN_SOLO ? [[K("R"), "관리자: 몫 바꾸기"]] : []),
+  ]);
+  const touch = tbl([
+    ["왼쪽 아래 조이스틱", "걷기. <b>위로 끝까지</b> 밀어 붉게 바뀔 때 손을 떼면 달리기가 고정돼요. 다시 누르면 풀려요"],
+    ["화면 끌기", "둘러보기"],
+    ["맨 오른쪽 <b>査 조사</b>", "앞에 있는 물건 조사하기 (단추 위에 이름이 떠요). 싸움에서는 활 쏘기"],
+    ["그 안쪽 <b>跳 점프</b>", "점프 · 물에서 올라가기"],
+    ["물건 누르기", "가까이 있는 물건을 바로 조사하기"],
+    ["위쪽 띠", "가방 · 힌트 · 소리 · 설정"],
+  ]);
+  card("조작법", isTouch ? touch + `<p class="note">키보드를 이으면 F1로 전체 단축키를 볼 수 있어요.</p>` : pc + `<p class="note">휴대폰에서는 왼쪽 아래 조이스틱과 오른쪽 아래 조사 · 점프 단추로 해요.</p>`);
+}
 function openJourney() {
   const groups = [];
   for (let i = Math.min(S.ch, CHAPTERS.length - 1); i >= 0; i--) {
@@ -1702,8 +1805,9 @@ function openSettings() {
     <h3 style="margin:18px 0 6px">그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     ${`<h3 style="margin:18px 0 6px">${isTouch ? "화면 돌리는 감도" : "마우스 감도"}</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
     <p class="note" style="margin-top:14px">Tab 가방 · Esc 설정 · M 소리 · V 시점 · 숫자 키 손에 들기</p>`}`,
-    `<a class="btn ghost" href="index.html">← 문 고르는 곳으로</a>`);
+    `<a class="btn ghost" href="index.html">← 문 고르는 곳으로</a><button class="btn ghost" id="open-help">조작법${isTouch ? "" : " (F1)"}</button>`);
   $("modal-body").querySelector("[data-close]").textContent = "계속하기";
+  $("open-help").onclick = openHelp;
   $("vol-music").oninput = (e) => { AU.music = +e.target.value; saveSound(); if (AU.ctx) BUS.music.gain.value = AU.music * 0.5; };
   $("vol-fx").oninput = (e) => { AU.fx = +e.target.value; saveSound(); if (AU.ctx) { BUS.fx.gain.value = AU.fx; BUS.amb.gain.value = AU.fx * 0.6; } };
   if ($("admin-go")) $("admin-go").onclick = (e) => { const b = e.target.closest("button"); if (b) adminGo(+b.dataset.c); };
@@ -1757,7 +1861,7 @@ function openHint() {
 }
 $("btn-hint").onclick = () => S && openHint();
 $("btn-sound").onclick = () => { audioInit(); setSoundOn(!AU.on); };
-addEventListener("keydown", (e) => { if ((e.key === "m" || e.key === "M") && !$("overlay").classList.contains("open")) { audioInit(); setSoundOn(!AU.on); } });
+addEventListener("keydown", (e) => { if (e.code === "KeyM" && !e.repeat && !$("overlay").classList.contains("open")) { audioInit(); setSoundOn(!AU.on); } });
 
 /* ── 타이머 ── */
 let tickT;
@@ -1814,9 +1918,9 @@ function showHUD(on) {
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
   showHUD(true); hintBadge(); adminNextChip();
-  $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 왼쪽 아래 조이스틱으로 걷기 · 오른쪽 아래 점프·달리기 · 가까이 가서 물건 누르기"
-    : lockFailed ? "마우스를 끌어서 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 가까이 가서 물건 클릭 · Tab 가방"
-    : "마우스로 둘러보기 · 방향키(WASD)로 걷기 · Shift 달리기 · Space 점프(물에선 올라가기) · 조준점(+)을 맞추고 클릭 · Tab 가방 · Esc 설정";
+  $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 조이스틱으로 걷기 (위로 끝까지 밀면 달리기 고정) · 오른쪽 아래 조사 · 점프"
+    : lockFailed ? "마우스를 끌어서 둘러보기 · WASD 걷기 · Shift 달리기 · Space 점프 · 클릭이나 E로 조사 · Tab 가방 · H 힌트 · F1 단축키"
+    : "마우스로 둘러보기 · WASD 걷기 · Shift 달리기 · Space 점프 · 조준점(+)을 맞추고 클릭이나 E로 조사 · Tab 가방 · H 힌트 · F1 단축키";
   $("guide").style.opacity = 0.85;
   renderInv(); inputLocked = false; startTimer(); startCoach();
   if (CH.onEnter) setTimeout(() => CH.onEnter(A), 400);
@@ -1888,7 +1992,7 @@ function audioInit() {
   const nd = NOISE.getChannelData(0); for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
   AU.timer = setInterval(schedule, 60);
 }
-function setSoundOn(on) { AU.on = on; saveSound(); if (AU.ctx) BUS.master.gain.setTargetAtTime(on ? 1 : 0, AU.ctx.currentTime, 0.05); $("btn-sound").textContent = on ? "소리" : "소리 끔"; $("btn-sound").classList.toggle("off", !on); }
+function setSoundOn(on) { AU.on = on; saveSound(); if (AU.ctx) BUS.master.gain.setTargetAtTime(on ? 1 : 0, AU.ctx.currentTime, 0.05); $("btn-sound").innerHTML = (on ? "소리" : "소리 끔") + `<span class="key-hint">M</span>`; $("btn-sound").classList.toggle("off", !on); }
 function semi(root, n) { return root * Math.pow(2, n / 12); }
 
 /* ── 악기 ── */
@@ -2040,20 +2144,20 @@ const CTL_PC = `<div class="ctl-grid">
   <div class="ctl"><div class="pic"><kbd class="w3">Space</kbd></div><b>점프</b><span>물에서는 뭍으로 올라가기</span></div>
   <div class="ctl"><div class="pic"><kbd class="w2">Tab</kbd></div><b>가방</b><span>소지품 · 여정 기록 보기</span></div>
 </div>
-<p class="ctl-foot"><kbd>Esc</kbd> 설정(소리 · 그래픽) &nbsp;·&nbsp; <kbd>M</kbd> 소리 켜고 끄기</p>`;
+<p class="ctl-foot"><kbd>E</kbd> 조사 &nbsp;·&nbsp; <kbd>H</kbd> 힌트 &nbsp;·&nbsp; <kbd>J</kbd> 여정 기록 &nbsp;·&nbsp; <kbd>Esc</kbd> 설정 &nbsp;·&nbsp; <kbd>F1</kbd> 전체 단축키</p>`;
 const CTL_TOUCH = `<div class="phone"><div class="phone-screen">
     <span class="ph-chip">가방 &nbsp; 힌트</span>
     <span class="ph-swipe"><i>↔</i></span>
     <span class="ph-obj">函</span>
     <div class="ph-pad"><i></i></div>
-    <div class="ph-act"><i>走</i><i>跳</i></div>
+    <div class="ph-act"><i>跳</i><i>査</i></div>
     <b class="n n1">1</b><b class="n n2">2</b><b class="n n3">3</b><b class="n n4">4</b><b class="n n5">5</b>
   </div></div>
 <ol class="ph-list">
   <li><b>둘러보기</b> — 화면을 손가락으로 끌어요</li>
-  <li><b>걷기</b> — 왼쪽 아래 조이스틱을 가고 싶은 쪽으로 밀어요</li>
-  <li><b>조사하기</b> — 가까이 가서 물건을 직접 눌러요</li>
-  <li><b>달리기 · 점프</b> — 오른쪽 아래 버튼</li>
+  <li><b>걷기</b> — 왼쪽 아래 조이스틱을 밀어요. 위로 끝까지 밀었다 떼면 달리기 고정</li>
+  <li><b>조사하기</b> — 물건을 직접 누르거나 조사(査) 단추</li>
+  <li><b>조사 · 점프</b> — 오른쪽 아래 단추 (맨 오른쪽이 조사)</li>
   <li><b>가방 · 힌트</b> — 위쪽 버튼 (모은 물건과 단서)</li>
 </ol>
 <p class="ctl-foot">휴대폰은 <b>가로로</b> 돌리면 훨씬 넓게 보여요.</p>`;
@@ -2111,7 +2215,7 @@ function startCoach() {
   const steps = isTouch ? [
     ["一", "화면을 <b>끌어서</b> 주위를 둘러보세요", "look"],
     ["二", "왼쪽 아래 <b>조이스틱</b>을 밀어 걸어 보세요", "walk"],
-    ["三", "물건에 <b>가까이 가서 눌러</b> 조사해 보세요", "inspect"],
+    ["三", "물건에 다가가 <b>조사</b> 단추를 누르거나 물건을 직접 눌러 보세요", "inspect"],
     ["四", "위쪽 <b>가방</b>을 눌러 소지품을 살펴보세요", "bag"],
   ] : [
     ["一", "화면을 <b>클릭</b>하고 마우스를 움직여 둘러보세요", "look"],
