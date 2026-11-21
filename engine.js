@@ -1889,6 +1889,125 @@ function matchLock(left, right, answer, onOk, wrongText) {
     if (vals.every((v, i) => +v === answer[i])) onOk(); else wrong(wrongText);
   });
 }
+
+/* ── 새 자물쇠들 ──
+   모두 card() 다음에 부른다. 맞으면 자물쇠가 열리는 모습을 잠깐 보여 준 뒤 onOk. 틀리면 wrong(). */
+const lkOpen = (onOk) => { const l = $("lk"); if (l) l.classList.add("open"); sfx("door"); setTimeout(onOk, 520); };
+const lkShake = () => { const l = $("lk"); if (!l) return; l.classList.remove("jolt"); void l.offsetWidth; l.classList.add("jolt"); };
+const lkOk = (fn) => { const b = addBtn("열기", "red", fn); b.id = "lk-ok"; return b; };
+const DIGITS = "0123456789".split("");
+// 쓸어 넘기기(휴대폰) · 마우스 휠
+function lkSwipe(el, fn) {
+  let y0 = null;
+  el.addEventListener("wheel", (ev) => { ev.preventDefault(); fn(ev.deltaY > 0 ? 1 : -1); }, { passive: false });
+  el.addEventListener("touchstart", (ev) => { y0 = ev.touches[0].clientY; }, { passive: true });
+  el.addEventListener("touchmove", (ev) => { if (y0 === null) return; const d = ev.touches[0].clientY - y0; if (Math.abs(d) > 22) { fn(d < 0 ? 1 : -1); y0 = ev.touches[0].clientY; } }, { passive: true });
+}
+
+/* 다이얼 자물쇠 (놋쇠 맹꽁이자물쇠, 바퀴를 돌려 맞춤)
+   answer: "1300" 또는 ["甲","子"] · o.symbols: 바퀴 글자들(모든 바퀴 같음) 또는 바퀴마다 [[..],[..]] · o.label: 몸통에 새길 글 */
+function dialLock(answer, onOk, wrongText, o = {}) {
+  onOk = withSolve(onOk);
+  const ans = Array.isArray(answer) ? answer.map(String) : String(answer).split("");
+  const sets = ans.map((_, i) => (o.symbols ? (Array.isArray(o.symbols[0]) ? o.symbols[i] : o.symbols) : DIGITS).map(String));
+  const idx = ans.map(() => 0);
+  inject(`<div class="lk lk-dial" id="lk"><div class="lk-shackle"></div><div class="lk-body">${o.label ? `<div class="lk-label">${o.label}</div>` : ""}<div class="lk-wheels">${ans.map((_, i) =>
+    `<div class="wheel" data-w="${i}"><button data-w="${i}" data-a="up" aria-label="${i + 1}번째 바퀴 위로">▲</button><div class="win" data-w="${i}"><span class="p"></span><b></b><span class="n"></span></div><button data-w="${i}" data-a="dn" aria-label="${i + 1}번째 바퀴 아래로">▼</button></div>`).join("")}</div><div class="lk-hole"></div></div></div>`);
+  const draw = () => idx.forEach((k, i) => {
+    const s = sets[i], w = $("lk").querySelector(`.wheel[data-w="${i}"]`), L = s.length;
+    w.dataset.v = s[k]; w.querySelector("b").textContent = s[k];
+    w.querySelector(".p").textContent = s[(k - 1 + L) % L]; w.querySelector(".n").textContent = s[(k + 1) % L];
+  });
+  const turn = (i, d) => { idx[i] = (idx[i] + d + sets[i].length) % sets[i].length; sfx("page"); draw(); };
+  $("lk").onclick = (ev) => { const b = ev.target.closest("button[data-a]"); if (b) turn(+b.dataset.w, b.dataset.a === "up" ? 1 : -1); };
+  $("lk").querySelectorAll(".win").forEach((w) => lkSwipe(w, (d) => turn(+w.dataset.w, d)));
+  lkOk(() => { if (idx.every((k, i) => sets[i][k] === ans[i])) return lkOpen(onOk); lkShake(); wrong(wrongText); });
+  draw();
+}
+
+/* 돌림판 자물쇠 (겹친 원판을 돌려 맨 위 붉은 표시에 맞춤)
+   rings: 바깥부터 [[글자…], [글자…]] · answer: 고리마다 맨 위에 와야 할 글자 · o.names: 고리 이름 · o.center: 가운데 글 */
+function ringLock(rings, answer, onOk, wrongText, o = {}) {
+  onOk = withSolve(onOk);
+  const N = rings.length, R = 132, inner = o.center ? 28 : 16;
+  // 안쪽 고리일수록 둘레가 짧아 글자가 붐비므로 더 두껍게 잡는다
+  const wt = rings.map((_, k) => 1 + 0.5 * k), wsum = wt.reduce((a, b) => a + b, 0), RW = wt.map((x) => ((R - inner) * x) / wsum);
+  const R0 = RW.map((_, k) => R - RW.slice(0, k).reduce((a, b) => a + b, 0));
+  const rot = rings.map(() => 0), pos = rings.map(() => 0);
+  const fills = ["#e9dcc0", "#d9c9a6", "#ecdfc4", "#cdbb95"];
+  const svg = rings.map((syms, k) => {
+    const w = RW[k], r0 = R0[k], rt = r0 - Math.min(w / 2, 17), n = syms.length;
+    const ticks = syms.map((_, j) => { const a = ((j + 0.5) / n) * Math.PI * 2; return `<line x1="${(Math.sin(a) * r0).toFixed(1)}" y1="${(-Math.cos(a) * r0).toFixed(1)}" x2="${(Math.sin(a) * (r0 - w)).toFixed(1)}" y2="${(-Math.cos(a) * (r0 - w)).toFixed(1)}" stroke="#2a2118" stroke-opacity=".35"/>`; }).join("");
+    const txt = syms.map((s, j) => { const deg = (j / n) * 360; return `<text transform="rotate(${deg}) translate(0 ${(-rt).toFixed(1)})" text-anchor="middle" dominant-baseline="central" font-size="${Math.min(22, w * 0.62, ((2 * Math.PI * rt) / n) * 0.78).toFixed(1)}">${s}</text>`; }).join("");
+    return `<g class="ring" data-r="${k}"><circle r="${r0}" fill="${fills[k % fills.length]}" stroke="#2a2118" stroke-width="1.5"/>${ticks}${txt}</g>`;
+  }).join("");   // 바깥 고리부터 그려서 안쪽이 위에 오게
+  inject(`<div class="lk lk-ring" id="lk"><svg viewBox="-140 -150 280 290" aria-hidden="true">${svg}<circle r="${inner}" fill="#2a2118"/>${o.center ? `<text class="ctr" text-anchor="middle" dominant-baseline="central">${o.center}</text>` : ""}<path d="M-10 -146 L10 -146 L0 -128 Z" fill="#a3281f"/></svg>
+    <div class="ring-ctl">${rings.map((_, k) => `<div><button data-r="${k}" data-a="ccw" aria-label="왼쪽으로">◀</button><span>${o.names?.[k] || (N === 1 ? "원판" : ["바깥 고리", "가운데 고리", "안쪽 고리", "맨 안 고리"][N === 2 && k === 1 ? 2 : k])}</span><button data-r="${k}" data-a="cw" aria-label="오른쪽으로">▶</button></div>`).join("")}</div></div>`);
+  const draw = () => rings.forEach((syms, k) => {
+    const g = $("lk").querySelector(`.ring[data-r="${k}"]`); g.style.transform = `rotate(${rot[k]}deg)`;
+    $("lk").querySelector(`.ring-ctl button[data-r="${k}"]`).parentNode.dataset.v = syms[pos[k]];
+  });
+  // ▶ = 원판을 시계 방향으로 한 칸: 맨 위에 오는 글자는 앞 글자
+  const turn = (k, d) => { const n = rings[k].length; rot[k] += d * (360 / n); pos[k] = ((pos[k] - d) % n + n) % n; sfx("page"); draw(); };
+  $("lk").onclick = (ev) => { const b = ev.target.closest("button[data-a]"); if (b) turn(+b.dataset.r, b.dataset.a === "cw" ? 1 : -1); };
+  lkOk(() => { if (rings.every((s, k) => s[pos[k]] === String(answer[k]))) return lkOpen(onOk); lkShake(); wrong(wrongText); });
+  draw();
+}
+
+/* 빗장 자물쇠 (나무 빗장 여러 개를 올리고 내려 맞춤)
+   labels: 빗장마다 새긴 글 · answer: "1010" 또는 [true,false,…] (1 = 올림) · o.up / o.down: 올림·내림을 부르는 말 */
+function switchLock(labels, answer, onOk, wrongText, o = {}) {
+  onOk = withSolve(onOk);
+  const ans = (Array.isArray(answer) ? answer.map((x) => (x ? "1" : "0")) : String(answer).split("")).join("");
+  const st = labels.map(() => false);
+  inject(`<div class="lk lk-switch" id="lk"><div class="sw-frame">${labels.map((l, i) => `<button class="sw" data-i="${i}" aria-pressed="false"><i></i><span>${l}</span></button>`).join("")}</div><p class="note sw-key">${o.up || "올림"} ▲ · ${o.down || "내림"} ▼</p></div>`);
+  const draw = () => $("lk").querySelectorAll(".sw").forEach((b, i) => { b.classList.toggle("on", st[i]); b.setAttribute("aria-pressed", st[i]); });
+  $("lk").onclick = (ev) => { const b = ev.target.closest(".sw"); if (!b) return; st[+b.dataset.i] = !st[+b.dataset.i]; sfx("page"); draw(); };
+  lkOk(() => { if (st.map((x) => (x ? "1" : "0")).join("") === ans) return lkOpen(onOk); lkShake(); wrong(wrongText); });
+  draw();
+}
+
+/* 별자리 잇기 자물쇠 (점을 차례로 이어 그림을 만듦)
+   answer: 잇는 점의 차례 [0,4,8] (점 번호는 왼쪽 위부터 0) · o.cols, o.rows (기본 3×3) · o.labels: 점마다 이름 · o.loose: 거꾸로 이어도 정답 · o.bg: 배경 "night"|"paper" */
+function patternLock(answer, onOk, wrongText, o = {}) {
+  onOk = withSolve(onOk);
+  const C = o.cols || 3, Rw = o.rows || 3, gap = 78, W = (C - 1) * gap + 70, H = (Rw - 1) * gap + 70;
+  const P = Array.from({ length: C * Rw }, (_, i) => [35 + (i % C) * gap, 35 + Math.floor(i / C) * gap]);
+  let seq = [];
+  inject(`<div class="lk lk-pat ${o.bg === "paper" ? "paper" : ""}" id="lk"><svg viewBox="0 0 ${W} ${H}"><polyline id="lk-line" fill="none"/>${P.map(([x, y], i) => `<g class="dot" data-p="${i}" role="button" aria-label="${o.labels?.[i] || i + 1 + "번 점"}"><circle cx="${x}" cy="${y}" r="24" class="hit"/><circle cx="${x}" cy="${y}" r="9" class="star"/>${o.labels?.[i] ? `<text x="${x}" y="${y + 26}" text-anchor="middle">${o.labels[i]}</text>` : ""}</g>`).join("")}</svg></div>`);
+  const draw = () => {
+    $("lk-line").setAttribute("points", seq.map((i) => P[i].join(",")).join(" "));
+    $("lk").querySelectorAll(".dot").forEach((g) => g.classList.toggle("on", seq.includes(+g.dataset.p)));
+  };
+  $("lk").onclick = (ev) => { const g = ev.target.closest(".dot"); if (!g) return; const i = +g.dataset.p; if (seq.includes(i)) return; seq.push(i); sfx("page"); draw(); };
+  const r = document.createElement("button"); r.className = "btn ghost"; r.textContent = "다시 잇기"; r.onclick = () => { seq = []; draw(); }; $("acts").prepend(r);
+  lkOk(() => {
+    const a = answer.join(","), s = seq.join(",");
+    if (s === a || (o.loose && s === answer.slice().reverse().join(","))) return lkOpen(onOk);
+    lkShake(); wrong(wrongText); seq = []; draw();
+  });
+  draw();
+}
+
+/* 두드림 자물쇠 (북 · 종 · 오방색 단추 따위를 정해진 차례로 누름. 같은 것을 여러 번 눌러도 됨)
+   symbols: ["북", "징"] 또는 [{label, color, sub}] · answer: 누를 차례(번호) [0,0,1] · 다 누르면 바로 맞춰 봄 */
+function seqLock(symbols, answer, onOk, wrongText, o = {}) {
+  onOk = withSolve(onOk);
+  const its = symbols.map((s) => (typeof s === "string" ? { label: s } : s));
+  let seq = [];
+  inject(`<div class="lk lk-seq" id="lk"><div class="seq-slots" id="lk-slots"></div><div class="seq-pads">${its.map((s, i) => `<button class="pad" data-s="${i}" style="${s.color ? `--pc:${s.color};` : ""}"><b>${s.label}</b>${s.sub ? `<small>${s.sub}</small>` : ""}</button>`).join("")}</div></div>`);
+  const draw = () => { $("lk-slots").innerHTML = answer.map((_, n) => { const i = seq[n]; return `<span class="${i === undefined ? "" : "on"}" style="${i !== undefined && its[i].color ? `--pc:${its[i].color}` : ""}">${i === undefined ? "" : its[i].label}</span>`; }).join(""); };
+  $("lk").onclick = (ev) => {
+    const b = ev.target.closest(".pad"); if (!b || seq.length >= answer.length) return;
+    seq.push(+b.dataset.s); sfx(o.sound || "page"); b.classList.remove("hit"); void b.offsetWidth; b.classList.add("hit"); draw();
+    if (seq.length === answer.length) {
+      if (seq.every((v, n) => v === answer[n])) return lkOpen(onOk);
+      setTimeout(() => { if (!$("lk")) return; lkShake(); wrong(wrongText); seq = []; draw(); }, 250);
+    }
+  };
+  const r = document.createElement("button"); r.className = "btn ghost"; r.textContent = "처음부터"; r.onclick = () => { seq = []; draw(); }; $("acts").prepend(r);
+  draw();
+}
 const formation = (rows) => `<span class="formation" style="grid-template-columns:repeat(${rows[0].length},14px)">${rows.join("").split("").map((c) => `<i class="${c === "o" ? "s" : c === "X" ? "e" : ""}"></i>`).join("")}</span>`;
 const GANJI_TABLE = `<table><tr><th>천간</th><td>갑</td><td>을</td><td>병</td><td>정</td><td>무</td><td>기</td><td>경</td><td>신</td><td>임</td><td>계</td><td></td><td></td></tr><tr><th>지지</th><td>자</td><td>축</td><td>인</td><td>묘</td><td>진</td><td>사</td><td>오</td><td>미</td><td>신</td><td>유</td><td>술</td><td>해</td></tr></table>`;
 
@@ -2005,7 +2124,7 @@ const A = {
   battleOn: () => !!BATTLE, battleStop: () => battleEnd(false),   // 함께하기: 다른 사람이 먼저 이겼을 때 내 싸움을 접는다
   sneak: (o, onDone) => startSneak(o, onDone), sneakOn: () => !!SNEAK,   // 숨어 지나가기
   questDone: (id) => { if (questState(id) !== 1) return false; S.flags.push("q-" + id); save(); qNote(`들어주었다: ${CH.quests[id].title}`, "done"); refreshQuests(); sfx("solve"); return true; },
-  card, textLock, codeLock, dirLock, choiceLock, orderLock, matchLock, toast, ok, closeModal, formation, GANJI_TABLE,
+  card, textLock, codeLock, dirLock, choiceLock, orderLock, matchLock, dialLock, ringLock, switchLock, patternLock, seqLock, toast, ok, closeModal, formation, GANJI_TABLE,
   has: (f) => S.flags.includes(f),
   flag: (f) => { if (!S.flags.includes(f)) S.flags.push(f); save(); },
   owns: (k) => S.inv.includes(k),

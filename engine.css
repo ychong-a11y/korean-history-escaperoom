@@ -514,3 +514,70 @@ table.keys kbd { min-width: 26px; height: 24px; font-size: 11.5px; border-bottom
 .kw dl div { padding: 8px 10px; border: 1px solid var(--line); border-left: 3px solid #a3281f; border-radius: 6px; background: var(--paper-3, #fbf6ea); }
 .kw dt { font: 700 15px "Noto Serif KR", serif; color: #2b2118; }
 .kw dd { margin: 3px 0 0; font-size: 13px; line-height: 1.5; color: #5c4d3c; word-break: keep-all; }
+
+/* ── 새 자물쇠들 ── */
+.lk { position: relative; margin: 8px auto 14px; user-select: none; -webkit-user-select: none; }
+.lk.jolt { animation: lkJolt .38s; }
+@keyframes lkJolt { 20% { transform: rotate(-4deg); } 45% { transform: rotate(3.5deg); } 70% { transform: rotate(-2deg); } }
+.lk button { font: inherit; cursor: pointer; }
+/* 다이얼: 놋쇠 맹꽁이자물쇠 */
+.lk-dial { width: max-content; max-width: 100%; padding-top: 56px; }
+.lk-shackle { position: absolute; left: 50%; top: 0; width: 46%; min-width: 120px; height: 84px; transform: translateX(-50%); border: 14px solid #8d8a84; border-bottom: 0; border-radius: 70px 70px 0 0; box-shadow: inset 0 3px 0 rgba(255,255,255,.35), 0 2px 0 rgba(0,0,0,.25); transition: transform .45s cubic-bezier(.3,1.6,.5,1); }
+.lk-dial.open .lk-shackle { transform: translateX(-50%) translateY(-22px) rotate(-14deg); transform-origin: 85% 100%; }
+.lk-body { position: relative; z-index: 1; padding: 14px 18px 16px; border-radius: 16px; background: linear-gradient(160deg, #e7c46a, #b88a2c 55%, #8a6418); box-shadow: inset 0 2px 0 rgba(255,255,255,.45), inset 0 -3px 0 rgba(0,0,0,.25), 0 8px 18px rgba(0,0,0,.28); }
+.lk-label { text-align: center; font: 900 14px "Noto Serif KR", serif; color: #4a3008; letter-spacing: .2em; margin-bottom: 8px; text-shadow: 0 1px 0 rgba(255,240,200,.6); }
+.lk-wheels { display: flex; gap: 8px; justify-content: center; }
+.wheel { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.wheel button { width: 46px; height: 30px; border: 0; border-radius: 8px; background: rgba(60,36,6,.25); color: #3a2406; font-size: 14px; }
+.wheel button:active { background: rgba(60,36,6,.45); }
+.win { width: 46px; height: 92px; border-radius: 8px; overflow: hidden; display: grid; grid-template-rows: 1fr 1.5fr 1fr; place-items: center; background: linear-gradient(#2a2118, #4a3a2a 30%, #5a4a38 50%, #4a3a2a 70%, #2a2118); box-shadow: inset 0 0 0 2px #3a2406, inset 0 6px 8px rgba(0,0,0,.6), inset 0 -6px 8px rgba(0,0,0,.6); touch-action: none; }
+.win b { font: 900 26px "Noto Serif KR", serif; color: #f6ead2; }
+.win span { font: 700 15px "Noto Serif KR", serif; color: rgba(246,234,210,.35); }
+.lk-hole { width: 14px; height: 22px; margin: 12px auto 0; border-radius: 7px 7px 3px 3px; background: #3a2406; box-shadow: inset 0 2px 3px rgba(0,0,0,.6); }
+/* 돌림판 */
+.lk-ring { width: min(340px, 100%); }
+.lk-ring svg { display: block; width: 100%; height: auto; filter: drop-shadow(0 6px 10px rgba(0,0,0,.25)); }
+.lk-ring .ring { transition: transform .35s cubic-bezier(.3,1.3,.5,1); }
+.lk-ring text { font-family: "Noto Serif KR", serif; font-weight: 900; fill: #2a2118; }
+.lk-ring text.ctr { fill: #f6ead2; font-size: 13px; }
+.lk-ring.open svg { animation: lkSpin .5s ease-in; }
+@keyframes lkSpin { to { transform: rotate(20deg) scale(.96); opacity: .7; } }
+.ring-ctl { display: grid; gap: 6px; margin-top: 6px; }
+.ring-ctl div { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.ring-ctl span { min-width: 92px; text-align: center; font-size: 14px; color: var(--ink-soft); }
+.ring-ctl button { width: 52px; height: 38px; border-radius: 10px; border: 1px solid var(--line); background: var(--paper-3); font-size: 16px; }
+/* 빗장 */
+.lk-switch .sw-frame { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; padding: 14px 12px; border-radius: 10px; background: linear-gradient(#6a4a2c, #4a321c); box-shadow: inset 0 0 0 3px #2e1e10, 0 6px 14px rgba(0,0,0,.25); }
+.lk-switch .sw { position: relative; width: 58px; height: 124px; border: 0; border-radius: 8px; background: #2e1e10; padding: 0; overflow: hidden; }
+.lk-switch .sw i { position: absolute; left: 7px; right: 7px; top: 58px; height: 36px; border-radius: 5px; background: linear-gradient(#d8b878, #a07a40); box-shadow: inset 0 2px 0 rgba(255,255,255,.4), 0 3px 4px rgba(0,0,0,.5); transition: top .22s cubic-bezier(.3,1.5,.5,1); }
+.lk-switch .sw.on i { top: 8px; }
+.lk-switch .sw span { position: absolute; left: 0; right: 0; bottom: 6px; font: 700 13px "Noto Serif KR", serif; color: #f6ead2; line-height: 1.2; word-break: keep-all; }
+.lk-switch .sw.on span { color: #ffd98a; }
+.lk-switch .sw-key { text-align: center; margin: 6px 0 0; }
+.lk-switch.open .sw-frame { animation: lkSlide .5s ease-in forwards; }
+@keyframes lkSlide { to { transform: translateX(40px); opacity: .5; } }
+/* 별자리 잇기 */
+.lk-pat { width: min(360px, 100%); padding: 10px; border-radius: 12px; background: radial-gradient(circle at 30% 20%, #2e3654, #12152a); box-shadow: 0 6px 14px rgba(0,0,0,.3); }
+.lk-pat.paper { background: #efe3c6; box-shadow: inset 0 0 0 2px #2a2118; }
+.lk-pat svg { display: block; width: 100%; height: auto; touch-action: manipulation; }
+.lk-pat .hit { fill: transparent; cursor: pointer; }
+.lk-pat .star { fill: #c8c4b8; transition: r .15s, fill .15s; pointer-events: none; }
+.lk-pat .dot.on .star { fill: #ffd76a; r: 12; }
+  .lk-pat text { fill: #d8d2c0; font: 700 16px "Noto Serif KR", serif; pointer-events: none; }
+.lk-pat.paper .star { fill: #6a5a46; } .lk-pat.paper .dot.on .star { fill: #a3281f; } .lk-pat.paper text { fill: #2a2118; }
+.lk-pat #lk-line { stroke: #ffd76a; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; opacity: .9; }
+.lk-pat.paper #lk-line { stroke: #a3281f; }
+.lk-pat.open { animation: lkGlow .5s; }
+@keyframes lkGlow { 50% { box-shadow: 0 0 30px #ffd76a; } }
+/* 두드림 */
+.seq-slots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; min-height: 46px; margin-bottom: 12px; }
+.seq-slots span { width: 40px; height: 40px; border-radius: 50%; border: 2px dashed rgba(42,33,24,.35); display: grid; place-items: center; font: 900 15px "Noto Serif KR", serif; }
+.seq-slots span.on { border: 0; background: var(--pc, #2a2118); color: #f6ead2; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+.seq-pads { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.seq-pads .pad { width: 78px; height: 78px; border-radius: 50%; border: 0; background: var(--pc, #6a4a2c); background: radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--pc, #6a4a2c) 70%, white), var(--pc, #6a4a2c) 60%, color-mix(in srgb, var(--pc, #6a4a2c) 70%, black)); color: #f6ead2; box-shadow: 0 5px 0 rgba(0,0,0,.35), 0 8px 14px rgba(0,0,0,.25); display: grid; place-content: center; text-shadow: 0 1px 2px rgba(0,0,0,.6); }
+.seq-pads .pad b { font: 900 18px "Noto Serif KR", serif; }
+.seq-pads .pad small { font-size: 11px; opacity: .85; }
+.seq-pads .pad.hit { animation: lkHit .22s; }
+@keyframes lkHit { 40% { transform: translateY(4px) scale(.94); box-shadow: 0 1px 0 rgba(0,0,0,.35); } }
+.lk-seq.open .seq-slots span.on { animation: lkGlow .5s; }
+.seq-slots span { width: auto; min-width: 40px; padding: 0 8px; border-radius: 20px; white-space: nowrap; font-size: 14px; }
