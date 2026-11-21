@@ -1806,7 +1806,7 @@ function openSettings() {
   card("설정", `<p class="note">게임이 잠시 멈췄어요. 닫으면 이어서 할 수 있어요.</p>
     <h3 style="margin:6px 0 6px">소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
-    ${ADMIN ? `<h3 style="margin:6px 0 6px">관리자 <span class="note">(이 기기에서만 보여요)</span></h3><div class="choices grid2" id="admin-go">${CHAPTERS.map((c, i) => `<button data-c="${i}"><b>${i === S.ch ? "✔ " : ""}제${i + 1}장</b> <span class="note">· ${c.place}</span></button>`).join("")}</div><p class="note" style="margin:8px 0 0">장을 누르면 문제를 풀지 않고 그 장으로 가요. 화면 오른쪽 위의 '다음 장 ▶' 단추${isTouch ? "" : "나 N 키"}로 한 장씩 넘길 수도 있어요.</p>` : ""}
+    ${ADMIN ? `<h3 style="margin:6px 0 6px">관리자 <span class="note">(이 기기에서만 보여요)</span></h3><p class="note" id="admin-pres" style="margin:0 0 8px">접속자 수를 읽는 중…</p><div class="choices grid2" id="admin-go">${CHAPTERS.map((c, i) => `<button data-c="${i}"><b>${i === S.ch ? "✔ " : ""}제${i + 1}장</b> <span class="note">· ${c.place}</span></button>`).join("")}</div><p class="note" style="margin:8px 0 0">장을 누르면 문제를 풀지 않고 그 장으로 가요. 화면 오른쪽 위의 '다음 장 ▶' 단추${isTouch ? "" : "나 N 키"}로 한 장씩 넘길 수도 있어요.</p>` : ""}
     <h3 style="margin:18px 0 6px">시점 <span class="note">(V 키로 바꾸기)</span></h3><div class="choices grid2" id="view-sel">${[["third", "3인칭", "내 모습이 보여요"], ["first", "1인칭", "내 눈으로 봐요"]].map(([k, t, d]) => `<button data-w="${k}"><b>${(thirdOn() ? "third" : "first") === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">인물 목소리</h3><div class="choices grid2" id="voice-sel">${[["mumble", "웅얼웅얼", "말하는 느낌의 소리"], ...(window.speechSynthesis ? [["tts", "읽어 주기", "기기의 한국어 음성"]] : []), ["off", "끄기", "글만 보기"]].map(([k, t, d]) => `<button data-v="${k}" style="${AU.voice === k ? "border-color:var(--ink);font-weight:700" : ""}">${AU.voice === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
@@ -1817,6 +1817,7 @@ function openSettings() {
   $("open-help").onclick = openHelp;
   $("vol-music").oninput = (e) => { AU.music = +e.target.value; saveSound(); if (AU.ctx) BUS.music.gain.value = AU.music * 0.5; };
   $("vol-fx").oninput = (e) => { AU.fx = +e.target.value; saveSound(); if (AU.ctx) { BUS.fx.gain.value = AU.fx; BUS.amb.gain.value = AU.fx * 0.6; } };
+  if ($("admin-pres")) presShow($("admin-pres"));
   if ($("admin-go")) $("admin-go").onclick = (e) => { const b = e.target.closest("button"); if (b) adminGo(+b.dataset.c); };
   $("view-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; setView(b.dataset.w); openSettings(); };
   $("voice-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; AU.voice = b.dataset.v; saveSound(); if (AU.voice === "tts") try { speechSynthesis.getVoices(); } catch (er) {} openSettings(); };
@@ -1886,7 +1887,20 @@ function disposeRoot() {
   scene.remove(ROOT);
 }
 let loadedCh = -1;   // 지금 지어진 장. 장 탈출이 두 번 불려도(협동: 친구의 탈출 + 내 연출 타이머) 한 장만 넘어가게
+/* 지금 접속한 사람 수 (presence.js). 이 컴퓨터에서 개발 · 검사할 때는 세지 않는다(주소에 ?pres=1 을 붙이면 셈). */
+const PRES_ON = (() => { try { return !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || new URLSearchParams(location.search).get("pres") === "1"; } catch (er) { return false; } })();
+const PRES_T = (location.pathname.split("/").pop() || "").replace(/\.html?$/, "") || "game";
+function presTell(ch) { if (PRES_ON) import("./presence.js").then((m) => m.presence({ t: PRES_T, ch, co: !!COOP })).catch(() => {}); }
+function presShow(el) {   // 관리자 설정 창: 지금 접속 수
+  import("./presence.js").then(async (m) => [await m.readPresence(), m.NAMES]).then(([p, names]) => {
+    if (!el.isConnected) return;
+    if (!p) { el.textContent = "접속자 수를 읽지 못했어요 (Firebase 규칙이 아직 게시되지 않았을 수 있어요)."; return; }
+    const rows = Object.entries(p.by).sort((a, b) => b[1].n - a[1].n).map(([t, b]) => `${names[t] || t} ${b.n}명`).join(" · ");
+    el.innerHTML = `<b>지금 ${p.live}명</b>${rows ? " · " + rows : ""}<br>오늘 들어온 기기 ${p.today}대 · 최근 7일 ${p.week}대`;
+  }).catch(() => { el.textContent = "접속자 수를 읽지 못했어요."; });
+}
 function loadChapter(i, resumePos) {
+  presTell(i);
   if (BATTLE) battleEnd(false); if (SNEAK) sneakEnd(false);
   loadedCh = i;
   disposeRoot();
@@ -2274,6 +2288,7 @@ function refreshIntro() {
 }
 export function start(theme) {
   THEME = theme; CHAPTERS = theme.chapters; SAVE = theme.saveKey;
+  presTell();
   Object.assign(MOODS, theme.moods || {});
   document.title = theme.title;
   $("intro-tag").textContent = theme.introTag || `3D 방탈출 · 전 ${CHAPTERS.length}장`;

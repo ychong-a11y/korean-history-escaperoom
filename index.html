@@ -358,7 +358,28 @@ try {
     b.style.cssText = "position:fixed;right:12px;bottom:12px;z-index:50;padding:7px 12px;border:1px solid #2a2118;background:#f4ecd9;color:#2a2118;font:700 13px 'Gowun Batang',serif;cursor:pointer";
     b.onclick = () => { localStorage.removeItem("hk-admin"); location.replace(location.pathname); };
     document.body.appendChild(b);
+    /* 관리자: 지금 접속한 사람 수 (30초마다 새로) */
+    const pv = document.createElement("div");
+    pv.id = "admin-pres";
+    pv.style.cssText = "position:fixed;right:12px;bottom:52px;z-index:50;max-width:min(340px,calc(100vw - 24px));padding:8px 12px;border:1px solid #2a2118;background:rgba(244,236,217,.97);color:#2a2118;font:13px/1.55 'Gowun Batang',serif;box-shadow:0 2px 8px rgba(0,0,0,.2)";
+    pv.textContent = "접속자 수를 읽는 중…";
+    document.body.appendChild(pv);
+    const names = () => Object.fromEntries((window.THEMES || []).map((t) => [t.id, t.title]));
+    const draw = () => import("./presence.js").then((m) => m.readPresence()).then((p) => {
+      if (!p) { pv.textContent = "접속자 수를 읽지 못했어요 (Firebase 규칙이 아직 게시되지 않았을 수 있어요)."; return; }
+      const nm = names();
+      const rows = Object.entries(p.by).sort((a, b) => b[1].n - a[1].n).map(([t, x]) => {
+        const chs = Object.entries(x.ch).sort((a, b) => a[0] - b[0]).map(([c, n]) => `${+c + 1}장 ${n}`).join(", ");
+        return `<div>· ${t === "hub" ? "첫 화면" : nm[t] || t} <b>${x.n}명</b>${chs ? ` <span style="opacity:.7">(${chs})</span>` : ""}${x.co ? ` <span style="opacity:.7">함께하기 ${x.co}</span>` : ""}</div>`;
+      }).join("");
+      pv.innerHTML = `<b style="font-size:15px">지금 접속 ${p.live}명</b>${rows}<div style="opacity:.7;margin-top:4px">오늘 들어온 기기 ${p.today}대 · 최근 7일 ${p.week}대</div>`;
+    }).catch(() => { pv.textContent = "접속자 수를 읽지 못했어요."; });
+    draw(); setInterval(draw, 30000);
   }
+} catch (e) {}
+/* 접속자 수 세기: 이 기기가 첫 화면에 있음을 익명으로 알린다. 이 컴퓨터(localhost)에서 개발할 때는 세지 않는다(?pres=1 이면 셈). */
+try {
+  if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || new URLSearchParams(location.search).get("pres") === "1") import("./presence.js").then((m) => m.presence({ t: "hub" })).catch(() => {});
 } catch (e) {}
 /* ===================== 공통 ===================== */
 const $ = (id) => document.getElementById(id);
