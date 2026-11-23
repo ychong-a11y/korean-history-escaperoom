@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>이용 보고서</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Serif+KR:wght@500;700;900&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* 관리자 이용 보고서: 첫 화면과 같은 한지 · 먹 · 인주 바탕. 빛깔은 '오늘' 하나에만 */
+:root { --ink: #2a2118; --ink2: #5a4a38; --ink3: #7b6a55; --line: rgba(42,33,24,.18); --red: #a3281f; --paper: #f4ecd9; --bar: #8a7a66; }
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { min-height: 100vh; color: var(--ink); background: #e7dcc3; font: 15px/1.6 "Noto Sans KR", system-ui, sans-serif; }
+.wrap { max-width: 1040px; margin: 0 auto; padding: 32px 16px 64px; }
+.leaf { padding: 24px 32px 32px; border: 3px solid var(--ink); outline: 1px solid var(--ink); outline-offset: -8px; background: rgba(250,245,232,.55); }
+header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding-bottom: 16px; border-bottom: 2px solid var(--ink); }
+.seal { display: grid; place-items: center; width: 36px; height: 36px; flex: none; background: var(--red); color: #f6ead2; font: 900 20px/1 "Noto Serif KR", serif; border-radius: 4px; box-shadow: inset 0 0 0 2px var(--red), inset 0 0 0 3px rgba(246,234,210,.75); }
+h1 { margin: 0; font: 900 26px/1.2 "Noto Serif KR", serif; flex: 1; min-width: 160px; }
+.range { display: flex; border: 1px solid var(--ink); }
+.range button { border: 0; background: transparent; padding: 8px 16px; font: 700 14px "Noto Serif KR", serif; color: var(--ink2); cursor: pointer; transition: background-color .15s, color .15s; }
+.range button + button { border-left: 1px solid var(--ink); }
+.range button:hover { background: rgba(42,33,24,.06); }
+.range button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+.range button:focus-visible, a:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+.back { color: var(--ink2); font-size: 14px; text-decoration: none; }
+.back:hover { color: var(--red); }
+.live { margin: 16px 0 0; font-size: 14px; color: var(--ink2); }
+.live b { color: var(--ink); }
+.figs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 24px 0 32px; }
+.fig { padding: 16px 20px; border: 1px solid var(--line); background: rgba(255,252,244,.7); }
+.fig span { display: block; font-size: 13px; color: var(--ink2); }
+.fig b { display: block; margin-top: 4px; font: 700 30px/1.15 "Noto Serif KR", serif; font-variant-numeric: tabular-nums; }
+.fig small { display: block; margin-top: 4px; font-size: 12px; color: var(--ink3); }
+h2 { margin: 0 0 12px; font: 700 18px/1.3 "Noto Serif KR", serif; }
+h2 small { margin-left: 8px; font: 400 13px "Noto Sans KR", sans-serif; color: var(--ink3); }
+section + section { margin-top: 40px; }
+.chart { position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.chart .ax { font: 12px "Noto Sans KR", sans-serif; fill: var(--ink3); font-variant-numeric: tabular-nums; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .b { fill: var(--bar); }
+.chart .b.now { fill: var(--red); }
+.chart .hit { fill: transparent; cursor: default; }
+.chart .hit:hover + .b, .chart g:hover .b { opacity: .8; }
+.tip { position: absolute; pointer-events: none; padding: 4px 8px; background: var(--ink); color: var(--paper); font-size: 13px; white-space: nowrap; transform: translate(-50%, -100%); opacity: 0; transition: opacity .12s; }
+.tip.on { opacity: 1; }
+.two > section { margin-top: 0; }
+.two { display: grid; grid-template-columns: 2fr 1fr; gap: 32px; align-items: start; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { padding: 8px 8px; border-bottom: 1px solid var(--line); text-align: right; font-variant-numeric: tabular-nums; vertical-align: top; }
+th { font: 700 13px "Noto Serif KR", serif; color: var(--ink2); border-bottom: 2px solid var(--ink); white-space: nowrap; }
+th:first-child, td:first-child { text-align: left; }
+td .g { display: block; font-size: 12px; color: var(--ink3); }
+td.funnel { text-align: left; font-size: 13px; color: var(--ink2); }
+.steps { display: flex; gap: 2px; align-items: flex-end; height: 24px; margin-bottom: 4px; }
+.steps i { flex: 1; min-width: 6px; max-width: 24px; background: var(--bar); border-radius: 2px 2px 0 0; }
+.steps i.c { background: var(--red); }
+tr.none td { color: var(--ink3); }
+.note { margin-top: 40px; padding-top: 16px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.7; color: var(--ink2); }
+.note ul { margin: 0; padding-left: 20px; }
+.msg { padding: 48px 0; text-align: center; color: var(--ink2); }
+.demo { margin: 16px 0 0; padding: 8px 12px; border: 1px dashed var(--red); color: var(--red); font-size: 13px; }
+@media (max-width: 760px) {
+  .leaf { padding: 16px 16px 24px; }
+  .figs { grid-template-columns: 1fr 1fr; }
+  .two { grid-template-columns: 1fr; }
+  .hide-s { display: none; }
+}
+</style>
+</head>
+<body>
+<div class="wrap"><div class="leaf">
+  <header>
+    <span class="seal">錄</span>
+    <h1>이용 보고서</h1>
+    <div class="range" role="group" aria-label="기간">
+      <button data-d="1">오늘</button><button data-d="7" aria-pressed="true">7일</button><button data-d="30">30일</button><button data-d="90">90일</button>
+    </div>
+    <a class="back" href="./">← 첫 화면</a>
+  </header>
+  <div id="body"><p class="msg">기록을 읽는 중…</p></div>
+</div></div>
+<script>window.THEMES = [];</script>
+<script src="themes/upcoming.js"></script>
+<script type="module">
+import { FIREBASE_CONFIG as CFG } from "./net-config.js";
+import { readPresence, dayKey } from "./presence.js";
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[c]);
+const admin = (() => { try { return localStorage.getItem("hk-admin") === "1"; } catch (e) { return false; } })();
+const isLocal = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);
+const DEMO = isLocal && new URLSearchParams(location.search).get("demo") === "1";   // 이 컴퓨터에서 화면 모양만 볼 때 쓰는 예시 자료
+const THEMES = (window.THEMES || []).filter((t) => t.available);
+const chapters = (t) => +((String(t.playtime || "").match(/전 ([0-9]+)장/) || [0, 6])[1]);
+const ORDER = { "쉬움": 0, "보통": 1, "어려움": 2 };
+THEMES.sort((a, b) => (ORDER[a.grade] ?? 1) - (ORDER[b.grade] ?? 1) || (a.stars || 0) - (b.stars || 0));
+let DATA = {}, RANGE = 7;
+
+function boot() {
+if (!admin) {
+  $("body").innerHTML = `<p class="msg">관리자 모드에서만 볼 수 있어요.</p>`;
+  document.querySelector(".range").remove();
+} else {
+  document.querySelectorAll(".range button").forEach((b) => (b.onclick = () => {
+    RANGE = +b.dataset.d; document.querySelectorAll(".range button").forEach((x) => x.setAttribute("aria-pressed", x === b)); draw();
+  }));
+  load();
+}
+}
+
+const days = (n) => { const out = []; const d = new Date(); d.setHours(12, 0, 0, 0); for (let i = n - 1; i >= 0; i--) { const x = new Date(d); x.setDate(d.getDate() - i); out.push(dayKey(x)); } return out; };
+
+async function load() {
+  if (DEMO) { DATA = demo(); draw(); return; }
+  const from = days(90)[0];
+  const r = await fetch(`${CFG.databaseURL}/stats.json?orderBy=${encodeURIComponent('"$key"')}&startAt=${encodeURIComponent(`"${from}"`)}`).catch(() => null);
+  if (!r || !r.ok) { $("body").innerHTML = `<p class="msg">기록을 읽지 못했어요.<br>Firebase 규칙(stats 칸)이 아직 게시되지 않았을 수 있어요.</p>`; return; }
+  DATA = (await r.json()) || {};
+  draw();
+  readPresence().then((p) => { const el = $("live"); if (el && p) el.innerHTML = `지금 접속 <b>${p.live}명</b>`; }).catch(() => {});
+}
+
+function draw() {
+  const list = days(RANGE), today = dayKey();
+  const perDay = list.map((d) => Object.keys(DATA[d] || {}).length);
+  const devices = new Set(), th = {}, hours = Array(24).fill(0);
+  let minutes = 0, clears = 0, coop = new Set();
+  for (const d of list) for (const [uid, r] of Object.entries(DATA[d] || {})) {
+    devices.add(uid);
+    for (let h = 0; h < 24; h++) if ((r.hr || 0) & (1 << h)) hours[h]++;
+    for (const [t, x] of Object.entries(r.th || {})) {
+      const s = (th[t] ||= { dev: new Set(), clr: new Set(), co: new Set(), min: 0, far: {} });
+      s.dev.add(uid); s.min += x.m || 0; minutes += x.m || 0;
+      if (x.c) { s.clr.add(uid); clears++; }
+      if (x.co) { s.co.add(uid); coop.add(uid); }
+      s.far[uid] = Math.max(s.far[uid] ?? 0, (x.ch || 0) + (x.c ? 1 : 0));   // 0부터 센 장 + 탈출이면 하나 더
+    }
+  }
+  const avgDay = perDay.reduce((a, b) => a + b, 0) / list.length;
+  const hm = (m) => (m >= 60 ? `${Math.floor(m / 60)}시간 ${m % 60}분` : `${m}분`);
+  const empty = !devices.size;
+
+  const rows = THEMES.map((t) => {
+    const s = th[t.id], n = chapters(t);
+    if (!s) return `<tr class="none"><td>${esc(t.title)}<span class="g">${esc(t.grade || "")}</span></td><td>0</td><td>0</td><td class="hide-s">-</td><td>-</td><td class="funnel hide-s"></td></tr>`;
+    const reach = Array.from({ length: n + 1 }, (_, k) => Object.values(s.far).filter((v) => v >= k).length);   // k장까지 간 기기 (마지막 칸 = 탈출)
+    const max = reach[0] || 1;
+    const bars = reach.map((v, k) => `<i class="${k === n ? "c" : ""}" style="height:${Math.max(2, Math.round((v / max) * 24))}px" title="${k === n ? "탈출" : `${k + 1}장`} ${v}대"></i>`).join("");
+    const words = reach.map((v, k) => (k === n ? `탈출 ${v}` : `${k + 1}장 ${v}`)).join(" · ");
+    return `<tr><td>${esc(t.title)}<span class="g">${esc(t.grade || "")}</span></td><td>${s.dev.size}</td><td>${s.clr.size}<span class="g">${Math.round((s.clr.size / s.dev.size) * 100)}%</span></td><td class="hide-s">${s.co.size}</td><td>${hm(Math.round(s.min / s.dev.size))}</td><td class="funnel hide-s"><div class="steps">${bars}</div>${words}</td></tr>`;
+  }).join("");
+
+  $("body").innerHTML = `
+    ${DEMO ? `<p class="demo">예시 자료로 그린 화면이에요 (이 컴퓨터에서만, 화면 확인용)</p>` : ""}
+    <p class="live" id="live"></p>
+    <div class="figs">
+      <div class="fig"><span>들어온 기기</span><b>${devices.size}대</b><small>${RANGE === 1 ? "오늘" : `최근 ${RANGE}일, 같은 기기는 한 번`}</small></div>
+      <div class="fig"><span>하루 평균</span><b>${avgDay.toFixed(avgDay < 10 ? 1 : 0)}대</b><small>날마다 센 기기의 평균</small></div>
+      <div class="fig"><span>플레이 시간</span><b>${hm(minutes)}</b><small>테마 화면을 켜 둔 시간의 합</small></div>
+      <div class="fig"><span>탈출</span><b>${clears}번</b><small>함께하기로 한 기기 ${coop.size}대</small></div>
+    </div>
+    ${empty ? `<p class="msg">이 기간에는 아직 기록이 없어요.</p>` : `
+    <div class="two">
+      <section><h2>날마다 들어온 기기<small>${RANGE === 1 ? "오늘" : `최근 ${RANGE}일`}</small></h2><div class="chart" id="c-day"></div></section>
+      <section><h2>이용한 시각<small>그 시간에 켜져 있던 기기</small></h2><div class="chart" id="c-hour"></div></section>
+    </div>`}
+    <section><h2>테마별<small>장 막대: 그 장까지 간 기기 수, 붉은 칸이 탈출</small></h2>
+      <table><thead><tr><th>테마</th><th>들어간 기기</th><th>탈출</th><th class="hide-s">함께하기</th><th>기기당 시간</th><th class="hide-s" style="text-align:left">어디까지 갔나</th></tr></thead><tbody>${rows}</tbody></table>
+    </section>
+    <div class="note"><ul>
+      <li>기기는 브라우저 하나를 한 대로 셉니다. 같은 컴퓨터라도 다른 브라우저 · 시크릿 창 · 기록이 지워지는 학교 컴퓨터는 새 기기로 잡혀요.</li>
+      <li>이름 · 기기 정보 · 위치는 모으지 않고, 이름 없는 번호와 플레이 기록만 남깁니다. 날짜는 그 기기의 시계 기준이에요.</li>
+      <li>시간은 화면이 켜져 있던 1분 단위로 셉니다. 첫 화면에 머문 시간은 플레이 시간에 넣지 않았어요.</li>
+    </ul></div>`;
+  if (!empty) {
+    bars($("c-day"), list.map((d, i) => ({ v: perDay[i], label: RANGE <= 7 ? md(d) : (i % Math.ceil(list.length / 8) === 0 || d === today ? md(d) : ""), tip: `${md(d)} · ${perDay[i]}대`, now: d === today })), 640, 240);
+    const nowH = new Date().getHours();
+    bars($("c-hour"), hours.map((v, h) => ({ v, label: h % 6 === 0 ? `${h}시` : "", tip: `${h}시 · ${v}대`, now: false })), 320, 240);
+  }
+}
+const md = (d) => `${+d.slice(5, 7)}/${+d.slice(8, 10)}`;
+
+/* 막대 하나짜리 그림: 옅은 눈금, 막대 끝만 둥글게, 오늘만 붉게. 막대에 마우스를 올리면 숫자 */
+function bars(el, pts, W, H) {
+  const L = 32, B = 24, T = 8, max = Math.max(1, ...pts.map((p) => p.v));
+  const step = niceStep(max), top = Math.ceil(max / step) * step;
+  const bw = (W - L) / pts.length, gap = Math.min(8, bw * 0.3), y = (v) => T + (H - T - B) * (1 - v / top);
+  let g = "";
+  for (let v = 0; v <= top; v += step) g += `<line class="grid" x1="${L}" x2="${W}" y1="${y(v)}" y2="${y(v)}"/><text class="ax" x="${L - 8}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+  pts.forEach((p, i) => {
+    const x = L + i * bw + gap / 2, w = bw - gap, h = Math.max(0, y(0) - y(p.v)), r = Math.min(4, w / 2, h);
+    const path = h > 0 ? `M${x},${y(0)} V${y(p.v) + r} Q${x},${y(p.v)} ${x + r},${y(p.v)} H${x + w - r} Q${x + w},${y(p.v)} ${x + w},${y(p.v) + r} V${y(0)} Z` : "";
+    g += `<g data-tip="${esc(p.tip)}" data-x="${x + w / 2}" data-y="${y(p.v)}"><rect class="hit" x="${L + i * bw}" y="${T}" width="${bw}" height="${H - T - B}"/>${path ? `<path class="b${p.now ? " now" : ""}" d="${path}"/>` : ""}</g>`;
+    if (p.label) g += `<text class="ax" x="${x + w / 2}" y="${H - 6}" text-anchor="middle">${p.label}</text>`;
+  });
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="막대 그림">${g}</svg><div class="tip"></div>`;
+  const tip = el.querySelector(".tip"), svg = el.querySelector("svg");
+  svg.querySelectorAll("g[data-tip]").forEach((n) => {
+    n.addEventListener("mouseenter", () => { const k = svg.getBoundingClientRect().width / W; tip.textContent = n.dataset.tip; tip.style.left = n.dataset.x * k + "px"; tip.style.top = n.dataset.y * k - 6 + "px"; tip.classList.add("on"); });
+    n.addEventListener("mouseleave", () => tip.classList.remove("on"));
+  });
+}
+function niceStep(max) { const raw = max / 4, p = 10 ** Math.floor(Math.log10(raw)), f = raw / p; return Math.max(1, (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * p); }
+
+/* 화면 확인용 예시 자료 (localhost + ?demo=1 에서만) */
+function demo() {
+  const out = {}, ids = THEMES.map((t) => t.id); let seed = 7;
+  const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  days(90).forEach((d, di) => {
+    const wd = new Date(d).getDay(), n = wd === 0 || wd === 6 ? Math.round(rnd() * 4) : Math.round(6 + rnd() * 22 + di / 8);
+    const day = (out[d] = {});
+    for (let i = 0; i < n; i++) {
+      const h = [9, 10, 11, 13, 14, 15, 20][Math.floor(rnd() * 7)], t = ids[Math.floor(rnd() * ids.length)], T = THEMES.find((x) => x.id === t), nc = chapters(T);
+      const ch = Math.min(nc - 1, Math.floor(rnd() * nc * 1.2)), c = ch === nc - 1 && rnd() > 0.4;
+      day["d" + di + "-" + i] = { f: 0, l: 0, hr: (1 << h) | (rnd() > 0.5 ? 1 << (h + 1) : 0), hub: 2, th: { [t]: { m: 8 + Math.round(rnd() * 50), ch, ...(c ? { c: true } : {}), ...(rnd() > 0.8 ? { co: true } : {}) } } };
+    }
+  });
+  return out;
+}
+boot();   // 맨 끝에서 시작 (아래 함수 · 상수가 모두 준비된 뒤)
+</script>
+</body>
+</html>

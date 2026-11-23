@@ -2351,7 +2351,7 @@ let loadedCh = -1;   // 지금 지어진 장. 장 탈출이 두 번 불려도(�
 /* 지금 접속한 사람 수 (presence.js). 이 컴퓨터에서 개발 · 검사할 때는 세지 않는다(주소에 ?pres=1 을 붙이면 셈). */
 const PRES_ON = (() => { try { return !/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname) || new URLSearchParams(location.search).get("pres") === "1"; } catch (er) { return false; } })();
 const PRES_T = (location.pathname.split("/").pop() || "").replace(/\.html?$/, "") || "game";
-function presTell(ch) { if (PRES_ON) import("./presence.js").then((m) => m.presence({ t: PRES_T, ch, co: !!COOP })).catch(() => {}); }
+function presTell(ch, clear) { if (PRES_ON) import("./presence.js").then((m) => m.presence({ t: PRES_T, ch, co: !!COOP, clear })).catch(() => {}); }
 function presShow(el) {   // 관리자 설정 창: 지금 접속 수
   import("./presence.js").then(async (m) => [await m.readPresence(), m.NAMES]).then(([p, names]) => {
     if (!el.isConnected) return;
@@ -2441,6 +2441,7 @@ function endGame() {
   hintEarn(SAVE + ":" + S.ch);
   $("end-time").textContent = fmt(S.elapsed); $("end-hints").textContent = S.hints + "개"; $("end-wrong").textContent = S.wrong + "번";
   lsSet("escape-cleared-" + SAVE, fmt(S.elapsed));   // 테마 고르는 화면의 '탈출 성공' 표시용
+  presTell(S.ch, true);   // 관리자 보고서의 '탈출' 수
   if (COOP) COOP.onEnd(); else store.del();
   $("fade").style.opacity = 1;
   setTimeout(() => { $("ending").classList.remove("hidden"); $("fade").style.opacity = 0; }, 1200);
