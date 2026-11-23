@@ -15,8 +15,8 @@ CHAPTERS.push({
   place: "새벽의 마당", when: "어느 해 봄 · 한양의 한 골목",
   atmosphere: { hdri: "qwantani_dawn_puresky", hdrExposure: 0.55,  top: 0x29386b, mid: 0x8c789e, low: 0xf29e73, sun: [1, 0.22, 0.12], sunCol: 0xff8c40, fog: 0x7d7088, hemiSky: 0xc8c4e0, hemiGround: 0x5a4630, hemiI: 1.05, light: 0xffc28a, lightI: 2.2 },
   items: {
-    lamp: { icon: "🪔", name: "작은 등잔", desc: "이름패 뒤 벽감에서 찾은 작은 등잔. 어두운 곳을 비출 수 있다." },
-    key1: { icon: "🗝️", name: "녹슨 열쇠", desc: "해 뜨는 쪽 장독에서 꺼낸 열쇠. 기름 먹인 천에 싸여 있었다." },
+    lamp: { icon: "燈", name: "작은 등잔", desc: "이름패 뒤 벽감에서 찾은 작은 등잔. 어두운 곳을 비출 수 있다." },
+    key1: { icon: "鑰", name: "녹슨 열쇠", desc: "해 뜨는 쪽 장독에서 꺼낸 열쇠. 기름 먹인 천에 싸여 있었다." },
   },
   hints: [
     "서안의 책장은 차례가 뒤섞여 있어요. '누구 다음', '누구에게서 물려받음'을 이어 붙여 임금들의 차례를 다시 세워 보세요.",
@@ -141,8 +141,8 @@ CHAPTERS.push({
   place: "훈련원 시험장", when: "임신년 봄 · 한양 훈련원",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75,  top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.4, 0.85, 0.35], sunCol: 0xfff0c0, glow: 0.6, fog: 0xb8c8d8, fogNear: 40, fogFar: 120, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.4 },
   items: {
-    bark: { icon: "🌿", name: "버드나무 껍질", desc: "버드나무 가지에서 벗겨 낸 질긴 껍질. 무언가를 단단히 감아 묶을 수 있다." },
-    bow: { icon: "🏹", name: "고친 활", desc: "부러진 곳을 버드나무 껍질로 감아 고친 활. 과녁을 겨눌 수 있다." },
+    bark: { icon: "皮", name: "버드나무 껍질", desc: "버드나무 가지에서 벗겨 낸 질긴 껍질. 무언가를 단단히 감아 묶을 수 있다." },
+    bow: { icon: "弓", name: "고친 활", desc: "부러진 곳을 버드나무 껍질로 감아 고친 활. 과녁을 겨눌 수 있다." },
   },
   hints: [
     "시험관의 이야기와 게시판의 규칙을 함께 읽으세요. 부러진 활은 무엇으로 감을 수 있을까요?",
@@ -245,10 +245,10 @@ CHAPTERS.push({
       if (hit) { const p = L.targets[i].worldToLocal(hit.point.clone()); a.position.set(p.x, p.y, 0.4); } else a.position.z = 0.4;
       collectClickables();
       const n = [0, 1, 2].filter((k) => A.has("c2_shot" + k)).length;
-      if (n < 3) return toast(`🎯 명중 (${n}/3)`);
+      if (n < 3) return toast(`명중 (${n}/3)`);
       A.flag("c2_shot"); A.questDone("c2_shoot");
       A.note("일기: 처음 이 시험장에 선 임신년, 나는 스물여덟이었고 시험엔 떨어졌다. 네 해가 지난 병자년, 셋째 등급으로 합격해 홍패를 받았다.");
-      return A.card("🎯 활쏘기를 마쳤다", `<p>마지막 화살이 퍽 꽂히자 일기장이 저 혼자 한 장 넘어갔다.</p><div class="letter">"임신년. 처음 이 시험장에 섰다. 스물여덟. 떨어졌다.<br>네 해 뒤 <b>병자년</b>, <b>셋째 등급</b>으로 붙어 홍패를 받았다."</div><p class="note">이제 시험관 천막의 명부를 볼 수 있다.</p>`);
+      return A.card("활쏘기를 마쳤다", `<p>마지막 화살이 퍽 꽂히자 일기장이 저 혼자 한 장 넘어갔다.</p><div class="letter">"임신년. 처음 이 시험장에 섰다. 스물여덟. 떨어졌다.<br>네 해 뒤 <b>병자년</b>, <b>셋째 등급</b>으로 붙어 홍패를 받았다."</div><p class="note">이제 시험관 천막의 명부를 볼 수 있다.</p>`);
     }
     if (id === "roster") {
       if (!A.has("c2_shot")) return A.card("합격자 명부", `<p>시험관이 손바닥으로 덮는다. "활쏘기부터 마치고 오게."</p>`);
@@ -275,8 +275,8 @@ CHAPTERS.push({
   place: "국경의 섬", when: "정해년 가을 · 두만강 녹둔도",
   atmosphere: { hdri: "belfast_sunset_puresky", hdrExposure: 0.6,  top: 0x2b335c, mid: 0xb0705a, low: 0xff9a4d, sun: [-1, 0.12, 0.25], sunCol: 0xff6a20, fog: 0x8a6a60, fogNear: 25, fogFar: 90, hemiSky: 0xe0b090, hemiGround: 0x4a3a28, hemiI: 0.95, light: 0xff9a5a, lightI: 2.0 },
   items: {
-    towerKey: { icon: "🔑", name: "망루 열쇠", desc: "거문고 울림통 안에서 나온 열쇠. 망루 사다리 자물쇠에 맞을 것 같다." },
-    whiteRobe: { icon: "🥋", name: "흰 옷", desc: "벼슬 없는 사람이 입는 흰 옷. 백의종군(白衣從軍)의 '백의'." },
+    towerKey: { icon: "鑰", name: "망루 열쇠", desc: "거문고 울림통 안에서 나온 열쇠. 망루 사다리 자물쇠에 맞을 것 같다." },
+    whiteRobe: { icon: "衣", name: "흰 옷", desc: "벼슬 없는 사람이 입는 흰 옷. 백의종군(白衣從軍)의 '백의'." },
   },
   hints: [
     "이 진지 곳곳의 글에는 한자가 섞여 있어요. 군막 옆 '글공부 판'이 한자 사전 역할을 해요.",
@@ -395,8 +395,8 @@ CHAPTERS.push({
   place: "남쪽 바다의 진영", when: "임진년 봄 · 전라 좌수영",
   atmosphere: { hdri: "qwantani_morning_puresky", hdrExposure: 0.8,  top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [0.5, 0.55, -0.6], sunCol: 0xffe0a0, glow: 0.7, fog: 0xb0c4d4, fogNear: 50, fogFar: 160, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff0d8, lightI: 2.3 },
   items: {
-    shedKey: { icon: "🗝️", name: "창고 열쇠", desc: "'5년 뒤에 열라' 상자에서 나온 열쇠." },
-    signalFlag: { icon: "🚩", name: "신호 깃발", desc: "화포 창고에서 나온 신호 깃발. 지휘선에 오를 때 필요하다." },
+    shedKey: { icon: "鑰", name: "창고 열쇠", desc: "'5년 뒤에 열라' 상자에서 나온 열쇠." },
+    signalFlag: { icon: "旗", name: "신호 깃발", desc: "화포 창고에서 나온 신호 깃발. 지휘선에 오를 때 필요하다." },
   },
   hints: [
     "상자는 '적이 다시 오는 해의 이름'을 물어요. 언제 다시 오는지는 거북선 돛대 아래 쪽지에 있어요.",
@@ -518,7 +518,7 @@ CHAPTERS.push({
   place: "어두운 옥", when: "정유년 봄 · 한양 의금부",
   atmosphere: { top: 0x05070f, mid: 0x0b1020, low: 0x161c30, sun: [0.3, 0.6, 0.5], sunCol: 0x8090c0, glow: 0.3, fog: 0x0b0d14, fogNear: 14, fogFar: 45, hemiSky: 0x8a9ac0, hemiGround: 0x4a3a2a, hemiI: 1.6, light: 0x8aa0d0, lightI: 0.5, exposure: 1.45 },
   items: {
-    robe5: { icon: "🥋", name: "흰 옷", desc: "벼슬 없는 군사의 흰 옷. 두 번째 백의종군." },
+    robe5: { icon: "衣", name: "흰 옷", desc: "벼슬 없는 군사의 흰 옷. 두 번째 백의종군." },
   },
   hints: [
     "벽의 자국이 전부일까요? 무언가에 가려진 부분이 있어요.",
@@ -648,7 +648,7 @@ CHAPTERS.push({
   atmosphere: { hdri: "qwantani_sunrise_puresky", hdrExposure: 0.6,  top: 0x3b4a6a, mid: 0x8a8ea0, low: 0xd8a888, sun: [0.8, 0.12, -0.6], sunCol: 0xff9a60, fog: 0x8a909c, fogNear: 30, fogFar: 140, hemiSky: 0xc8d0e8, hemiGround: 0x404650, hemiI: 1.0, light: 0xffd0a8, lightI: 1.8 },
   eye: 1.6,
   items: {
-    drumstick: { icon: "🥁", name: "북채", desc: "지휘선의 큰 북을 칠 북채. 북소리는 공격 신호다." },
+    drumstick: { icon: "桴", name: "북채", desc: "지휘선의 큰 북을 칠 북채. 북소리는 공격 신호다." },
   },
   hints: [
     "노 젓는 군사는 물살이 '해가 가장 높이 뜰 무렵' 바뀐다고 해요. 난간의 십이시 판에서 그때를 찾으세요.",
@@ -860,6 +860,9 @@ export default {
       ["칠천량 해전(1597)", "원균이 이끈 조선 수군이 크게 져 배를 거의 다 잃은 싸움"],
       ["명량 해전(1597)", "울돌목의 좁고 빠른 물길에서 배 13척으로 130여 척의 일본 수군을 물리침"],
       ["노량 해전(1598)", "물러가는 일본 수군을 막은 마지막 바다 싸움. 이순신이 전사함"],
+    ],
+    photos: [
+      { src: "assets/photos/diary-nanjung.jpg", caption: "『난중일기』와 서간첩", credit: "공공 저작물 · Wikimedia Commons" },
     ],
   },
 };

@@ -167,7 +167,7 @@ CHAPTERS.push({
   place: "닫힌 성문", when: "668년 가을 · 평양성",
   atmosphere: { hdri: "qwantani_dusk_2_puresky", hdrExposure: 0.6, top: 0x2a2f4a, mid: 0x8a6a6a, low: 0xd08a5a, sun: [-0.8, 0.14, -0.5], sunCol: 0xff8a40, glow: 0.6, fog: 0x6e5e5a, fogNear: 30, fogFar: 120, hemiSky: 0xd8b8a8, hemiGround: 0x4a3a2a, hemiI: 1.0, light: 0xffaa70, lightI: 1.8 },
   items: {
-    millet: { icon: "🌾", name: "좁쌀 자루", desc: "창고에 남아 있던 좁쌀을 담은 자루. 배고픈 사람에게 나눠 줄 수 있다." },
+    millet: { icon: "粟", name: "좁쌀 자루", desc: "창고에 남아 있던 좁쌀을 담은 자루. 배고픈 사람에게 나눠 줄 수 있다." },
   },
   hints: [
     "죽간(대나무 조각)이 네 군데 흩어져 있어요: 관청 서안, 우물, 큰 북, 그리고 피란민 아이. 아이는 배가 고파 보여요.",
@@ -354,7 +354,7 @@ CHAPTERS.push({
   place: "여러 겨레의 성", when: "696년 여름 · 요하 서쪽 영주(營州)",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.3, 0.85, 0.4], sunCol: 0xfff0c0, glow: 0.6, fog: 0xc0c8cc, fogNear: 40, fogFar: 140, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.3 },
   items: {
-    arrowLetter: { icon: "📜", name: "화살 편지", desc: "화살대에 돌돌 말아 묶은 편지. 말갈 무리에게 전해야 한다." },
+    arrowLetter: { icon: "書", name: "화살 편지", desc: "화살대에 돌돌 말아 묶은 편지. 말갈 무리에게 전해야 한다." },
   },
   hints: [
     "할머니의 말, 관청 벽의 달력, 그리고 1장 수첩의 '무진'을 함께 쓰세요. 마구간 상자는 '올해'의 간지예요.",
@@ -720,7 +720,7 @@ CHAPTERS.push({
   place: "구름 걸린 고개", when: "698년 무렵 · 동쪽으로 가는 산길",
   atmosphere: { top: 0x3a4258, mid: 0x8a7a84, low: 0xe0a070, sun: [-1, 0.14, 0.12], sunCol: 0xff9050, glow: 0.9, fog: 0x8a8890, fogNear: 45, fogFar: 180, hemiSky: 0xc8cce0, hemiGround: 0x5a5850, hemiI: 1.1, light: 0xffb888, lightI: 1.5, exposure: 1.1 },
   items: {
-    arrows: { icon: "🏹", name: "화살 묶음", desc: "창고에서 꺼낸 화살 묶음. 고구려 궁수들에게 나눠 줄 것." },
+    arrows: { icon: "矢", name: "화살 묶음", desc: "창고에서 꺼낸 화살 묶음. 고구려 궁수들에게 나눠 줄 것." },
   },
   hints: [
     "척후병, 참모, 골짜기의 깃발을 먼저 살펴보세요. 고개 끝 울타리에서 골짜기를 내려다보면 깃발이 보여요.",
@@ -878,7 +878,7 @@ CHAPTERS.push({
   place: "산 위의 새 성", when: "698년 · 동모산",
   atmosphere: { hdri: "qwantani_sunrise_puresky", hdrExposure: 0.6, top: 0x3b4a6a, mid: 0x8a8ea0, low: 0xd8a888, sun: [1, 0.2, 0.08], sunCol: 0xff9a60, fog: 0x9a98a0, fogNear: 40, fogFar: 160, hemiSky: 0xc8d0e8, hemiGround: 0x4a4a40, hemiI: 1.1, light: 0xffd0a8, lightI: 2.0 },
   items: {
-    shovel: { icon: "⛏️", name: "나무 삽", desc: "일꾼에게 빌린 삽. 흙더미를 파 볼 수 있다." },
+    shovel: { icon: "鍤", name: "나무 삽", desc: "일꾼에게 빌린 삽. 흙더미를 파 볼 수 있다." },
   },
   hints: [
     "고구려 노인, 서기의 간지 셈판, 설계도, 먼 길에서 돌아온 사신을 먼저 보세요. 1장 수첩에 적은 '무진'도 필요해요.",
@@ -1199,6 +1199,10 @@ export default {
       ["고구려 계승 의식", "발해 왕이 일본에 보낸 국서에서 스스로 '고려국왕'이라 함"],
       ["모줄임천장 · 온돌", "정혜공주 무덤의 천장과 구들처럼, 발해 문화에 남은 고구려의 흔적"],
       ["남북국 시대", "남쪽의 신라와 북쪽의 발해가 함께 있던 시대. 조선 후기 유득공이 《발해고》에서 이렇게 부름"],
+    ],
+    photos: [
+      { src: "assets/photos/gate-pyongyang.jpg", caption: "「평양성도」. 조선 후기에 그린 평양, 옛 고구려의 도읍", credit: "출처: 국립중앙박물관(공공누리 제1유형) · Wikimedia Commons" },
+      { src: "assets/photos/gate-tile.jpg", caption: "발해의 연꽃무늬 수막새", credit: "CC0 · Wikimedia Commons" },
     ],
   },
 };

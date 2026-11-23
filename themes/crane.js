@@ -221,7 +221,7 @@ CHAPTERS.push({
   place: "겨울 강의 나루", when: "기유년(1789) 겨울 · 한강 노량 나루",
   atmosphere: { hdri: "qwantani_morning_puresky", hdrExposure: 0.72, top: 0x4a74a8, mid: 0xa8c4dc, low: 0xdfe4e8, sun: [0.45, 0.4, -0.6], sunCol: 0xfff0d0, glow: 0.6, fog: 0xc6d2dc, fogNear: 45, fogFar: 160, hemiSky: 0xe0eaf6, hemiGround: 0x6a6450, hemiI: 1.1, light: 0xfff4e4, lightI: 2.1, waterColor: 0x23465a },
   items: {
-    rope: { icon: "🪢", name: "굵은 밧줄", desc: "배와 배를 단단히 묶을 굵은 밧줄. 강가의 말뚝에서 쓰자." },
+    rope: { icon: "繩", name: "굵은 밧줄", desc: "배와 배를 단단히 묶을 굵은 밧줄. 강가의 말뚝에서 쓰자." },
   },
   hints: [
     "늙은 사공에게 먼저 말을 걸어 보세요. 바로 앞의 '배다리 규칙 판'에 해야 할 일이 다 적혀 있어요.",
@@ -396,10 +396,10 @@ CHAPTERS.push({
   place: "눈 내린 강마을 집", when: "임자년(1792) 겨울 · 한강 가 마재 마을",
   atmosphere: { top: 0x8a98a8, mid: 0xb8c2cc, low: 0xd8dde0, sun: [0.3, 0.55, 0.4], sunCol: 0xfff4e0, glow: 0.3, fog: 0xc4ccd2, fogNear: 30, fogFar: 110, hemiSky: 0xe8eef4, hemiGround: 0x7a7060, hemiI: 1.35, light: 0xfff6ea, lightI: 1.6, exposure: 1.1 },
   items: {
-    kigi: { icon: "📘", name: "기기도설", desc: "임금이 보낸 책. 서양의 여러 기계를 그림으로 풀이했다. 가방(Tab)에서 살펴볼 수 있다.", look: `<p>도르래를 풀이한 쪽에 책갈피가 끼워져 있다.</p>${BOOK_HTML}` },
-    pulleyF: { icon: "⭕", name: "고정도르래", desc: "기둥에 매달아 쓰는 도르래. 줄 당기는 방향만 바꿔 준다." },
-    pulleyM: { icon: "🔄", name: "움직도르래", desc: "물건과 함께 오르내리는 도르래. 드는 힘을 반으로 줄여 준다." },
-    drawing: { icon: "📜", name: "완성한 설계 그림", desc: "위에 도르래 넷, 아래에 도르래 넷을 단 큰 틀의 그림. 궁에서 온 심부름꾼에게 건네자." },
+    kigi: { icon: "書", name: "기기도설", desc: "임금이 보낸 책. 서양의 여러 기계를 그림으로 풀이했다. 가방(Tab)에서 살펴볼 수 있다.", look: `<p>도르래를 풀이한 쪽에 책갈피가 끼워져 있다.</p>${BOOK_HTML}` },
+    pulleyF: { icon: "輪", name: "고정도르래", desc: "기둥에 매달아 쓰는 도르래. 줄 당기는 방향만 바꿔 준다." },
+    pulleyM: { icon: "滑", name: "움직도르래", desc: "물건과 함께 오르내리는 도르래. 드는 힘을 반으로 줄여 준다." },
+    drawing: { icon: "圖", name: "완성한 설계 그림", desc: "위에 도르래 넷, 아래에 도르래 넷을 단 큰 틀의 그림. 궁에서 온 심부름꾼에게 건네자." },
   },
   hints: [
     "궁에서 온 심부름꾼에게 말을 걸면 임금의 편지를 받아요. 편지 끝의 그림 세 개(①②③)를 잘 보세요.",
@@ -584,7 +584,7 @@ CHAPTERS.push({
   place: "돌 소리 가득한 공사터", when: "을묘년(1795) 봄 · 팔달산 아래",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.4, 0.85, 0.35], sunCol: 0xfff0c0, glow: 0.6, fog: 0xc0ccd6, fogNear: 45, fogFar: 150, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.4 },
   items: {
-    hook: { icon: "⛓️", name: "쇠갈고리", desc: "대장장이가 벼려 준 굵은 쇠갈고리. 거중기 아래 뭉치에 걸어 돌을 맨다." },
+    hook: { icon: "鉤", name: "쇠갈고리", desc: "대장장이가 벼려 준 굵은 쇠갈고리. 거중기 아래 뭉치에 걸어 돌을 맨다." },
   },
   hints: [
     "감독관에게 먼저 말을 거세요. 기계 넷(거중기, 녹로, 유형거, 벽돌 가마)을 하나씩 눌러 보면 일꾼이 그 기계가 하는 일을 말해 줘요.",
@@ -778,7 +778,7 @@ CHAPTERS.push({
   get atmosphere() { return exileNow() ? ATM4B : ATM4; },
   musicKey: (S) => (S.flags.includes("c4_exile") ? "ch4b" : "ch4"),
   items: {
-    olddraw: { icon: "📜", name: "구멍 난 거중기 그림", desc: "의궤 상자에서 나온 거중기 그림. 그린 사람 이름 자리에 동그란 구멍이 나 있다." },
+    olddraw: { icon: "圖", name: "구멍 난 거중기 그림", desc: "의궤 상자에서 나온 거중기 그림. 그린 사람 이름 자리에 동그란 구멍이 나 있다." },
   },
   hints: [
     "석수의 부탁부터: 왼쪽 공사청 탁자의 '공사 장부'에서 석수 줄을 찾으면 '하루 4전 5푼과 쌀 6되'(모군은 2전 5푼).",
@@ -1078,6 +1078,10 @@ export default {
       ["신유박해", "1801년 서학(천주교)을 믿는 사람들을 크게 탄압한 사건. 정약용 형제가 귀양을 갔다"],
       ["목민심서", "지방 수령이 백성을 돌보는 마음가짐과 할 일을 적은 책 (『경세유표』 『흠흠신서』와 함께 1표 2서)"],
       ["자산어보", "형 정약전이 흑산도에서 바다 생물을 조사해 엮은 책"],
+    ],
+    photos: [
+      { src: "assets/photos/crane-uigwe.jpg", caption: "『화성성역의궤』에 실린 거중기 그림", credit: "출처: 국립중앙박물관 e뮤지엄(공공누리 제1유형) · Wikimedia Commons" },
+      { src: "assets/photos/crane-hwaseong.jpg", caption: "오늘의 수원 화성", credit: "CC0 · Wikimedia Commons" },
     ],
     timelineTitle: "그의 삶과 화성",
     timeline: [

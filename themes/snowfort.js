@@ -327,7 +327,7 @@ CHAPTERS.push({
   place: "섬으로 건너간 임금", when: "네 해 뒤 늦겨울 · 바다 건너 섬",
   atmosphere: GREY2,
   items: {
-    hotwater: { icon: "🫖", name: "뜨거운 물 주전자", desc: "부엌 가마솥에서 떠 온 뜨거운 물. 언 것을 녹일 수 있다." },
+    hotwater: { icon: "湯", name: "뜨거운 물 주전자", desc: "부엌 가마솥에서 떠 온 뜨거운 물. 언 것을 녹일 수 있다." },
   },
   hints: [
     "임금의 쪽지(어찰), 대청 벽의 글자 판, 탁자 위 초안을 읽어 보세요. 초안을 고쳐 쓰려면 먼저 얼어붙은 벼루를 녹여야 해요(동쪽 부엌).",
@@ -497,8 +497,8 @@ CHAPTERS.push({
   place: "꺼지지 않는 봉화", when: "아홉 해 뒤 섣달 · 도성의 회의청",
   atmosphere: DUSK3, woodFloor: false,
   items: {
-    wine: { icon: "🍶", name: "술병", desc: "곳간 술독에서 따른 술. 적장을 대접할 것." },
-    meat: { icon: "🍖", name: "말린 고기", desc: "걸이에서 내린 고기. 적장을 대접할 것." },
+    wine: { icon: "酒", name: "술병", desc: "곳간 술독에서 따른 술. 적장을 대접할 것." },
+    meat: { icon: "肉", name: "말린 고기", desc: "걸이에서 내린 고기. 적장을 대접할 것." },
   },
   hints: [
     "회의청의 국서, 뒷벽 글자 판, 탁자 위 상소 조각을 읽어 보세요. 상소함 뚜껑의 두 글자 主和를 글자 판으로 풀어 보세요.",
@@ -647,7 +647,7 @@ CHAPTERS.push({
       if (!A.has("c3_gate")) return A.card("안장 얹은 말", `<p>말이 하얀 콧김을 내뿜는다.</p>`);
       const miss = [["wine", "술"], ["meat", "고기"]].filter(([k]) => !A.owns(k)).map(([, n]) => n);
       if (miss.length) return A.card("안장 얹은 말", `<p>적장을 붙잡아 두려면 대접할 것이 있어야 한다. 아직 <b>${miss.length > 1 ? "술과 고기를" : miss[0] === "술" ? "술을" : "고기를"}</b> 챙기지 못했다.</p>`);
-      A.card("안장 얹은 말", `<p>술과 고기를 안장에 매달았다. 가는 곳은 서쪽 길. 적의 선봉이 있는 곳이다.</p>`, `<button class="btn gold" id="use-btn">🐎 적진으로 떠난다</button>`);
+      A.card("안장 얹은 말", `<p>술과 고기를 안장에 매달았다. 가는 곳은 서쪽 길. 적의 선봉이 있는 곳이다.</p>`, `<button class="btn gold" id="use-btn">적진으로 떠난다</button>`);
       E.$("use-btn").onclick = () => { A.use("wine"); A.use("meat"); A.closeModal(); E.lockInput(); toast("눈발을 뚫고 서쪽 길로 말을 몬다.", 3000); sfx("door"); setTimeout(A.clearChapter, 1500); };
       return;
     }
@@ -693,8 +693,8 @@ CHAPTERS.push({
   place: "산성의 겨울", when: "그해 섣달 · 눈 덮인 산성",
   atmosphere: SNOW4,
   items: {
-    wax: { icon: "🕯️", name: "밀랍 덩이", desc: "촛농을 뭉친 밀랍. 글을 싸서 둥글게 굴리면 눈 속에서도 젖지 않는다." },
-    soup: { icon: "🍵", name: "더운 숭늉 한 바가지", desc: "취사병이 솥 바닥을 긁어 끓인 숭늉. 성벽 위의 군사들에게 가져다주자." },
+    wax: { icon: "蠟", name: "밀랍 덩이", desc: "촛농을 뭉친 밀랍. 글을 싸서 둥글게 굴리면 눈 속에서도 젖지 않는다." },
+    soup: { icon: "湯", name: "더운 숭늉 한 바가지", desc: "취사병이 솥 바닥을 긁어 끓인 숭늉. 성벽 위의 군사들에게 가져다주자." },
   },
   hints: [
     "창고(서쪽)의 장부와 산가지 셈법 판, 행궁 앞의 군적과 명(命), 솥 앞의 취사병 말을 모두 읽어요. 장대(동쪽 누각) 위 장계함이 '버틸 날'을 묻고 있어요.",
@@ -929,7 +929,7 @@ CHAPTERS.push({
   place: "찢는 사람, 붙이는 사람", when: "해가 바뀐 정월 · 산성의 행궁",
   atmosphere: NIGHT5, woodFloor: true,
   items: {
-    rice: { icon: "🍚", name: "밥알 몇 톨", desc: "오늘 끼니로 나온 밥알. 짓이기면 풀이 된다." },
+    rice: { icon: "飯", name: "밥알 몇 톨", desc: "오늘 끼니로 나온 밥알. 짓이기면 풀이 된다." },
   },
   hints: [
     "먼저 서안 쪽의 백발의 대감에게 다가가 보세요. 국서가 찢기면 방바닥의 조각 다섯을 모두 주워요(하나는 대감 곁). 밥그릇의 밥알로 풀을 마련해 서안에서 이어 붙여요. 북쪽 벽 서리의 쪽지가 읽는 차례를 알려 줘요.",
@@ -1085,7 +1085,7 @@ CHAPTERS.push({
   place: "끓는 물과 얼음", when: "몇 해 뒤 겨울 · 북쪽 먼 도성의 감옥",
   atmosphere: GREY6,
   items: {
-    boil: { icon: "🥣", name: "끓는 물 한 그릇", desc: "마당 화로에서 떠 온 끓는 물. 湯(끓는 물 탕)." },
+    boil: { icon: "湯", name: "끓는 물 한 그릇", desc: "마당 화로에서 떠 온 끓는 물. 湯(끓는 물 탕)." },
   },
   hints: [
     "옆 칸 노인의 물음을 먼저 들어 보세요. 답시는 내 방 서안에서 짓는데, 벼루가 얼었어요. 마당 화로의 끓는 물을 쓰세요.",

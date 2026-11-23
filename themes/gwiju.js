@@ -118,7 +118,7 @@ function redraw() {
 }
 
 /* ───────────── 두 사람의 몫: 붓(역할 0) · 활(역할 1) ───────────── */
-const ROLE = [{ icon: "🖌️", name: "붓을 든 사람", col: "#2c4a7a" }, { icon: "🏹", name: "활을 든 사람", col: "#9e2b25" }];
+const ROLE = [{ icon: "筆", name: "붓을 든 사람", col: "#2c4a7a" }, { icon: "弓", name: "활을 든 사람", col: "#9e2b25" }];
 let lastRole = -1;
 function roleTick(A) {
   const r = A.coop.role();
@@ -336,7 +336,7 @@ CHAPTERS.push({
       const desc = `<p>서쪽에서 ${"첫둘셋넷"[i]}째 집. ${h.tile ? "<b>기와</b>를 얹은 집이다." : "풀(짚)로 지붕을 이은 <b>초가집</b>이다."} 담 너머로 ${h.tree === "gam" ? "주황빛 감이 달린 <b>감나무</b>" : "붉은 대추가 익어 가는 <b>대추나무</b>"}가 보인다. 대문 옆의 등은 ${h.lamp ? "<b>불이 켜져 있다</b>." : "<b>꺼져 있다</b>."}</p>`;
       if (!A.has("c1_star")) return A.card(title, desc + `<p class="note">아직 문을 두드릴 때가 아니다. 어느 별이 떨어졌는지부터 사신께 아뢰자.</p>`);
       A.card(title, desc + `<p>별이 떨어진 집이 이 집일까? 한밤에 아무 집이나 두드릴 수는 없다.</p>`);
-      return A.choiceLock(["🚪 이 집 대문을 두드린다"], i === 1 ? 0 : -1, () => {
+      return A.choiceLock(["이 집 대문을 두드린다"], i === 1 ? 0 : -1, () => {
         A.questDone("c1_house"); A.closeModal(); E.lockInput(); sfx("door");
         toast("문틈으로 하인이 얼굴을 내민다. \"어찌 아시고 오셨습니까? 방금 마님께서 아드님을 낳으셨습니다.\" 안채에서 갓난아이 울음소리가 들린다.", 3600);
         setTimeout(A.clearChapter, 2400);
@@ -467,7 +467,7 @@ CHAPTERS.push({
     if (id === "small") {
       if (A.has("c2_box")) {
         A.card("해진 옷을 입은 작은 선비", `<p>어사화를 꽂은 작은 선비가 붉은 홍패를 받쳐 든다.</p><div class="letter">"늦게 핀 꽃도 꽃이라 했소. 자, 갑시다."</div><p class="note">장원을 앞세운 행렬이 궁궐 문을 나선다.</p>`);
-        return A.choiceLock(["🌸 장원의 행렬을 따라간다"], 0, () => { A.closeModal(); E.lockInput(); toast("피리 소리, 북소리. 행렬이 도성 거리로 나아간다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
+        return A.choiceLock(["장원의 행렬을 따라간다"], 0, () => { A.closeModal(); E.lockInput(); toast("피리 소리, 북소리. 행렬이 도성 거리로 나아간다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
       }
       A.note("작은 선비: \"나는 잔나비(원숭이)띠요. 남들보다 늦었지요.\" 몸집이 작고 옷이 해졌다.");
       return A.card("해진 옷을 입은 작은 선비", `<p>몸집이 작다. 소맷부리가 해져 실밥이 비죽 나왔다. 그래도 두 발은 땅에 박은 듯 꼿꼿하다.</p><div class="letter">"나 말이오? <b>잔나비(원숭이)띠</b>요. 남들보다 한참 늦었소."</div>`);
@@ -552,7 +552,7 @@ CHAPTERS.push({
   hero: { robe: 0x34506e, long: true },
   place: "임금의 피란", when: "스물일곱 해 뒤 섣달 그믐 무렵의 밤 · 도성의 궁궐",
   atmosphere: NIGHT3,
-  items: { knife: { icon: "🗡️", name: "작은 칼", desc: "병기 걸이에서 빌린 작은 칼. 얼어붙은 매듭을 끊을 수 있다." } },
+  items: { knife: { icon: "刀", name: "작은 칼", desc: "병기 걸이에서 빌린 작은 칼. 얼어붙은 매듭을 끊을 수 있다." } },
   quests: {
     c3_news: { title: "급보를 풀어 임금께 아뢰기", desc: "얼어붙은 급보 통을 열고, 붓과 활이 함께 군호를 풀어 임금께 있는 그대로 아뢰자.", from: "king", when: (A) => !A.has("c3_report") },
     c3_stand: { title: "항복이냐, 피란이냐", desc: "신하들이 임금 앞에 항복하자는 글을 올렸다. 재상과 작은 신하의 말을 듣고, 누구 곁에 설지 정하자.", from: "surrender", when: (A) => A.has("c3_report") && !A.has("c3_stand") && !A.has("c3_plan") },
@@ -673,7 +673,7 @@ CHAPTERS.push({
       if (A.has("c3_stand") || A.has("c3_plan")) return A.card("말아서 밀쳐 둔 항복의 글", `<p>임금이 밀어낸 항복의 글. 둘둘 말린 채 신하들 발치에 밀쳐져 있다.</p>`);
       A.questStart("c3_stand");
       A.card("항복하자는 글", `<p>신하들이 밤새 써 둔 글이 임금 앞 상에 펼쳐져 있다.</p><div class="doc">"…북쪽 나라 임금께 엎드려 아뢰오니, 군사를 거두어 주시면 신하의 예를 다하겠나이다…"</div><div class="letter"><b>재상</b>: "전하, 열일곱 해 전 일을 벌써 잊으셨습니까? <b>서희</b> 공은 칼 한 번 뽑지 않고 적장과 <b>말로 담판</b>하여 군사를 물렸습니다. 압록강 동쪽 여섯 고을, <b>강동 6주</b>까지 얻어 왔지요. 이번에도 말로 풀면 됩니다. 이 글을 보내 백성을 살리소서."</div><div class="letter"><b>작은 체구의 신하</b>: "서희 공은 <b>무릎 꿇으러 간 게 아니었소.</b> 우리가 고구려를 이은 나라라고 당당히 밝혔고, 적이 정말 바라는 게 뭔지 읽어 냈소. 그래서 땅을 얻은 거요. 이 글은 담판이 아니오. 항복이오."<br>(그가 임금 쪽으로 몸을 돌린다.)<br>"다만 지금은 적이 많고 우리가 적어 맞서 싸울 수 없습니다. <b>그 날카로운 기세를 잠시 피하여, 천천히 다시 일어설 길을 꾀해야 합니다.</b>"</div><p>신하들의 눈이 모두 그대들에게 쏠린다. 줄 끝의 작은 신하는 혼자다.</p>`);
-      return A.choiceLock(["✍️ 재상의 말대로, 임금께 항복의 글을 올리자고 아뢴다", "🧍 작은 신하 곁에 나란히 서서, 잠시 피해야 한다고 함께 아뢴다"], 1, () => {
+      return A.choiceLock(["재상의 말대로, 임금께 항복의 글을 올리자고 아뢴다", "작은 신하 곁에 나란히 서서, 잠시 피해야 한다고 함께 아뢴다"], 1, () => {
         A.flag("c3_stand"); A.questDone("c3_stand"); A.questStart("c3_refuge");
         A.note("항복하자는 글: 재상은 '서희가 말로 담판해 강동 6주를 얻었듯 이번에도 말로 풀자'며 항복을 권했다. 작은 신하는 '서희의 담판은 무릎 꿇은 항복이 아니었다. 적의 기세를 잠시 피해 다시 일어설 길을 꾀하자'고 맞섰다. 우리는 작은 신하 곁에 섰고, 임금은 항복의 글을 밀어냈다.");
         A.card("항복하자는 글", `<p class="msg ok">그대들이 작은 신하 곁에 나란히 섰다. 술렁이던 정전이 조용해진다. 촛농 떨어지는 소리까지 들린다.</p><p>젊은 임금이 한참 동안 그대들을 바라보다가, 떨리는 손으로 항복의 글을 밀어낸다.</p><div class="letter">"알겠다. 무릎을 꿇느니 몸을 피하겠다. 허면, 어디로 가야 하느냐?"</div><p class="note">작은 체구의 신하에게 말을 걸어 보자.</p>`);
@@ -710,7 +710,7 @@ CHAPTERS.push({
     if (id === "gate") {
       if (A.has("c3_bar")) {
         A.card("남쪽 문", `<p>문이 열렸다. 눈발 날리는 어둠 속으로 임금의 가마가 나선다.</p>`);
-        return A.choiceLock(["🌙 가마를 따라 문을 나선다"], 0, () => { A.closeModal(); E.lockInput(); toast("눈발 너머로 도성의 불빛이 하나둘 멀어진다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
+        return A.choiceLock(["가마를 따라 문을 나선다"], 0, () => { A.closeModal(); E.lockInput(); toast("눈발 너머로 도성의 불빛이 하나둘 멀어진다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
       }
       if (!A.has("c3_plan")) return A.card("남쪽 문", `<p>굵은 빗장이 걸린 궁궐의 남쪽 문. 아직 떠날 곳도 정해지지 않았다.</p>`);
       return A.card("남쪽 문", `<p>통나무만 한 <b>빗장</b>이 걸려 있다. 한쪽만 들어서는 꿈쩍도 하지 않는다.</p><p><b>두 사람이 문 양 끝의 둥근 표시 안에 동시에 서서</b> 함께 들어야 벗겨진다.</p><p class="note">표시 안에 사람이 서면 초록빛으로 바뀐다.</p>`);
@@ -747,7 +747,7 @@ CHAPTERS.push({
   hero: { robe: 0x34506e, helmet: true },
   place: "강을 막은 쇠가죽", when: "여덟 해 뒤 섣달 · 북쪽 국경의 성 동쪽 큰 내",
   atmosphere: GREY4,
-  items: { hides: { icon: "🐂", name: "쇠가죽 45장과 큰 밧줄", desc: "밧줄에 꿰어 내를 가로막을 쇠가죽." } },
+  items: { hides: { icon: "革", name: "쇠가죽 45장과 큰 밧줄", desc: "밧줄에 꿰어 내를 가로막을 쇠가죽." } },
   quests: {
     c4_block: { title: "쇠가죽으로 내 막기", desc: "쇠가죽이 몇 장 필요한지 셈해 군수 관리에게 받고, 내를 가로지른 말뚝과 밧줄에 세 겹으로 걸자.", from: "general", to: "dam", when: (A) => !A.has("c4_dam") },
     c4_hide: { title: "기병 일만 이천 숨기기", desc: "다리 건너 부장과 지형도를 보고, 조건에 모두 맞는 골짜기에 부장의 돌림판 바늘을 맞추자.", from: "general", to: "adjutant", when: (A) => !A.has("c4_ambush") },
@@ -831,7 +831,7 @@ CHAPTERS.push({
     if (id === "general") {
       if (flood) {
         A.card("흰 수염의 으뜸 장수", `<p>쏟아진 물에 적의 대열이 끊기자, 솔골의 기병 일만 이천이 한꺼번에 내달려 적을 쳤다. 첫 싸움은 크게 이겼다.</p><div class="letter">"잘했소. 허나 아직 끝이 아니오. 적장은 이 길로 <b>곧장 도성까지</b> 내달릴 게요.<br>도성은 들판의 곡식과 사람을 성 안으로 거두어 들을 비워 두었소. <b>청야</b>(淸野)라 하오. 성문도 굳게 닫았고. 적이 굶주려 돌아설 때, 그때가 우리 차례요. 뒤를 쫓읍시다."</div>${A.has("gw_p2") ? "" : givePiece(A, 2)}`);
-        return A.choiceLock(["🐎 남쪽으로 내려간 적을 쫓는다"], 0, () => { A.closeModal(); E.lockInput(); toast("말발굽 소리가 땅을 울린다. 온 군사가 적의 뒤를 쫓아 남쪽으로 내려간다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
+        return A.choiceLock(["남쪽으로 내려간 적을 쫓는다"], 0, () => { A.closeModal(); E.lockInput(); toast("말발굽 소리가 땅을 울린다. 온 군사가 적의 뒤를 쫓아 남쪽으로 내려간다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
       }
       if (ready) return A.card("흰 수염의 으뜸 장수", `<div class="letter">"적이 내 한가운데에 들어섰소! <b>둑 양쪽 기슭의 말뚝</b>으로 가시오. 밧줄은 <b>서쪽과 동쪽에서 동시에</b> 풀어야 물이 터지오."</div><p class="note">둑 양쪽 말뚝 옆 둥근 표시에 한 사람씩 동시에 선다. 동쪽 기슭은 통나무 다리로 건넌다.</p>`);
       if (dam && amb) {
@@ -941,7 +941,7 @@ CHAPTERS.push({
   hero: { robe: 0x34506e, helmet: true },
   place: "바람이 바뀐 벌판", when: "이듬해 이월 초하루 · 북쪽 성 동쪽의 넓은 벌판",
   atmosphere: GREY5,
-  items: { redflag: { icon: "🚩", name: "붉은 기", desc: "깃발 걸이에서 뽑은 붉은 신호 깃발. 장대의 깃대 꽂이에 세운다." } },
+  items: { redflag: { icon: "旗", name: "붉은 기", desc: "깃발 걸이에서 뽑은 붉은 신호 깃발. 장대의 깃대 꽂이에 세운다." } },
   quests: {
     c5_when: { title: "원군이 닿는 때 셈하기", desc: "척후의 말과 부원수의 말, 열두 때 판을 맞추어 원군이 벌판에 닿는 때를 부원수에게 알려 주자.", from: "vice", when: (A) => !A.has("c5_reinf") },
     c5_signal: { title: "군령대로 신호 올리기", desc: "부절의 두 쪽을 맞추어 바람에 맞는 기를 장대에 세우고 큰 북을 치자. 깃대는 한 사람이 붙들고 있어야 한다.", from: "general", to: "drum", when: (A) => A.has("c5_reinf") && !A.has("c5_charge") },
@@ -1024,7 +1024,7 @@ CHAPTERS.push({
       if (charge) {
         if (!A.has("c5_won")) return A.card("흰 수염의 으뜸 장수", `<div class="letter">"아직 끝나지 않았소. 북쪽에 선 적의 깃발부터 모두 쏘아 떨어뜨리시오."</div>`);
         A.card("흰 수염의 으뜸 장수", `<p>남풍을 탄 화살이 쏟아지고 온 군사가 한꺼번에 내달렸다. 적은 북쪽으로 달아났고, 십만 가운데 살아 돌아간 적은 몇천뿐이었다.</p><p>그가 투구를 벗는다. 흰 머리칼이 빗물에 젖어 이마에 붙어 있다.</p><div class="letter">"내가 이긴 게 아니오. 강을 막은 손들, 도성을 지킨 백성, 때맞춰 와 준 원군. 그리고 저 바람.<br><b>큰 싸움은 혼자 이기는 것이 아니오.</b>"</div>${A.has("gw_p3") ? "" : givePiece(A, 3)}`);
-        return A.choiceLock(["🏵️ 도성으로 돌아간다"], 0, () => { A.closeModal(); E.lockInput(); toast("이긴 군사들이 남쪽으로, 도성으로 돌아간다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
+        return A.choiceLock(["도성으로 돌아간다"], 0, () => { A.closeModal(); E.lockInput(); toast("이긴 군사들이 남쪽으로, 도성으로 돌아간다.", 3000); setTimeout(A.clearChapter, 1600); }, "");
       }
       if (reinf) { A.questStart("c5_signal"); return A.card("흰 수염의 으뜸 장수", `<div class="letter">"원군이 닿았소. 그리고 <b>바람이 바뀌었소.</b><br><b>부절의 군령대로</b> 신호를 올리시오. 깃발 걸이에서 <b>바람에 맞는 기</b>를 뽑아 이 장대의 <b>깃대 꽂이</b>에 세우고, <b>큰 북</b>을 치시오. 깃발과 북이 함께여야 온 군사가 알아듣소."</div>`); }
       A.note("으뜸 장수의 말: 적은 굶주려 물러가는 길이지만 아직 수가 많다. 지금은 맞바람이라 화살이 닿지 않는다. 원군이 닿고 바람이 바뀔 때까지 기다린다. 군령은 둘로 쪼갠 부절(장대의 탁자)에 있다. 붓과 활이 반쪽씩 읽는다.");
@@ -1114,7 +1114,7 @@ CHAPTERS.push({
   hero: { robe: 0xd8d2c2 },
   place: "별이 떨어진 터", when: "세월이 흐른 뒤 어느 가을 저녁 · 별이 떨어졌던 그 집터",
   atmosphere: DUSK6,
-  items: { lever: { icon: "🪵", name: "지렛대 두 자루", desc: "무거운 돌을 들어 올릴 때 쓰는 굵은 통나무 지렛대. 둘이 함께 써야 한다." } },
+  items: { lever: { icon: "杠", name: "지렛대 두 자루", desc: "무거운 돌을 들어 올릴 때 쓰는 굵은 통나무 지렛대. 둘이 함께 써야 한다." } },
   quests: {
     c6_tower: { title: "돌탑 쌓아 올리기", desc: "석수에게 그분이 한 일을 차례대로 일러 주고, 셋째 층 지붕돌까지 올려 탑을 세우자.", from: "mason", when: (A) => !A.has("c6_cap") },
     c6_name: { title: "탑에 이름 세 글자 새기기", desc: "돌 조각 셋을 별의 수대로 놓고, 훈장의 옥편에서 글자의 소리를 찾아 탑에 이름을 새기자.", from: "mason", to: "pagoda", when: (A) => A.has("c6_cap") },
@@ -1303,6 +1303,9 @@ export default {
       ["귀주 대첩(1019)", "강감찬이 물러가던 거란군을 귀주 벌판에서 크게 무찌름. 물을 터뜨린 싸움이 아니라 들판의 싸움"],
       ["나성", "강감찬의 건의로 개경 둘레에 쌓은 바깥 성 (1029 완성, 성문 25개)"],
       ["낙성대", "강감찬이 태어난 곳. '별이 떨어진 터'라는 뜻"],
+    ],
+    photos: [
+      { src: "assets/photos/gwiju-goryeosa.jpg", caption: "『고려사』. 조선 초에 엮은 고려의 역사책", credit: "출처: 국립중앙박물관(공공누리 제1유형) · Wikimedia Commons" },
     ],
   },
 };

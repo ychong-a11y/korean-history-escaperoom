@@ -256,8 +256,8 @@ CHAPTERS.push({
   place: "다리 옆 장터", when: "1434년 가을 · 한양 혜정교 근처",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.45, 0.8, 0.4], sunCol: 0xfff0c0, glow: 0.6, fog: 0xb8c8d8, fogNear: 40, fogFar: 130, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.4, waterColor: 0x1a4a58 },
   items: {
-    book1: { icon: "📕", name: "글자 풀이 책", desc: "한자마다 뜻과 소리를 적은 책. 관아의 방을 읽을 때 쓸 수 있다." },
-    brush: { icon: "🖌️", name: "아이의 붓", desc: "서당 아이가 우물가에 두고 온 붓. 아이에게 돌려주자." },
+    book1: { icon: "書", name: "글자 풀이 책", desc: "한자마다 뜻과 소리를 적은 책. 관아의 방을 읽을 때 쓸 수 있다." },
+    brush: { icon: "筆", name: "아이의 붓", desc: "서당 아이가 우물가에 두고 온 붓. 아이에게 돌려주자." },
   },
   hints: [
     "농부의 방은 한자로 적혀 있어요. 한자를 읽으려면 서당 책궤에 든 '글자 풀이 책'이 필요해요.",
@@ -896,6 +896,10 @@ export default {
       ["앙부일구 · 자격루", "글 모르는 백성도 보게 동물 그림을 넣은 해시계 · 장영실 등이 만든 자동 물시계"],
       ["삼강행실도", "본받을 사람들의 이야기를 그림과 함께 엮어 백성을 가르친 책 (1434)"],
       ["4군 6진", "최윤덕(압록강 쪽 4군) · 김종서(두만강 쪽 6진)가 개척 → 오늘날 국경선의 바탕"],
+    ],
+    photos: [
+      { src: "assets/photos/sound-haerye.jpg", caption: "『훈민정음』 해례본 (영인본)", credit: "공공 저작물 · Wikimedia Commons" },
+      { src: "assets/photos/sound-angbu.jpg", caption: "앙부일구. 솥 모양의 해시계", credit: "공공 저작물 · Wikimedia Commons" },
     ],
   },
 };

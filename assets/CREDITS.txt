@@ -11,3 +11,22 @@
 - qwantani_dawn_puresky (1장), kloofendal_48d_partly_cloudy_puresky (2장), belfast_sunset_puresky (3장),
   qwantani_morning_puresky (4장), qwantani_sunrise_puresky (6장), qwantani_dusk_2_puresky (6장 노량)
 - kloofendal_overcast_puresky, overcast_soil_puresky (눈 덮인 산성의 흐린 날)
+
+
+== 유물 사진 (assets/photos) ==
+엔딩 화면 '진짜 유물'에 쓴 사진. 모두 위키미디어 공용(Wikimedia Commons)에서 가로 축소본으로 받았고, 공공 저작물 · CC0 · 공공누리 제1유형만 골랐다.
+- stele-1915.jpg: https://commons.wikimedia.org/wiki/File:Original_Gwanggaeto_stele_(from_a_book_published_in_1915).png · Public domain (PD-Japan-oldphoto)
+- stele-rubbing.jpg: https://commons.wikimedia.org/wiki/File:Gwanggaeto_stele_Mizutani_Rubbing05.jpg · Public domain (PD-Art / PD-old-70), Tokyo National Museum
+- river-anak.jpg: https://commons.wikimedia.org/wiki/File:Dongshouprocessionmural.jpg · Public domain (PD-Art / PD-old-100)
+- hwarang-imsin.jpg: https://commons.wikimedia.org/wiki/File:%EC%9E%84%EC%8B%A0%EC%84%9C%EA%B8%B0%EC%84%9D.jpg · 공공누리 제1유형 (출처: 국립중앙박물관)
+- gate-pyongyang.jpg: https://commons.wikimedia.org/wiki/File:%ED%8F%89%EC%96%91%EC%84%B1%EB%8F%84.jpg · 공공누리 제1유형 (출처: 국립중앙박물관)
+- gate-tile.jpg: https://commons.wikimedia.org/wiki/File:Pottery_Roof_Tile_End,_Balhae_Kingdom_(17879685862).jpg · CC0 1.0
+- gwiju-goryeosa.jpg: https://commons.wikimedia.org/wiki/File:Goryeosa,_National_Museum_of_Korea_01.jpg · 공공누리 제1유형 (출처: 국립중앙박물관)
+- sound-haerye.jpg: https://commons.wikimedia.org/wiki/File:Hunminjeongeum_Haerye_03.jpg · Public domain (PD-South Korea)
+- sound-angbu.jpg: https://commons.wikimedia.org/wiki/File:%EC%95%99%EB%B6%80%EC%9D%BC%EA%B5%AC.png · Public domain (released by the photographer)
+- diary-nanjung.jpg: https://commons.wikimedia.org/wiki/File:%EC%9D%B4%EC%88%9C%EC%8B%A0_%EB%82%9C%EC%A4%91%EC%9D%BC%EA%B8%B0_%EB%B0%8F_%EC%84%9C%EA%B0%84%EC%B2%A9_%EC%9E%84%EC%A7%84%EC%9E%A5%EC%B4%88.jpg · Public domain (PD-Art / PD-old-100)
+- crane-uigwe.jpg: https://commons.wikimedia.org/wiki/File:Hwaseong_seongyeok_uigwe_25.jpg · 공공누리 제1유형 (출처: 국립중앙박물관 e뮤지엄)
+- crane-hwaseong.jpg: https://commons.wikimedia.org/wiki/File:Hwaseong_Fortress_01.jpg · CC0 1.0 (Bernard Gagnon)
+- harbin-innae.jpg: https://commons.wikimedia.org/wiki/File:%EC%95%88%EC%A4%91%EA%B7%BC_%EC%9D%98%EC%82%AC_%EC%9C%A0%EB%AC%B5_-_%EC%9D%B8%EB%82%B4.jpg · Public domain (PD-old)
+- paper-declaration.jpg: https://commons.wikimedia.org/wiki/File:The_Proclamation_of_Korean_Independence.jpg · Public domain (PD-old-70-1923)
+- paper-seodaemun.jpg: https://commons.wikimedia.org/wiki/File:Seodaemun_Prison,_April_2023.jpg · CC0 1.0 (Dudva)

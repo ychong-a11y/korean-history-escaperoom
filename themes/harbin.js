@@ -99,9 +99,9 @@ CHAPTERS.push({
   place: "북두칠성 아래", when: "어느 해 가을밤 · 황해도 신천 청계동",
   atmosphere: { top: 0x040818, mid: 0x0a1430, low: 0x1a2444, sun: [-0.45, 0.55, -0.7], sunCol: 0x8090c0, glow: 0.25, fog: 0x0a1020, fogNear: 22, fogFar: 75, hemiSky: 0x6a7ab0, hemiGround: 0x2a2018, hemiI: 0.95, light: 0x9ab0e0, lightI: 0.65, exposure: 1.35 },
   items: {
-    bowstring: { icon: "🧵", name: "활시위", desc: "이름 상자에서 나온 새 활시위. 끊어진 활에 걸 수 있다." },
-    bow: { icon: "🏹", name: "연습용 활", desc: "새 시위를 건 작은 활. 서쪽 과녁을 겨눌 수 있다." },
-    drawerKey: { icon: "🗝️", name: "서랍 열쇠", desc: "마지막 과녁 뒤에 매달려 있던 작은 열쇠. '사랑방 서안'이라는 쪽지가 붙어 있다." },
+    bowstring: { icon: "弦", name: "활시위", desc: "이름 상자에서 나온 새 활시위. 끊어진 활에 걸 수 있다." },
+    bow: { icon: "弓", name: "연습용 활", desc: "새 시위를 건 작은 활. 서쪽 과녁을 겨눌 수 있다." },
+    drawerKey: { icon: "鑰", name: "서랍 열쇠", desc: "마지막 과녁 뒤에 매달려 있던 작은 열쇠. '사랑방 서안'이라는 쪽지가 붙어 있다." },
   },
   hints: [
     "사랑방의 족자와 문갑 위 옥편, 마당의 우물을 모두 읽어 보세요. 우물에는 별을 세는 순서가 적혀 있어요.",
@@ -268,9 +268,9 @@ CHAPTERS.push({
       if (A.has("c1_shot" + i)) return toast("이미 맞힌 과녁이다.");
       A.flag("c1_shot" + i); sfx("bow"); addArrow(i, hit); collectClickables();
       const n = [0, 1, 2].filter((k) => A.has("c1_shot" + k)).length;
-      if (n < 3) return toast(`🎯 명중 (${n}/3)`);
+      if (n < 3) return toast(`명중 (${n}/3)`);
       A.note("마을 사람들의 말: 이 집 아이는 산골에서 말을 달리고, 총을 잘 쏘기로 이름났다.");
-      A.card("🎯 세 과녁을 다 맞혔다", `<p>울타리 너머에서 이웃 영감이 껄껄 웃는다.</p><div class="letter">"허, 역시 이 집 손자로구먼. 산골을 말로 휘젓고 다니더니, <b>총 잘 쏘기</b>로는 이 동네에 당할 아이가 없지."</div><p>마지막 과녁 뒤에 작은 열쇠가 매달려 있다. 쪽지: <b>"사랑방 서안"</b></p>`);
+      A.card("세 과녁을 다 맞혔다", `<p>울타리 너머에서 이웃 영감이 껄껄 웃는다.</p><div class="letter">"허, 역시 이 집 손자로구먼. 산골을 말로 휘젓고 다니더니, <b>총 잘 쏘기</b>로는 이 동네에 당할 아이가 없지."</div><p>마지막 과녁 뒤에 작은 열쇠가 매달려 있다. 쪽지: <b>"사랑방 서안"</b></p>`);
       return A.give("drawerKey");
     }
     if (id === "desk") {
@@ -341,8 +341,8 @@ CHAPTERS.push({
   place: "세 가지를 일으키는 학교", when: "정미년(1907) 봄 · 평안도 진남포",
   atmosphere: { hdri: "qwantani_morning_puresky", hdrExposure: 0.8, top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [0.5, 0.55, -0.6], sunCol: 0xffe0a0, glow: 0.7, fog: 0xb0c4d4, fogNear: 50, fogFar: 160, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff0d8, lightI: 2.3 },
   items: {
-    officeKey: { icon: "🔑", name: "교무실 열쇠", desc: "칠판 틀 뒤에서 떨어진 열쇠. 동쪽 교무실 문에 맞을 것 같다." },
-    pouch: { icon: "💍", name: "패물 주머니", desc: "집안 여인들이 내놓은 패물을 담은 비단 주머니." },
+    officeKey: { icon: "鑰", name: "교무실 열쇠", desc: "칠판 틀 뒤에서 떨어진 열쇠. 동쪽 교무실 문에 맞을 것 같다." },
+    pouch: { icon: "囊", name: "패물 주머니", desc: "집안 여인들이 내놓은 패물을 담은 비단 주머니." },
   },
   hints: [
     "교문 옆 신문, 모금 탁자의 서약서, 교실 양쪽 벽의 표 두 개를 모두 읽어 보세요. 서약서는 한 번 더 살펴보세요.",
@@ -517,7 +517,7 @@ CHAPTERS.push({
   place: "강 건너 숲", when: "무신년(1908) 여름 · 두만강 너머 함경북도",
   atmosphere: { hdri: "belfast_sunset_puresky", hdrExposure: 0.6, top: 0x2b335c, mid: 0xb0705a, low: 0xff9a4d, sun: [-1, 0.12, 0.25], sunCol: 0xff6a20, fog: 0x8a6a60, fogNear: 25, fogFar: 90, hemiSky: 0xe0b090, hemiGround: 0x4a3a28, hemiI: 0.95, light: 0xff9a5a, lightI: 2.0, waterColor: 0x16343a },
   items: {
-    compass: { icon: "🧭", name: "나침반", desc: "놋쇠 나침반. 뚜껑 안쪽에 '北 북 · 南 남 · 東 동 · 西 서'라고 새겨져 있고, 붉은 바늘 끝은 늘 北을 가리킨다." },
+    compass: { icon: "針", name: "나침반", desc: "놋쇠 나침반. 뚜껑 안쪽에 '北 북 · 南 남 · 東 동 · 西 서'라고 새겨져 있고, 붉은 바늘 끝은 늘 北을 가리킨다." },
   },
   hints: [
     "작전 지도, 만국공법 책, 포로 천막 옆 동료의 말을 먼저 들어 보세요.",
@@ -693,9 +693,9 @@ CHAPTERS.push({
   place: "열두 개의 손도장", when: "기유년(1909) 2월(음력) · 연해주 연추 하리 마을",
   atmosphere: { top: 0x3a4250, mid: 0x6a7280, low: 0x9aa0a8, sun: [0.3, 0.3, -0.8], sunCol: 0xc0c8d8, glow: 0.2, fog: 0x8a929c, fogNear: 14, fogFar: 60, hemiSky: 0xc8d0e0, hemiGround: 0x606870, hemiI: 1.1, light: 0xd0d8e8, lightI: 0.7, exposure: 1.1 },
   items: {
-    flagcloth: { icon: "🏳️", name: "접힌 태극기", desc: "궤짝 속에 곱게 접혀 있던 태극기. 아직 아무 글씨도 없다." },
-    firewood: { icon: "🪵", name: "마른 장작", desc: "눈을 털어 낸 마른 장작 몇 개." },
-    lamp: { icon: "🪔", name: "등잔불", desc: "화로 불씨로 불을 붙인 등잔. 어두운 곳을 비출 수 있다." },
+    flagcloth: { icon: "旗", name: "접힌 태극기", desc: "궤짝 속에 곱게 접혀 있던 태극기. 아직 아무 글씨도 없다." },
+    firewood: { icon: "薪", name: "마른 장작", desc: "눈을 털어 낸 마른 장작 몇 개." },
+    lamp: { icon: "燈", name: "등잔불", desc: "화로 불씨로 불을 붙인 등잔. 어두운 곳을 비출 수 있다." },
   },
   hints: [
     "벽의 맹세문과 탁자의 손도장 종이를 꼼꼼히 비교해 보세요. 맹세한 사람은 어느 손으로 도장을 찍었나요?",
@@ -1023,7 +1023,7 @@ CHAPTERS.push({
   place: "뤼순의 붓", when: "경술년(1910) 봄 · 뤼순 감옥",
   atmosphere: NIGHT6,
   items: {
-    water: { icon: "💧", name: "물 한 사발", desc: "주전자에서 따른 물. 벼루에 부어 먹을 갈 수 있다." },
+    water: { icon: "水", name: "물 한 사발", desc: "주전자에서 따른 물. 벼루에 부어 먹을 갈 수 있다." },
   },
   hints: [
     "벽의 유묵은 두 글자가 비어 있어요. 먹을 갈려면 물이 필요해요(문 옆 주전자). 먹을 간 뒤 벼루 밑도 살펴보세요.",
@@ -1220,6 +1220,9 @@ export default {
       ["하얼빈 의거(1909.10.26)", "하얼빈역에서 이토 히로부미를 처단함"],
       ["『동양평화론』", "뤼순 감옥에서 쓴 글. 한국과 중국과 일본이 함께 평화를 지키자는 생각"],
       ["뤼순 감옥", "안중근이 갇혀 있다가 1910년에 순국한 곳"],
+    ],
+    photos: [
+      { src: "assets/photos/harbin-innae.jpg", caption: "안중근이 뤼순 감옥에서 쓴 「인내(忍耐)」와 손도장", credit: "공공 저작물 · Wikimedia Commons" },
     ],
   },
 };

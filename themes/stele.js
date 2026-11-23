@@ -155,9 +155,9 @@ CHAPTERS.push({
   place: "돌성의 궁궐 마당", when: "4세기 후반 어느 봄 · 압록강 가 국내성",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.4, 0.85, 0.35], sunCol: 0xfff0c0, glow: 0.6, fog: 0xb8c8d8, fogNear: 40, fogFar: 130, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.4 },
   items: {
-    waterbag: { icon: "👝", name: "가죽 물주머니", desc: "성문 지기가 우물에 두고 온 물주머니. 성문으로 가져다주자." },
-    jokbo: { icon: "📜", name: "왕실 족보 두루마리", desc: "큰아버지의 책궤에서 나온 족보. 군데군데 물에 젖어 이름이 번졌다. 사당 위패와 맞춰 보면 될 것 같다." },
-    maekgung: { icon: "🏹", name: "맥궁", desc: "짧고 단단한 고구려 활. 손에 쥐면 뿔과 나무를 겹쳐 붙인 이음매가 만져진다. 생긴 것보다 멀리 나간다." },
+    waterbag: { icon: "囊", name: "가죽 물주머니", desc: "성문 지기가 우물에 두고 온 물주머니. 성문으로 가져다주자." },
+    jokbo: { icon: "譜", name: "왕실 족보 두루마리", desc: "큰아버지의 책궤에서 나온 족보. 군데군데 물에 젖어 이름이 번졌다. 사당 위패와 맞춰 보면 될 것 같다." },
+    maekgung: { icon: "弓", name: "맥궁", desc: "짧고 단단한 고구려 활. 손에 쥐면 뿔과 나무를 겹쳐 붙인 이음매가 만져진다. 생긴 것보다 멀리 나간다." },
   },
   hints: [
     "서고에는 죽간 세 개와 '글자 풀이판'이 있어요. 죽간은 한글로, 책궤는 한자로 적혀 있으니 풀이판으로 이어 보세요.",
@@ -333,10 +333,10 @@ CHAPTERS.push({
       const a = cyl(0.015, 0.015, 0.8, MAT.wood, 0, 0, 0, 5, L.targets[i]); a.rotation.x = Math.PI / 2; L.arrows.push(a);
       if (hit) { const p = L.targets[i].worldToLocal(hit.point.clone()); a.position.set(p.x, p.y, 0.4); } else a.position.z = 0.4;
       collectClickables();
-      if (done + 1 < 3) return toast(`🎯 명중 (${done + 1}/3)`);
+      if (done + 1 < 3) return toast(`명중 (${done + 1}/3)`);
       A.flag("s1_shot"); A.questDone("s1_bow");
       A.note("세 과녁을 차례로 명중. 스승의 깃발 아래 돌에 새겨진 글자: 德");
-      return A.card("🎯 세 과녁 모두 명중", `<p>스승이 말없이 고개를 끄덕이더니 깃발을 걷었다. 깃대 아래 돌에 한 글자가 새겨져 있다.</p>${BIG("德")}<div class="letter">"왕자님 이름 둘째 글자입니다. 첫 글자랑 붙여 읽으면 '말로 덕을 편다'는 뜻이고요. 오늘 활은… 뭐, 나쁘지 않았습니다."</div>`);
+      return A.card("세 과녁 모두 명중", `<p>스승이 말없이 고개를 끄덕이더니 깃발을 걷었다. 깃대 아래 돌에 한 글자가 새겨져 있다.</p>${BIG("德")}<div class="letter">"왕자님 이름 둘째 글자입니다. 첫 글자랑 붙여 읽으면 '말로 덕을 편다'는 뜻이고요. 오늘 활은… 뭐, 나쁘지 않았습니다."</div>`);
     }
     if (id === "guard") {
       const lock = `"자물쇠요? 이름을 <b>소리 나는 대로</b> 넣으셔야 열립죠. 한자로 넣으면 꿈쩍도 안 합니다."`;
@@ -378,8 +378,8 @@ CHAPTERS.push({
   place: "붉은 기둥의 궁궐", when: "신묘년(391) 여름 · 국내성 궁궐", woodFloor: true,
   atmosphere: { top: 0x1a1410, mid: 0x3a2a1a, low: 0x5a4028, sun: [0.4, 0.7, 0.3], sunCol: 0xffc080, glow: 0.2, fog: 0x2a1f16, fogNear: 30, fogFar: 80, hemiSky: 0xffe0b8, hemiGround: 0x5a3a20, hemiI: 1.55, light: 0xffd8a0, lightI: 0.5, exposure: 1.25 },
   items: {
-    okse: { icon: "🟫", name: "옥새", desc: "왕의 도장. 나라의 명령(조서)에 찍는다." },
-    armoryKey: { icon: "🗝️", name: "무기고 열쇠", desc: "사신 접견을 마치고 받은 무기고 열쇠." },
+    okse: { icon: "璽", name: "옥새", desc: "왕의 도장. 나라의 명령(조서)에 찍는다." },
+    armoryKey: { icon: "鑰", name: "무기고 열쇠", desc: "사신 접견을 마치고 받은 무기고 열쇠." },
   },
   hints: [
     "두루마리의 '王年二九'가 새 왕의 나이예요. 산가지 셈판의 쪽지가 이 표기를 푸는 법을 알려 줘요.",
@@ -556,9 +556,9 @@ CHAPTERS.push({
   combos: [["rope", "logs", "raft", "통나무를 밧줄로 엮었다. 물에 띄우면 배다리가 될 것이다."]],
   atmosphere: { hdri: "qwantani_morning_puresky", hdrExposure: 0.8, top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [0.5, 0.55, -0.6], sunCol: 0xffe0a0, glow: 0.7, fog: 0xb0c4d4, fogNear: 50, fogFar: 170, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff0d8, lightI: 2.3, waterColor: 0x1a4a58 },
   items: {
-    rope: { icon: "🪢", name: "굵은 밧줄", desc: "보급 천막에서 얻은 굵은 밧줄. 무언가를 묶어 엮을 수 있다." },
-    logs: { icon: "🪵", name: "통나무", desc: "강 가운데 모래섬에 쌓여 있던 통나무. 물에 잘 뜬다. 하지만 하나씩 띄우면 물살에 흩어질 것이다." },
-    raft: { icon: "🛶", name: "엮은 통나무", desc: "통나무를 밧줄로 줄줄이 엮은 것. 물에 띄워 이으면 다리가 된다." },
+    rope: { icon: "繩", name: "굵은 밧줄", desc: "보급 천막에서 얻은 굵은 밧줄. 무언가를 묶어 엮을 수 있다." },
+    logs: { icon: "木", name: "통나무", desc: "강 가운데 모래섬에 쌓여 있던 통나무. 물에 잘 뜬다. 하지만 하나씩 띄우면 물살에 흩어질 것이다." },
+    raft: { icon: "筏", name: "엮은 통나무", desc: "통나무를 밧줄로 줄줄이 엮은 것. 물에 띄워 이으면 다리가 된다." },
   },
   hints: [
     "서기의 책상은 한자 숫자로만 적혀 있어요. 보급 천막 기둥의 군량 장부에 한자 숫자 읽는 법이 있어요.",
@@ -730,7 +730,7 @@ CHAPTERS.push({
   place: "신라 성 앞 들판", when: "경자년(400) · 낙동강 하류 바닷가",
   atmosphere: { hdri: "belfast_sunset_puresky", hdrExposure: 0.6, top: 0x2b335c, mid: 0xb0705a, low: 0xff9a4d, sun: [-1, 0.12, 0.25], sunCol: 0xff6a20, fog: 0x8a6a60, fogNear: 30, fogFar: 120, hemiSky: 0xe0b090, hemiGround: 0x4a3a28, hemiI: 0.95, light: 0xff9a5a, lightI: 2.0, waterColor: 0x2a3446 },
   items: {
-    chumap: { icon: "🗺️", name: "추격 지도", desc: "지휘 상자에서 나온 지도. 달아나는 왜군을 뒤쫓는 길이 그려져 있다." },
+    chumap: { icon: "圖", name: "추격 지도", desc: "지휘 상자에서 나온 지도. 달아나는 왜군을 뒤쫓는 길이 그려져 있다." },
   },
   hints: [
     "신라 사신의 편지를 먼저 읽어야 지휘 상자를 열 수 있어요. 명령서의 한자는 진영 천막 안 '군사 셈 판'으로 읽어요.",
@@ -853,7 +853,7 @@ CHAPTERS.push({
   place: "요동의 들판", when: "5세기 초 · 요동 들판의 진영",
   atmosphere: { hdri: "qwantani_dawn_puresky", hdrExposure: 0.55, top: 0x29386b, mid: 0x8c789e, low: 0xf29e73, sun: [1, 0.22, 0.12], sunCol: 0xff8c40, fog: 0x7d7088, fogNear: 40, fogFar: 140, hemiSky: 0xc8c4e0, hemiGround: 0x5a4630, hemiI: 1.05, light: 0xffc28a, lightI: 2.2 },
   items: {
-    magap: { icon: "🛡️", name: "마갑", desc: "작은 쇠 비늘을 엮어 만든 말 갑옷. 말의 몸과 목을 감싼다." },
+    magap: { icon: "甲", name: "마갑", desc: "작은 쇠 비늘을 엮어 만든 말 갑옷. 말의 몸과 목을 감싼다." },
   },
   hints: [
     "벽화 조각에는 ㉠~㉣ 자리가, 대장장이 말에는 갑옷 이름과 그 자리가 있어요. 둘을 이어 보세요.",
@@ -1024,9 +1024,9 @@ CHAPTERS.push({
   combos: [["inkstick", "pad", "ink"]],
   atmosphere: { hdri: "qwantani_sunrise_puresky", hdrExposure: 0.6, top: 0x3b4a6a, mid: 0x8a8ea0, low: 0xd8a888, sun: [0.55, 0.22, 0.8], sunCol: 0xff9a60, fog: 0x9a98a0, fogNear: 40, fogFar: 160, hemiSky: 0xc8d0e8, hemiGround: 0x4a4a40, hemiI: 1.1, light: 0xffd0a8, lightI: 1.9 },
   items: {
-    inkstick: { icon: "⚫", name: "먹물 그릇", desc: "곱게 갈아 놓은 먹물. 무언가에 묻혀서 쓴다." },
-    pad: { icon: "🧶", name: "마른 솜방망이", desc: "솜을 천으로 싸서 묶은 방망이. 아직 보송보송하다. 이대로 두드리면 아무것도 묻어나지 않는다." },
-    ink: { icon: "🖌️", name: "먹 묻힌 솜방망이", desc: "먹물을 머금은 솜방망이. 비석에 종이를 대고 두드리면 글씨가 떠진다(탁본)." },
+    inkstick: { icon: "墨", name: "먹물 그릇", desc: "곱게 갈아 놓은 먹물. 무언가에 묻혀서 쓴다." },
+    pad: { icon: "綿", name: "마른 솜방망이", desc: "솜을 천으로 싸서 묶은 방망이. 아직 보송보송하다. 이대로 두드리면 아무것도 묻어나지 않는다." },
+    ink: { icon: "墨", name: "먹 묻힌 솜방망이", desc: "먹물을 머금은 솜방망이. 비석에 종이를 대고 두드리면 글씨가 떠진다(탁본)." },
   },
   hints: [
     "젊은 왕의 말대로 읽어야 글이 이어져요. 첫 면은 아침 해가 비추는 면, 그다음은 해가 하늘을 지나가는 쪽(왼쪽으로 돌며)이에요.",
@@ -1194,6 +1194,10 @@ export default {
       ["호우명 그릇", "경주 호우총에서 나온 고구려 그릇. 고구려와 신라가 가까웠음을 보여 줌"],
       ["개마무사", "사람과 말이 모두 갑옷을 입은 고구려의 철갑 기병"],
       ["장수왕", "아버지의 비석을 세우고(414), 427년 평양으로 도읍을 옮겨 남쪽으로 세력을 넓힌 아들"],
+    ],
+    photos: [
+      { src: "assets/photos/stele-1915.jpg", caption: "1915년 책에 실린 광개토대왕릉비 사진", credit: "공공 저작물 · Wikimedia Commons" },
+      { src: "assets/photos/stele-rubbing.jpg", caption: "광개토대왕릉비 탁본의 한 부분", credit: "도쿄 국립박물관 소장 · 공공 저작물 · Wikimedia Commons" },
     ],
   },
 };

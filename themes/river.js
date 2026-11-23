@@ -106,7 +106,7 @@ CHAPTERS.push({
   },
   atmosphere:{ hdri: "qwantani_morning_puresky", hdrExposure: 0.8, top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [0.5, 0.55, -0.6], sunCol: 0xffe0a0, glow: 0.7, fog: 0xb0c4d4, fogNear: 50, fogFar: 160, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff0d8, lightI: 2.3 },
   items: {
-    knife: { icon: "🔪", name: "작은 칼", desc: "달력 상자에서 나온 작은 칼. 끈을 자를 수 있다." },
+    knife: { icon: "刀", name: "작은 칼", desc: "달력 상자에서 나온 작은 칼. 끈을 자를 수 있다." },
   },
   hints: [
     "전각 안의 글(사관의 기록책, 조서 사본, 서쪽 벽 간지 판, 동쪽 벽 숫자 판)과 마당 전령의 말을 모두 읽어 보세요. 지도 탁자는 덮개가 끈으로 묶여 있어요.",
@@ -286,9 +286,9 @@ CHAPTERS.push({
   },
   atmosphere:{ hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [0.4, 0.6, -0.5], sunCol: 0xfff0d0, glow: 0.6, fog: 0xb0c0c8, fogNear: 60, fogFar: 200, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff4e0, lightI: 2.4, waterColor: 0x23403a },
   items: {
-    hookhead: { icon: "🪝", name: "쇠갈고리", desc: "자루가 부러져 한 뼘밖에 안 남은 쇠갈고리. 이대로는 성벽 아래까지 닿지 않는다." },
-    pole: { icon: "🎋", name: "긴 장대", desc: "성벽을 고칠 때 쓰던 긴 대나무 장대. 끝에 무언가를 묶을 수 있다." },
-    hook: { icon: "🪝", name: "장대 갈고리", desc: "긴 장대 끝에 쇠갈고리를 묶은 것. 성벽 위에서 해자에 뜬 것을 건질 수 있다." },
+    hookhead: { icon: "鉤", name: "쇠갈고리", desc: "자루가 부러져 한 뼘밖에 안 남은 쇠갈고리. 이대로는 성벽 아래까지 닿지 않는다." },
+    pole: { icon: "竿", name: "긴 장대", desc: "성벽을 고칠 때 쓰던 긴 대나무 장대. 끝에 무언가를 묶을 수 있다." },
+    hook: { icon: "鉤", name: "장대 갈고리", desc: "긴 장대 끝에 쇠갈고리를 묶은 것. 성벽 위에서 해자에 뜬 것을 건질 수 있다." },
   },
   hints: [
     "서쪽 계단으로 성벽에 올라가 장대(지휘소)의 일지와 명령문을 읽고, 마당의 글자 판과 무너진 곳의 인부 말도 들어 보세요. 마당 동쪽 창고의 글(淸野)은 다음 장에서 쓸모가 있어요.",
@@ -430,7 +430,7 @@ CHAPTERS.push({
   },
   atmosphere:{ hdri: "qwantani_dusk_2_puresky", hdrExposure: 0.62, top: 0x1a1a3a, mid: 0x6a3a4a, low: 0xe06a3a, sun: [0.9, 0.06, -0.4], sunCol: 0xff6020, glow: 0.6, fog: 0x5a3a40, fogNear: 25, fogFar: 110, hemiSky: 0xd09080, hemiGround: 0x303040, hemiI: 0.85, light: 0xff9060, lightI: 1.5, waterColor: 0x1a3038 },
   items: {
-    torch: { icon: "🔥", name: "횃불", desc: "모닥불에서 붙인 횃불. 어두운 곳을 비출 수 있다." },
+    torch: { icon: "炬", name: "횃불", desc: "모닥불에서 붙인 횃불. 어두운 곳을 비출 수 있다." },
   },
   hints: [
     "보초와 굶주린 병사들의 말을 듣고, 모닥불에서 횃불을 얻어 어두운 빈 천막을 비춰 보세요.",
@@ -630,7 +630,7 @@ CHAPTERS.push({
   },
   atmosphere:{ hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [-0.5, 0.6, 0.4], sunCol: 0xfff0d0, glow: 0.6, fog: 0xb4c4cc, fogNear: 70, fogFar: 220, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff4e0, lightI: 2.4, waterColor: 0x23424a },
   items: {
-    stick: { icon: "🥢", name: "북채", desc: "큰 북을 치는 북채." },
+    stick: { icon: "桴", name: "북채", desc: "큰 북을 치는 북채." },
   },
   hints: [
     "무기 걸이에서 북채를 찾아 북에 쓰세요. 북틀에 새긴 군호와 작전 지도의 명령('싸울 때마다 지는 척 물러나라')을 합쳐 군호를 울리면 싸움이 시작돼요. 사로잡은 적의 편지도 읽어 보세요.",
@@ -753,7 +753,7 @@ CHAPTERS.push({
         return toast("여기가 첫 번째 자리일까? 지도를 다시 보자.");
       }
       L.seq.push(i); L.banners[i].mat.color.set(0x8a8a80); sfx("item"); A.flag("c4_r" + i);
-      if (L.seq.length < 7) return toast(`⚔️ ${L.seq.length}번째 싸움. 지는 척 물러났다.`);
+      if (L.seq.length < 7) return toast(`${L.seq.length}번째 싸움. 지는 척 물러났다.`);
       A.flag("c4_lured"); A.questDone("c4_lure");
       A.note("하루에 일곱 번 싸워 일곱 번 모두 지는 척 물러났다. 적은 이긴 줄 알고 더 깊이 내려와 서남쪽 산에 진을 쳤다.");
       return A.card("일곱 번 물러나다", `<div class="letter">기록에 따르면 적장 우문술은 <b>하루에 일곱 번 싸워 일곱 번 모두 이겼다</b>. 그러나 그것은 굶주린 적을 지치게 하려고 일부러 물러난 것이었다.<br>이긴 줄 안 적은 더 깊이 내려와, 평양성이 바라보이는 <b>서남쪽 산</b>에 진을 쳤다.</div>${givePiece(A, 4)}`);
@@ -1038,7 +1038,7 @@ CHAPTERS.push({
     }
     if (id === "drum") {
       if (A.has("c6_strike")) return A.card("큰 북", `<p>북소리가 아직 강 위에 울리는 듯하다.</p>`);
-      A.card("큰 북", `<p>북채를 쥐었다. 지금 북을 치면, 사방에 숨은 군사가 한꺼번에 일어난다.</p>`, `<button class="btn gold" id="use-btn">🥁 북을 친다</button>`);
+      A.card("큰 북", `<p>북채를 쥐었다. 지금 북을 치면, 사방에 숨은 군사가 한꺼번에 일어난다.</p>`, `<button class="btn gold" id="use-btn">북을 친다</button>`);
       E.$("use-btn").onclick = () => strike(A);
       return;
     }
@@ -1187,6 +1187,9 @@ export default {
       ["청야 전술", "들판의 곡식을 거두고 성에 들어가 적이 먹을 것을 얻지 못하게 한 작전"],
       ["여수장우중문시", "을지문덕이 적장 우중문에게 보낸 다섯 글자 넉 줄 시. 추어올리는 척하며 그만 돌아가라고 놀림"],
       ["수의 멸망(618)", "거듭된 고구려 원정 실패와 원정에 지친 백성들의 봉기로 수나라가 무너짐"],
+    ],
+    photos: [
+      { src: "assets/photos/river-anak.jpg", caption: "안악 3호분 벽화 「행렬도」. 고구려 군대가 줄지어 가는 모습", credit: "공공 저작물 · Wikimedia Commons" },
     ],
   },
 };

@@ -93,7 +93,7 @@ CHAPTERS.push({
   place: "화랑의 수련터", when: "기사년 봄 · 서라벌 남산 기슭",
   atmosphere: { hdri: "qwantani_morning_puresky", hdrExposure: 0.8, top: 0x3a6fb0, mid: 0x9ac0dd, low: 0xe2d8c8, sun: [0.5, 0.55, -0.6], sunCol: 0xffe0a0, glow: 0.7, fog: 0xb0c4d4, fogNear: 50, fogFar: 160, hemiSky: 0xdde8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff0d8, lightI: 2.3 },
   items: {
-    bronzeKey: { icon: "🗝️", name: "청동 열쇠", desc: "가르침 판 뒤 틈에서 나온 열쇠. 정자의 책 상자에 맞을 것 같다." },
+    bronzeKey: { icon: "鑰", name: "청동 열쇠", desc: "가르침 판 뒤 틈에서 나온 열쇠. 정자의 책 상자에 맞을 것 같다." },
   },
   hints: [
     "낭도의 말을 듣고, 정자의 서안 위 '글자 풀이'와 활터의 점수판을 챙겨 보세요. 둘 다 뒤에서 계속 쓰여요.",
@@ -230,8 +230,8 @@ CHAPTERS.push({
   place: "깊은 산의 석굴", when: "신미년 · 중악",
   atmosphere: { top: 0x0a0806, mid: 0x15100c, low: 0x1e1712, sun: [0.2, 0.8, 0.3], sunCol: 0x806040, glow: 0.1, fog: 0x0c0907, fogNear: 8, fogFar: 32, hemiSky: 0x7a7080, hemiGround: 0x2a2018, hemiI: 1.25, light: 0x8a7a6a, lightI: 0.12, exposure: 1.75 },
   items: {
-    flint: { icon: "🪨", name: "부싯돌", desc: "보따리 속 부싯돌과 마른 쑥. 횃대에 불을 붙일 수 있다." },
-    scroll: { icon: "📜", name: "노인의 두루마리", desc: "석굴에서 나타난 노인이 남겼다는 두루마리. 위쪽 가장자리에 '南'이라고 적혀 있다. 길 그림(그린 그대로): ↑ ↑ → ↑ ← ←" },
+    flint: { icon: "石", name: "부싯돌", desc: "보따리 속 부싯돌과 마른 쑥. 횃대에 불을 붙일 수 있다." },
+    scroll: { icon: "卷", name: "노인의 두루마리", desc: "석굴에서 나타난 노인이 남겼다는 두루마리. 위쪽 가장자리에 '南'이라고 적혀 있다. 길 그림(그린 그대로): ↑ ↑ → ↑ ← ←" },
   },
   hints: [
     "입구의 보따리와 바위 글을 먼저 읽으세요. 이 석굴에서 해야 할 일 세 가지가 나와요.",
@@ -338,7 +338,7 @@ CHAPTERS.push({
         return toast("훅, 차가운 바람이 지나가더니 횃불이 몽땅 꺼졌다. 차례가 틀렸나 보다.", 3200);
       }
       A.flag("h2_t" + i);
-      if (lit.length < 3) return toast(`🔥 불이 붙었다 (${lit.length}/3)`);
+      if (lit.length < 3) return toast(`불이 붙었다 (${lit.length}/3)`);
       A.flag("h2_lit"); L.carve.material.color.setHex(0xffffff);
       A.note("세 횃불을 낮은 것부터 차례로 밝혔다. 서쪽 바위 벽의 그림이 드러났다.");
       return A.card("세 불이 밝혀지다", `<p class="msg ok">세 번째 불이 붙자 굴 안이 환해졌다.</p><p>서쪽 바위 벽에 뭔가 새겨져 있다. 아까는 보이지 않던 것이다.</p>`);
@@ -391,10 +391,10 @@ CHAPTERS.push({
   place: "서라벌의 집", when: "어느 해 봄 · 서라벌",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x3f6fb8, mid: 0x9cc0e0, low: 0xd8e2e6, sun: [0.4, 0.85, 0.35], sunCol: 0xfff0c0, glow: 0.6, fog: 0xb8c8d8, fogNear: 40, fogFar: 120, hemiSky: 0xdfe8ff, hemiGround: 0x6a6040, hemiI: 1.1, light: 0xfff2dc, lightI: 2.4 },
   items: {
-    silk: { icon: "👘", name: "비단 치마", desc: "함 속에 있던 문희의 고운 비단 치마." },
-    ribbon: { icon: "🎀", name: "떨어진 옷고름", desc: "축국을 하다 떨어진 김춘추의 옷고름." },
-    thread: { icon: "🧵", name: "바늘과 실", desc: "반짇고리에서 고른 바늘과 실." },
-    water: { icon: "💧", name: "찬물 한 바가지", desc: "우물에서 뜬 맑고 찬 물. 보희에게 가져다주자." },
+    silk: { icon: "裳", name: "비단 치마", desc: "함 속에 있던 문희의 고운 비단 치마." },
+    ribbon: { icon: "帶", name: "떨어진 옷고름", desc: "축국을 하다 떨어진 김춘추의 옷고름." },
+    thread: { icon: "絲", name: "바늘과 실", desc: "반짇고리에서 고른 바늘과 실." },
+    water: { icon: "水", name: "찬물 한 바가지", desc: "우물에서 뜬 맑고 찬 물. 보희에게 가져다주자." },
   },
   hints: [
     "보희에게 꿈 이야기를 듣고, 툇마루 서안의 어머니 쪽지를 읽으세요.",
@@ -517,7 +517,7 @@ CHAPTERS.push({
       if (A.owns("thread")) return A.card("반짇고리", `<p>바늘 하나와 실 한 타래를 꺼냈다.</p>`);
       if (!A.owns("ribbon")) return A.card("반짇고리", `<p>바늘, 골무, 붉은 실, 푸른 실, 자줏빛 실, 노란 실이 들어 있다. 지금은 꿰맬 것이 없다.</p>`);
       A.card("반짇고리", `<p>뚜껑 안쪽에 어머니의 글씨가 있다.</p><div class="letter">"옷고름은 <b>그 옷과 같은 빛깔 실</b>로 꿰매야 꿰맨 자리가 드러나지 않는다."</div><p>어떤 실을 꺼낼까?</p>`);
-      return A.choiceLock(["🟥 붉은 실", "🟦 푸른 실", "🟪 자줏빛 실", "🟨 노란 실"], 2, () => { A.card("반짇고리", `<p class="msg ok">바늘에 실을 꿰었다.</p>`); A.give("thread"); }, "이 빛깔로 꿰매면 꿰맨 자리가 훤히 보이겠다. 옷고름 주인의 옷을 떠올려 보자.");
+      return A.choiceLock(['<i class="swatch" style="background:#b23a2e"></i>붉은 실', '<i class="swatch" style="background:#2f5a8a"></i>푸른 실', '<i class="swatch" style="background:#6a3a7a"></i>자줏빛 실', '<i class="swatch" style="background:#d2a832"></i>노란 실'], 2, () => { A.card("반짇고리", `<p class="msg ok">바늘에 실을 꿰었다.</p>`); A.give("thread"); }, "이 빛깔로 꿰매면 꿰맨 자리가 훤히 보이겠다. 옷고름 주인의 옷을 떠올려 보자.");
     }
     if (id === "family") {
       A.flag("h3_family");
@@ -559,11 +559,11 @@ CHAPTERS.push({
   musicKey: (S) => (S.flags.includes("h4_launched") ? "ch4b" : "ch4"),
   atmosphere: { top: 0x02040c, mid: 0x0a1428, low: 0x1a2238, sun: [-0.3, 0.5, -0.6], sunCol: 0x8090c0, glow: 0.2, fog: 0x070a14, fogNear: 22, fogFar: 75, hemiSky: 0x6a7aa8, hemiGround: 0x2a2018, hemiI: 1.25, light: 0x8aa0d0, lightI: 0.45, exposure: 1.4 },
   items: {
-    scarecrow: { icon: "🎎", name: "짚 허수아비", desc: "짚을 묶어 사람 모양으로 만든 허수아비." },
-    kite: { icon: "🪁", name: "큰 연", desc: "물자 상자에서 꺼낸 커다란 연. 사람 하나쯤은 매달 수 있을 만큼 크다." },
-    pot: { icon: "🏺", name: "빈 불씨 단지", desc: "불씨를 담아 옮기는 작은 단지. 지금은 비어 있다." },
-    ember: { icon: "🔥", name: "불씨 단지", desc: "모닥불에서 불씨를 담았다. 뜨겁다." },
-    kiteReady: { icon: "🪁", name: "허수아비를 매단 연", desc: "큰 연에 짚 허수아비를 단단히 매달았다. 불만 붙이면 된다." },
+    scarecrow: { icon: "芻", name: "짚 허수아비", desc: "짚을 묶어 사람 모양으로 만든 허수아비." },
+    kite: { icon: "鳶", name: "큰 연", desc: "물자 상자에서 꺼낸 커다란 연. 사람 하나쯤은 매달 수 있을 만큼 크다." },
+    pot: { icon: "壺", name: "빈 불씨 단지", desc: "불씨를 담아 옮기는 작은 단지. 지금은 비어 있다." },
+    ember: { icon: "火", name: "불씨 단지", desc: "모닥불에서 불씨를 담았다. 뜨겁다." },
+    kiteReady: { icon: "鳶", name: "허수아비를 매단 연", desc: "큰 연에 짚 허수아비를 단단히 매달았다. 불만 붙이면 된다." },
   },
   hints: [
     "모닥불 곁 군사들의 소문을 듣고, 장수 막사 안쪽 책상의 계획서를 읽으세요.",
@@ -734,7 +734,7 @@ CHAPTERS.push({
   place: "황산벌", when: "경신년 7월 · 황산벌",
   atmosphere: { hdri: "belfast_sunset_puresky", hdrExposure: 0.6, top: 0x2b335c, mid: 0xb0705a, low: 0xff9a4d, sun: [-0.2, 0.12, -1], sunCol: 0xff6a20, fog: 0x8a6a60, fogNear: 30, fogFar: 120, hemiSky: 0xe0b090, hemiGround: 0x4a3a28, hemiI: 0.95, light: 0xff9a5a, lightI: 2.0 },
   items: {
-    drumstick: { icon: "🥁", name: "북채", desc: "진격의 북을 칠 북채." },
+    drumstick: { icon: "桴", name: "북채", desc: "진격의 북을 칠 북채." },
   },
   hints: [
     "부장의 말을 듣고, 군량 장부와 척후병의 나무쪽을 보세요. 숫자가 한자로 적혀 있어요. 五는 1장 점수판(수첩)에 있어요.",
@@ -889,7 +889,7 @@ CHAPTERS.push({
   place: "언덕 위의 집", when: "계유년 · 서라벌",
   atmosphere: { hdri: "qwantani_sunrise_puresky", hdrExposure: 0.6, top: 0x3b4a6a, mid: 0x8a8ea0, low: 0xd8a888, sun: [0.8, 0.15, 0.6], sunCol: 0xff9a60, fog: 0x8a909c, fogNear: 30, fogFar: 140, hemiSky: 0xc8d0e8, hemiGround: 0x404650, hemiI: 1.0, light: 0xffd0a8, lightI: 1.8 },
   items: {
-    caseKey: { icon: "🗝️", name: "명패함 열쇠", desc: "관직 패 걸이 뒤에서 나온 작은 열쇠." },
+    caseKey: { icon: "鑰", name: "명패함 열쇠", desc: "관직 패 걸이 뒤에서 나온 작은 열쇠." },
   },
   hints: [
     "손자, 의원, 서안의 편지에서 '무엇이 무엇보다 먼저'인지 모아 보세요. 5장까지의 수첩도 도움이 돼요.",
@@ -1062,6 +1062,9 @@ export default {
       ["황산벌 전투(660)", "계백이 이끈 백제 결사대와 신라군이 싸운 곳"],
       ["나당 연합", "신라와 당이 손잡고 백제(660)와 고구려(668)를 무너뜨림"],
       ["삼국 통일(676)", "신라가 매소성과 기벌포에서 당을 몰아내고 이룬 통일"],
+    ],
+    photos: [
+      { src: "assets/photos/hwarang-imsin.jpg", caption: "임신서기석. 신라의 두 젊은이가 맹세를 새긴 돌", credit: "출처: 국립중앙박물관(공공누리 제1유형) · Wikimedia Commons" },
     ],
   },
 };

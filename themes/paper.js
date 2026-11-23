@@ -115,9 +115,9 @@ CHAPTERS.push({
   place: "버드나무 집", when: "병진년(1916) 봄 무렵 · 충청남도 천안 지령리",
   atmosphere: SPRING,
   items: {
-    towel: { icon: "🧺", name: "잘 마른 수건", desc: "냇가 버드나무 가지에 널어 두었던 무명 수건. 볕에 잘 말랐다. 어머니께 가져다 드리자." },
-    clothes: { icon: "👘", name: "새 저고리", desc: "어머니가 지어 함에 넣어 두신 새 옷. 경성 가는 보따리에 넣자." },
-    bible: { icon: "📖", name: "작은 성경", desc: "예배당 성경함에서 꺼낸 손때 묻은 성경. 보따리에 넣자." },
+    towel: { icon: "巾", name: "잘 마른 수건", desc: "냇가 버드나무 가지에 널어 두었던 무명 수건. 볕에 잘 말랐다. 어머니께 가져다 드리자." },
+    clothes: { icon: "衣", name: "새 저고리", desc: "어머니가 지어 함에 넣어 두신 새 옷. 경성 가는 보따리에 넣자." },
+    bible: { icon: "經", name: "작은 성경", desc: "예배당 성경함에서 꺼낸 손때 묻은 성경. 보따리에 넣자." },
   },
   hints: [
     "어머니, 장독대, 예배당 안의 번호판, 아버지 학교의 칠판과 옥편을 모두 살펴보세요. 마루의 보따리를 싸려면 옷과 성경이 있어야 해요.",
@@ -332,7 +332,7 @@ CHAPTERS.push({
   place: "배꽃 학당의 밤", when: "기미년(1919) 2월 하순 · 경성 정동 이화학당 기숙사",
   atmosphere: NIGHT_IN,
   items: {
-    sewing: { icon: "🪡", name: "바늘과 실", desc: "작은 함에서 나온 검은 실과 바늘. 수틀의 태극기를 마저 수놓을 수 있다." },
+    sewing: { icon: "針", name: "바늘과 실", desc: "작은 함에서 나온 검은 실과 바늘. 수틀의 태극기를 마저 수놓을 수 있다." },
   },
   hints: [
     "책상 위 신문과 한자 공책, 가운데 침대의 베개 밑, 오른쪽 침대의 쪽지, 벽의 공부 종이, 교과서, 남쪽 벽의 약도를 모두 살펴보세요.",
@@ -504,7 +504,7 @@ CHAPTERS.push({
   place: "숨겨진 종이 뭉치", when: "기미년(1919) 2월 27일 밤 · 경성 수송동 보성사",
   atmosphere: NIGHT_IN,
   items: {
-    mirror: { icon: "🪞", name: "손거울", desc: "세면대 위의 작은 손거울. 좌우가 뒤집힌 것을 바로 비춰 볼 수 있다." },
+    mirror: { icon: "鏡", name: "손거울", desc: "세면대 위의 작은 손거울. 좌우가 뒤집힌 것을 바로 비춰 볼 수 있다." },
   },
   hints: [
     "사장, 벽의 쪽지, 북쪽 벽의 옥편 표와 종이 단위표, 선반의 장부, 탁자의 끝 장 명단, 세면대를 모두 보세요.",
@@ -682,8 +682,8 @@ CHAPTERS.push({
   place: "팔각정 앞에서", when: "기미년(1919) 3월 1일 낮 · 경성 탑골공원",
   atmosphere: { hdri: "kloofendal_48d_partly_cloudy_puresky", hdrExposure: 0.75, top: 0x4a78b0, mid: 0xa8c4dc, low: 0xdcd8cc, sun: [0.4, 0.6, 0.5], sunCol: 0xfff0d0, glow: 0.6, fog: 0xb8c4d0, fogNear: 45, fogFar: 150, hemiSky: 0xdde6f2, hemiGround: 0x5e5848, hemiI: 1.1, light: 0xfff2dc, lightI: 2.1 },
   items: {
-    letter: { icon: "✉️", name: "고향에서 온 편지", desc: "사촌 언니가 건넨 편지. 글자가 네 줄로 이상하게 늘어서 있다." },
-    bookwrap: { icon: "📚", name: "언니의 책보", desc: "사촌 언니가 십층 석탑 아래에 두고 온 책 보자기. 언니에게 돌려주자." },
+    letter: { icon: "信", name: "고향에서 온 편지", desc: "사촌 언니가 건넨 편지. 글자가 네 줄로 이상하게 늘어서 있다." },
+    bookwrap: { icon: "褓", name: "언니의 책보", desc: "사촌 언니가 십층 석탑 아래에 두고 온 책 보자기. 언니에게 돌려주자." },
   },
   hints: [
     "탑 아래와 비석 옆의 찢어진 종잇조각, 팔각정, 게시판, 벤치 위 전단을 모두 살펴보세요.",
@@ -885,9 +885,9 @@ CHAPTERS.push({
   place: "아우내의 장날", when: "기미년(1919) 3월 31일 밤 ~ 4월 1일 · 천안 병천 아우내 장터",
   atmosphere: NIGHT5,
   items: {
-    tinder: { icon: "🔥", name: "부시와 부싯깃", desc: "주막의 함에서 나온 불 붙이는 도구. 산꼭대기 봉화에 불을 붙일 수 있다." },
-    flags: { icon: "🇰🇷", name: "태극기 꾸러미", desc: "포목점 옷감 사이에 숨겨 둔 태극기 꾸러미. 장터 단상에서 나눠 주자." },
-    mtowel: { icon: "🤍", name: "어머니의 무명 수건", desc: "장터 단상 아래, 어머니가 서 계시던 자리에 떨어져 있던 수건. 버드나무 집 냇가에 널어 두시던 바로 그 수건이다." },
+    tinder: { icon: "火", name: "부시와 부싯깃", desc: "주막의 함에서 나온 불 붙이는 도구. 산꼭대기 봉화에 불을 붙일 수 있다." },
+    flags: { icon: "旗", name: "태극기 꾸러미", desc: "포목점 옷감 사이에 숨겨 둔 태극기 꾸러미. 장터 단상에서 나눠 주자." },
+    mtowel: { icon: "巾", name: "어머니의 무명 수건", desc: "장터 단상 아래, 어머니가 서 계시던 자리에 떨어져 있던 수건. 버드나무 집 냇가에 널어 두시던 바로 그 수건이다." },
   },
   hints: [
     "주막 마루의 쪽지, 주막 벽의 책력, 주막 앞 약도를 먼저 보세요. 쪽지의 '三月 初一日'은 어느 달력으로 센 날일까요?",
@@ -1261,6 +1261,10 @@ export default {
       ["아우내 장터 만세 운동", "1919년 4월 1일(음력 3월 1일) 천안 아우내 장터에서 열린 만세 운동"],
       ["대한민국 임시 정부", "3·1 운동 뒤 1919년 4월 상하이에 세운 정부"],
       ["문화 통치", "3·1 운동 뒤 일제가 내세운 통치 방식. 겉으로는 부드러워졌지만 감시와 탄압은 더 교묘해짐"],
+    ],
+    photos: [
+      { src: "assets/photos/paper-declaration.jpg", caption: "1919년의 기미 독립 선언서", credit: "공공 저작물 · Wikimedia Commons" },
+      { src: "assets/photos/paper-seodaemun.jpg", caption: "오늘의 서대문 형무소 역사관", credit: "CC0 · Wikimedia Commons" },
     ],
   },
 };
