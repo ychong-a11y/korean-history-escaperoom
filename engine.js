@@ -1300,7 +1300,7 @@ function stopAutoRun() { if (!autoRun) return; autoRun = false; running = false;
   };
   const end = (ev) => {
     if (joy.id !== ev.pointerId) return; joy.id = null; base.classList.remove("on", "ready");
-    if (lockReady && !inputLocked) { autoRun = true; running = true; joy.x = 0; joy.y = -1; base.classList.add("auto"); const R = (base.getBoundingClientRect().width / 2) * 0.6; knob.style.transform = "translate(0px," + (-R).toFixed(1) + "px)"; toast("달리기 고정! 조이스틱을 다시 누르면 풀려요.", 2000); }
+    if (lockReady && !inputLocked) { autoRun = true; running = true; joy.x = 0; joy.y = -1; base.classList.add("auto"); const R = (base.getBoundingClientRect().width / 2) * 0.6; knob.style.transform = "translate(0px," + (-R).toFixed(1) + "px)"; toast("달리기 고정. 조이스틱을 다시 누르면 풀려요.", 2000); }
     else { joy.x = joy.y = 0; knob.style.transform = ""; }
     lockReady = false;
   };
@@ -1585,7 +1585,7 @@ function startBattle(o = {}, onWin) {
   }
   BATTLE = { o, onWin, root, flags, arrows: [], shots: [], shields: o.shields, t: 0, next: 2.2, cool: 0, rx, rz, fx, fz, pause: 0, ox: targetPos.x, oz: targetPos.z, won: false };
   inputLocked = false; hideGuide(); battleBar(); B_MUSIC = AU.mood; setMusic("battle"); sfx("buk");
-  toast(isTouch ? "적이 활을 쏜다! 붉은 표시를 피하고, 깃발을 눌러 쏘자." : "적이 활을 쏜다! 붉은 표시를 피하고, 깃발을 겨누어 클릭하자.", 4200);
+  toast(isTouch ? "적이 활을 쏜다. 붉은 표시를 피하고, 깃발을 눌러 쏘자." : "적이 활을 쏜다. 붉은 표시를 피하고, 깃발을 겨누어 클릭하자.", 4200);
 }
 function battleEnd(win) {
   const B = BATTLE; if (!B) return;
@@ -1616,7 +1616,7 @@ function battleTick(dt) {
   }
   for (const s of B.shots) {   // 내가 쏜 화살
     s.t += dt; const k = Math.min(1, s.t / s.T); s.m.position.lerpVectors(s.from, s.to, k); s.m.lookAt(s.to);
-    if (k >= 1 && !s.done) { s.done = true; s.m.visible = false; if (s.flag && !s.flag.down) { s.flag.down = true; sfx("solve"); battleBar(); if (B.flags.every((f) => f.down)) { B.won = true; toast("깃발이 모두 쓰러졌다! 적이 물러난다.", 3200); setTimeout(() => battleEnd(true), 1700); } } }
+    if (k >= 1 && !s.done) { s.done = true; s.m.visible = false; if (s.flag && !s.flag.down) { s.flag.down = true; sfx("solve"); battleBar(); if (B.flags.every((f) => f.down)) { B.won = true; toast("깃발이 모두 쓰러졌다. 적이 물러난다.", 3200); setTimeout(() => battleEnd(true), 1700); } } }
   }
   if (B.won) return;
   if (B.pause > 0) { B.pause -= dt; return; }
@@ -1645,7 +1645,7 @@ function battleTick(dt) {
         if (Math.hypot(targetPos.x - a.to.x, targetPos.z - a.to.z) < 0.8) {   // 맞았다
           B.shields--; sfx("wrong"); battleBar(); const v = $("hitflash"); if (v) { v.classList.remove("on"); void v.offsetWidth; v.classList.add("on"); }
           if (B.shields <= 0) {
-            toast("방패가 다 깨졌다! 숨을 고르고 다시 맞선다.", 3000); B.pause = 2.4; B.shields = B.o.shields; B.next = 1.5;
+            toast("방패가 다 깨졌다. 숨을 고르고 다시 맞선다.", 3000); B.pause = 2.4; B.shields = B.o.shields; B.next = 1.5;
             B.flags.forEach((f) => { f.down = false; f.fall = 0; f.pole.rotation.x = f.cl.rotation.x = 0; f.man.visible = true; f.man.position.set(-0.45, 0, 0); f.man.rotation.y = 0; });
             B.arrows.forEach((x) => { x.gone = true; }); battleBar();
           }
@@ -1747,7 +1747,7 @@ function incenseDraw() {
   el.classList.toggle("out", left <= 0); el.classList.toggle("low", left > 0 && left < 60);
   el.querySelector("i").style.width = Math.round(k * 100) + "%";
   el.querySelector("b").textContent = left <= 0 ? "향이 다 탔다" : `향 ${Math.ceil(left / 60)}분`;
-  if (left > 0 && left < 60 && S.incWarn !== S.ch) { S.incWarn = S.ch; toast("향이 거의 다 탔다. 서두르자!", 2600); }
+  if (left > 0 && left < 60 && S.incWarn !== S.ch) { S.incWarn = S.ch; toast("향이 거의 다 탔다. 서두르자", 2600); }
 }
 
 function frame(dt) {
@@ -2214,7 +2214,7 @@ function openBag(sel, say = "") {
       if (t.k === mix) return openBag(i);
       const made = t.type === "cur" ? combine(mix, t.k) : null;
       if (!made) { sfx("wrong"); return openBag(bagSel, `${ITEMS[mix].name}${josa(ITEMS[mix].name, "과", "와")} ${t.it.name}${josa(t.it.name, "은", "는")} 서로 어울리지 않는 것 같다.`); }
-      return openBag(Math.max(0, bagSlots().findIndex((x) => x.k === made && x.type === "cur")), `${eul(ITEMS[made].name)} 만들었다!`);
+      return openBag(Math.max(0, bagSlots().findIndex((x) => x.k === made && x.type === "cur")), `${eul(ITEMS[made].name)} 만들었다`);
     }
     if (i === bagSel) primary(); else openBag(i);
   }));
@@ -2428,7 +2428,7 @@ function clearChapter(force) {
   $("clear-title").textContent = c.title;
   $("clear-text").innerHTML = `<p class="serif">${c.text}</p>${c.next ? `<div class="letter">${THEME.nextLabel ?? "다음 장면이 떠오른다."}<br>${c.next}</div>` : ""}`;
   progressBar("clear-progress", S.ch + 1);
-  $("clear-stats").textContent = `이번 장 ${fmt(took)} · 전체 ${fmt(S.elapsed)} · 쓴 힌트 ${S.hints}개` + (gotHint ? ` · 힌트 +1` : "") + (fast ? ` · 향이 타기 전에 탈출! 힌트 +1` : "") + (gotHint || fast ? ` (남은 ${hintLeft()}개)` : "");
+  $("clear-stats").textContent = `이번 장 ${fmt(took)} · 전체 ${fmt(S.elapsed)} · 쓴 힌트 ${S.hints}개` + (gotHint ? ` · 힌트 +1` : "") + (fast ? ` · 향이 타기 전에 탈출 · 힌트 +1` : "") + (gotHint || fast ? ` (남은 ${hintLeft()}개)` : "");
   S.ch++; S.inv = []; S.used = []; HELD = null; S.chStart = S.elapsed; delete S.pos; save();
   $("fade").style.opacity = 1;
   setTimeout(() => { $("clear").classList.remove("hidden"); $("fade").style.opacity = 0; }, 800);
@@ -2721,7 +2721,7 @@ function startCoach() {
   const finish = (skipped) => {
     clearInterval(coachT); coachT = null; lsSet(COACH_KEY, "1");
     if (skipped) { el.remove(); document.body.classList.remove("coaching"); return; }
-    el.classList.add("ok"); el.querySelector(".c-n").textContent = "준비 끝!"; el.querySelector(".c-ic").textContent = "畢"; el.querySelector(".c-t").innerHTML = "이제 단서를 찾아 문을 열어 보세요. 막히면 <b>힌트</b>";
+    el.classList.add("ok"); el.querySelector(".c-n").textContent = "준비 끝"; el.querySelector(".c-ic").textContent = "畢"; el.querySelector(".c-t").innerHTML = "이제 단서를 찾아 문을 열어 보세요. 막히면 <b>힌트</b>";
     $("coach-x").remove();
     setTimeout(() => { el.remove(); document.body.classList.remove("coaching"); }, 4500);
   };
