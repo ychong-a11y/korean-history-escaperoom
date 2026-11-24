@@ -1176,6 +1176,7 @@ export default {
   hero: { robe: 0x3a3a3a, modern: true, long: true },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   seal: "時",   // 시작 화면의 낙관 글자
   saveKey: "harbin-v1",
+  topView: true,
   title: "아침 아홉 시 반",
   startLabel: "시계 속으로",
   nextLabel: "회중시계의 바늘이 다시 움직였다.",

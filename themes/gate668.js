@@ -1151,6 +1151,7 @@ export default {
   hero: { robe: 0x34506e },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   seal: "門",   // 시작 화면의 낙관 글자
   saveKey: "gate668-v1",
+  topView: true,
   title: "무너지는 성문",
   startLabel: "문지도리에 손을 대다",
   nextLabel: "문지도리 돌이 다시 낮게 울렸다.",

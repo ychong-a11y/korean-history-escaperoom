@@ -1044,6 +1044,7 @@ export default {
   hero: { robe: 0x3f6a8a },
   seal: "輕",
   saveKey: "crane-v1",
+  topView: true,
   title: "가벼워진 돌",
   startLabel: "그림 속으로",
   nextLabel: "그림 속 도르래가 한 바퀴 돌았다.",

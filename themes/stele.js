@@ -1145,6 +1145,7 @@ export default {
   hero: { robe: 0x5a2f6b },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   seal: "碑",   // 시작 화면의 낙관 글자
   saveKey: "stele-v1",
+  topView: true,
   title: "돌에 새긴 이름",
   startLabel: "탁본 속으로",
   nextLabel: "탁본의 다음 줄이 떠올랐다.",

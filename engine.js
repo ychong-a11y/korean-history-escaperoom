@@ -1194,7 +1194,7 @@ function lockFail() {
 }
 document.addEventListener("pointerlockerror", lockFail);
 renderer.domElement.addEventListener("click", () => {
-  if (inputLocked || isTouch || lockFailed || window.__watching || TOP.active) return;
+  if (inputLocked || isTouch || lockFailed || window.__watching || TOP.active || TOP.far) return;
   if (!locked()) { requestLock(); return; }
   if (BATTLE) return battleShoot(innerWidth / 2, innerHeight / 2);
   tryInteract(pick(innerWidth / 2, innerHeight / 2));
@@ -1219,7 +1219,7 @@ document.addEventListener("mousemove", (e) => {
   pitch = Math.max(-1.2, Math.min(1.0, pitch - e.movementY * k));
 });
 renderer.domElement.addEventListener("pointerdown", (e) => {
-  if (inputLocked || (e.pointerType === "mouse" && !lockFailed && !TOP.active)) return;
+  if (inputLocked || (e.pointerType === "mouse" && !lockFailed && !TOP.active && !TOP.far)) return;
   if (drag) return;
   drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false };
   renderer.domElement.setPointerCapture(e.pointerId);
@@ -1318,10 +1318,11 @@ function stopAutoRun() { if (!autoRun) return; autoRun = false; running = false;
 }
 function doJump() { if (inputLocked || $("overlay").classList.contains("open")) return; if (swimming) climbOut(); else if (onGround()) { vy = 5.0; hideGuide(); sfx("jump"); } }
 // 오른쪽 아래: 안쪽이 점프, 맨 오른쪽이 조사(데스크탑의 마우스 클릭과 같은 일)
-$("act").innerHTML = `<button id="btn-jump" aria-label="점프"><b>跳</b><small>점프</small></button><button id="btn-use" aria-label="조사하기"><b>査</b><small>조사</small></button>`;
+$("act").innerHTML = `<button id="btn-far" aria-label="멀리 보기"><b>遠</b><small>멀리</small></button><button id="btn-jump" aria-label="점프"><b>跳</b><small>점프</small></button><button id="btn-use" aria-label="조사하기"><b>査</b><small>조사</small></button>`;
 document.body.insertAdjacentHTML("beforeend", `<div id="use-tip" class="hidden"></div>`);
 $("btn-jump").addEventListener("pointerdown", (e) => { e.preventDefault(); doJump(); });
 $("btn-use").addEventListener("pointerdown", (e) => { e.preventDefault(); useAction(); });
+$("btn-far").addEventListener("pointerdown", (e) => { e.preventDefault(); setFar(!farLook); });
 /* 조사하기: 화면 가운데에 걸린 물건이 가까우면 그것, 아니면 내 앞에서 손이 닿는 가장 가까운 물건.
    데스크탑의 E 키와 휴대폰의 조사 단추가 함께 쓴다. 싸움 중에는 화면 가운데로 활을 쏜다. */
 const NEAR_V = new THREE.Vector3();
@@ -1351,7 +1352,7 @@ function useAction() {
   if (inputLocked || !S || $("overlay").classList.contains("open")) return;
   if (BATTLE) return battleShoot(innerWidth / 2, innerHeight / 2);
   const m = findNear();
-  if (!m) { toast(isTouch ? "가까이에 살펴볼 것이 없다. 물건 쪽으로 다가가 보자." : "가까이에 살펴볼 것이 없다.", 1600); return; }
+  if (!m) { toast(TOP.active && TOP.farAny ? (isTouch ? "가까이에는 없다. 먼 곳은 '멀리'(遠) 단추로 둘러보자." : "가까이에는 없다. 먼 곳은 F 키로 둘러보자.") : isTouch ? "가까이에 살펴볼 것이 없다. 물건 쪽으로 다가가 보자." : "가까이에 살펴볼 것이 없다.", 2200); return; }
   tryInteract(m);
 }
 let NEAR = null;
@@ -1402,6 +1403,7 @@ addEventListener("keydown", (e) => {
     if (e.code === "KeyH") { openHint(); return; }
     if (e.code === "KeyJ") { openJourney(); return; }
     if (e.code === "KeyE") { useAction(); return; }
+    if (e.code === "KeyF" && (TOP.active || TOP.far)) { setFar(!farLook); return; }
   }
   if (e.code === "Space" && !e.repeat) { e.preventDefault(); doJump(); return; }
   const k = KEYMAP[e.key.toLowerCase()]; if (k) { keys[k] = 1; e.preventDefault(); }
@@ -1448,30 +1450,77 @@ function animate() {
    기본 시점: 테마에 hero 가 있으면 3인칭, 없으면 1인칭. V 키나 설정에서 바꾸면 이 기기에 기억된다. */
 const VIEW_KEY = "hk-view";
 let viewPref = (() => { try { return localStorage.getItem(VIEW_KEY); } catch (er) { return null; } })();
-const thirdOn = () => !topOn() && (viewPref && viewPref !== "top" ? viewPref === "third" : !!(THEME && THEME.hero)) && !CH.firstPerson;
-/* ── 내려다보기 시점 (시험판) ── 옛 게임기 놀이처럼 위에서 비스듬히 내려다본다. 테마에 topView: true 가 있을 때만 고를 수 있다.
+let farLook = false;   // 멀리 보기: 내려다보기 도중에 잠깐 내 눈으로 둘러본다 (먼 적진 · 하늘의 별 · 과녁처럼 위에서는 안 보이는 것)
+const FAR_REACH = 10;    // 이보다 멀리서 조사하는 물건이 있으면 '멀리' 단추가 빛난다
+const thirdOn = () => !topOn() && !farOn() && (viewPref && viewPref !== "top" ? viewPref === "third" : !!(THEME && THEME.hero)) && !CH.firstPerson;
+/* ── 내려다보기 시점 ── 옛 게임기 놀이처럼 위에서 비스듬히 내려다본다. 테마에 topView: true 가 있을 때만 고를 수 있다.
    3인칭과 같은 방식이라(그리기 직전에만 카메라를 옮김) 충돌 · 거리 · 퍼즐은 그대로다. 달라지는 것:
    · 둘러보기가 없다. 조이스틱 · 방향키는 화면 방향 그대로(위 = 북쪽) 여덟 방향으로 걷는다
    · 땅이나 물건을 누르면 그쪽으로 걸어가고, 물건에 닿으면 조사한다
    · 지붕 아래로 들어가거나 건물 뒤에 가려지면 머리 위쪽을 잘라 내어 안이 보이게 한다
    · 화면을 일부러 거칠게(세로 약 300줄) 그린다. 그만큼 휴대폰에서 가볍다
    휴대폰은 이 시점이 기본, 컴퓨터는 설정이나 V 키로 고른다. 활쏘기 · 숨어 가기 장면에서는 잠깐 원래 시점으로 돌아간다. */
-const TOP = { active: false, fov: 29, h: 10, back: 8.6, rows: 200, backCur: 8.6, steep: false, clip: false, tick: 0, plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), 0), goal: null, mark: null, v: new THREE.Vector3(), d: new THREE.Vector3() };
-function topOn() { return !!(THEME && THEME.topView) && !BATTLE && !SNEAK && (viewPref ? viewPref === "top" : isTouch); }
-const TOP_GUIDE = () => (isTouch ? "조이스틱을 밀거나 가고 싶은 곳을 눌러 걷기 · 물건을 누르면 조사" : "WASD · 방향키나 가고 싶은 곳을 클릭해 걷기 · 물건을 클릭하거나 E로 조사 · Tab 가방 · H 힌트 · V 시점");
+const TOP = { active: false, far: false, farAny: false, farTold: -1, farWait: 0, farRows: 270, fov: 29, h: 10, back: 8.6, rows: 200, backCur: 8.6, steep: false, clip: false, tick: 0, plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), 0), goal: null, mark: null, v: new THREE.Vector3(), d: new THREE.Vector3() };
+const topPref = () => !!(THEME && THEME.topView) && (viewPref ? viewPref === "top" : isTouch);
+function topOn() { return topPref() && !BATTLE && !SNEAK && !farLook; }
+function farOn() { return farLook && topPref() && !BATTLE && !SNEAK; }
+const FAR_GUIDE = () => (isTouch ? "화면을 끌어서 둘러보기 · 살펴볼 것을 누르기 · 다 봤으면 '돌아가기'" : "마우스를 끌어서 둘러보기 · 살펴볼 것을 클릭 · WASD 걷기 · F 돌아가기");
+function setFar(on) {
+  on = !!on; if (on === farLook) return;
+  if (on && (!TOP.active || inputLocked)) return;
+  farLook = on; TOP.goal = null;
+  if (on) {   // 가장 가까운 '먼 것' 쪽을 바라본다. 없으면 주인공이 보던 쪽
+    let best = null, bd = 1e9;
+    for (const c of clickable) {
+      if ((CH.reach?.(c.userData.objId) ?? REACH) <= FAR_REACH || !shown(c)) continue;
+      const g = c.geometry; if (!g.boundingSphere) g.computeBoundingSphere();
+      NEAR_V.copy(g.boundingSphere.center).applyMatrix4(c.matrixWorld);
+      const d = Math.hypot(NEAR_V.x - targetPos.x, NEAR_V.z - targetPos.z); if (d < bd) { bd = d; best = NEAR_V.clone(); }
+    }
+    if (best) { const dx = best.x - targetPos.x, dz = best.z - targetPos.z; targetYaw = yaw = Math.atan2(-dx, -dz); pitch = Math.max(-0.6, Math.min(1.0, Math.atan2(best.y - (feet + (CH.eye ?? 1.6)), Math.hypot(dx, dz)))); }
+    else { targetYaw = yaw = heroYaw; pitch = -0.05; }
+    sfx("page");
+  }
+  topSync(); farBtn();
+}
+function farBtn() {   // '멀리' 단추: 내려다보기 · 멀리 보기일 때만 보이고, 먼 것이 있으면 빛난다
+  const b = $("btn-far"); if (!b) return;
+  const m = TOP.far ? "back" : "far";
+  if (b.dataset.m !== m) { b.dataset.m = m; b.innerHTML = TOP.far ? "<b>還</b><small>돌아가기</small>" : "<b>遠</b><small>멀리</small>"; }
+  b.classList.toggle("on", TOP.far); b.classList.toggle("has", !TOP.far && !!TOP.farAny);
+}
+function farScan() {   // 가끔: 멀리서 조사하는 물건이 지금 있는가
+  let any = false;
+  for (const c of clickable) if ((CH.reach?.(c.userData.objId) ?? REACH) > FAR_REACH && shown(c)) { any = true; break; }
+  if (any !== TOP.farAny) { TOP.farAny = any; farBtn(); }
+  if (any && TOP.active && !inputLocked && TOP.farTold !== loadedCh && ++TOP.farWait > 6) { TOP.farTold = loadedCh; toast(isTouch ? "멀리 있는 것은 오른쪽 아래 '멀리'(遠) 단추로 둘러보자" : "멀리 있는 것은 F 키(멀리 보기)로 둘러보자", 4200); }
+  if (!any) TOP.farWait = 0;
+}
+const TOP_GUIDE = () => (isTouch ? "조이스틱을 밀거나 가고 싶은 곳을 눌러 걷기 · 물건을 누르면 조사 · 먼 곳은 '멀리' 단추" : "WASD · 방향키나 가고 싶은 곳을 클릭해 걷기 · 물건을 클릭하거나 E로 조사 · F 멀리 보기 · Tab 가방 · H 힌트 · V 시점");
 /* 화면 느낌 (내려다보기 전용, 설정에서 고름 · 이 기기에 기억)
    dot   도트: 세로 약 200줄로 그린 뒤 색을 줄이고(채널마다 6단계 + 무늬 섞기) 물체 둘레에 어두운 선을 넣는다. 화면 점 하나가 기기 화소의 정수 배가 되게 맞춘다
    sharp 선명: 기기 해상도(최대 2배)로 또렷하게. 느리면 자동으로 낮춘다 */
 const TOPSTYLE_KEY = "hk-topstyle";
 let topStyle = (() => { try { return localStorage.getItem(TOPSTYLE_KEY) === "sharp" ? "sharp" : "dot"; } catch (er) { return "dot"; } })();
-const dotOn = () => TOP.active && topStyle === "dot";
-const topDpr = () => (topStyle === "dot" ? devicePixelRatio / Math.max(1, Math.round((innerHeight * devicePixelRatio) / TOP.rows)) : Math.min(devicePixelRatio, 2) * dprScale);
+const dotOn = () => (TOP.active || TOP.far) && topStyle === "dot";
+const topDpr = () => (topStyle === "dot" ? devicePixelRatio / Math.max(1, Math.round((innerHeight * devicePixelRatio) / (TOP.far ? TOP.farRows : TOP.rows))) : Math.min(devicePixelRatio, 2) * dprScale);
 function setTopStyle(v) {
   topStyle = v; try { localStorage.setItem(TOPSTYLE_KEY, v); } catch (er) {}
   document.body.classList.toggle("dot", dotOn());
-  if (TOP.active) { renderer.setPixelRatio(topDpr()); composer?.setPixelRatio?.(topDpr()); }
+  if (TOP.active || TOP.far) { renderer.setPixelRatio(topDpr()); composer?.setPixelRatio?.(topDpr()); }
 }
-const DOT = { rt: null, scene: null, cam: null, mat: null, size: new THREE.Vector2() };
+const DOT = { rt: null, scene: null, cam: null, mat: null, size: new THREE.Vector2(), mrt: null, buf: new Uint8Array(16 * 16 * 4), n: 0, lift: 1, liftTo: 1, liftSet: false, mean: 0 };
+/* 밤 · 굴 속처럼 어두운 장면은 색을 몇 단계로 줄이면 거의 검게 뭉개진다. 화면의 평균 밝기를 가끔 재어(16×16 점) 어두우면 어두운 쪽만 끌어올린다(감마). 밝은 장면은 그대로 둔다 */
+function dotMeasure() {
+  if (!DOT.mrt) DOT.mrt = new THREE.WebGLRenderTarget(16, 16, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, depthBuffer: false });
+  const u = DOT.mat.uniforms; u.measure.value = 1;
+  renderer.setRenderTarget(DOT.mrt); renderer.render(DOT.scene, DOT.cam); renderer.setRenderTarget(null); u.measure.value = 0;
+  renderer.readRenderTargetPixels(DOT.mrt, 0, 0, 16, 16, DOT.buf);
+  let s = 0; for (let i = 0; i < DOT.buf.length; i += 4) s += DOT.buf[i] * 0.299 + DOT.buf[i + 1] * 0.587 + DOT.buf[i + 2] * 0.114;
+  DOT.mean = s / (256 * 255);
+  DOT.liftTo = Math.max(0.5, Math.min(1, Math.log(0.4) / Math.log(Math.max(0.02, Math.min(0.99, DOT.mean)))));
+  if (!DOT.liftSet) { DOT.lift = DOT.liftTo; DOT.liftSet = true; }
+}
 function dotRender() {   // 장면을 작은 그림으로 그린 뒤, 색 줄이기 · 테두리 선을 입혀 화면에 옮긴다
   renderer.getDrawingBufferSize(DOT.size);
   const w = DOT.size.x, h = DOT.size.y;
@@ -1482,17 +1531,18 @@ function dotRender() {   // 장면을 작은 그림으로 그린 뒤, 색 줄이
     DOT.rt.depthTexture = new THREE.DepthTexture(w, h); DOT.rt.depthTexture.minFilter = DOT.rt.depthTexture.magFilter = THREE.NearestFilter;
     if (!DOT.mat) {
       DOT.mat = new THREE.ShaderMaterial({
-        uniforms: { tC: { value: null }, tD: { value: null }, px: { value: new THREE.Vector2() }, near: { value: 0.05 }, far: { value: 300 }, levels: { value: 7 } },
+        uniforms: { tC: { value: null }, tD: { value: null }, px: { value: new THREE.Vector2() }, near: { value: 0.05 }, far: { value: 300 }, levels: { value: 7 }, measure: { value: 0 }, expo: { value: 1 }, lift: { value: 1 } },
         depthTest: false, depthWrite: false,
         vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
         fragmentShader: `
-          uniform sampler2D tC; uniform sampler2D tD; uniform vec2 px; uniform float near; uniform float far; uniform float levels; varying vec2 vUv;
+          uniform sampler2D tC; uniform sampler2D tD; uniform vec2 px; uniform float near; uniform float far; uniform float levels; uniform float measure; uniform float expo; uniform float lift; varying vec2 vUv;
           float lin(vec2 uv){ float n = texture2D(tD, uv).x * 2.0 - 1.0; return 2.0 * near * far / (far + near - n * (far - near)); }
           float bayer(vec2 p){ vec2 q = floor(mod(p, 4.0)); float i = q.x + q.y * 4.0;
             float m = i < 0.5 ? 0.0 : i < 1.5 ? 8.0 : i < 2.5 ? 2.0 : i < 3.5 ? 10.0 : i < 4.5 ? 12.0 : i < 5.5 ? 4.0 : i < 6.5 ? 14.0 : i < 7.5 ? 6.0 : i < 8.5 ? 3.0 : i < 9.5 ? 11.0 : i < 10.5 ? 1.0 : i < 11.5 ? 9.0 : i < 12.5 ? 15.0 : i < 13.5 ? 7.0 : i < 14.5 ? 13.0 : 5.0;
             return (m + 0.5) / 16.0 - 0.5; }
           void main(){
             vec3 c = texture2D(tC, vUv).rgb;
+            if (measure > 0.5) { gl_FragColor = vec4(sqrt(clamp(c * expo, 0.0, 1.0)), 1.0); return; }   // 밝기 재기용
             float d = lin(vUv);
             float m = min(min(lin(vUv + vec2(px.x, 0.0)), lin(vUv - vec2(px.x, 0.0))), min(lin(vUv + vec2(0.0, px.y)), lin(vUv - vec2(0.0, px.y))));
             float edge = step(max(0.16, d * 0.014), d - m);   // 바로 옆에 더 가까운 물체가 있다 = 그 물체의 둘레
@@ -1500,7 +1550,7 @@ function dotRender() {   // 장면을 작은 그림으로 그린 뒤, 색 줄이
             gl_FragColor = vec4(c, 1.0);
             #include <tonemapping_fragment>
             #include <colorspace_fragment>
-            vec3 q = gl_FragColor.rgb;
+            vec3 q = pow(max(gl_FragColor.rgb, 0.0), vec3(lift));
             float g = dot(q, vec3(0.299, 0.587, 0.114)); q = mix(vec3(g), q, 1.18);   // 색을 조금 진하게
             q = floor(q * (levels - 1.0) + 0.5 + bayer(gl_FragCoord.xy) * 0.4) / (levels - 1.0);
             gl_FragColor.rgb = clamp(q, 0.0, 1.0);
@@ -1511,18 +1561,22 @@ function dotRender() {   // 장면을 작은 그림으로 그린 뒤, 색 줄이
     }
   }
   renderer.setRenderTarget(DOT.rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
-  const u = DOT.mat.uniforms; u.tC.value = DOT.rt.texture; u.tD.value = DOT.rt.depthTexture; u.px.value.set(1 / w, 1 / h); u.near.value = camera.near; u.far.value = camera.far;
+  const u = DOT.mat.uniforms; u.tC.value = DOT.rt.texture; u.tD.value = DOT.rt.depthTexture; u.px.value.set(1 / w, 1 / h); u.near.value = camera.near; u.far.value = camera.far; u.expo.value = renderer.toneMappingExposure;
   const cp = renderer.clippingPlanes; renderer.clippingPlanes = [];
+  if (DOT.n++ % 24 === 0 || !DOT.liftSet) dotMeasure();
+  DOT.lift += (DOT.liftTo - DOT.lift) * 0.06; u.lift.value = DOT.lift;
   renderer.render(DOT.scene, DOT.cam);
   renderer.clippingPlanes = cp;
 }
 function topSync() {   // 시점이 바뀌는 순간에 한 번: 화각 · 해상도 · 안내 글
-  const on = topOn() && !!S;
-  if (on === TOP.active) return;
-  TOP.active = on; TOP.goal = null; TOP.clip = false; renderer.clippingPlanes = [];
+  const on = topOn() && !!S, far = !on && farOn() && !!S;
+  if (on === TOP.active && far === TOP.far) return;
+  TOP.active = on; TOP.far = far; TOP.goal = null; TOP.clip = false; renderer.clippingPlanes = [];
   camera.fov = on ? TOP.fov : 70; camera.updateProjectionMatrix();
-  const r = on ? topDpr() : BASE_DPR * dprScale; renderer.setPixelRatio(r); composer?.setPixelRatio?.(r);
-  document.body.classList.toggle("topview", on); document.body.classList.toggle("dot", dotOn());
+  const r = on || far ? topDpr() : BASE_DPR * dprScale; renderer.setPixelRatio(r); composer?.setPixelRatio?.(r);
+  document.body.classList.toggle("topview", on); document.body.classList.toggle("farlook", far); document.body.classList.toggle("dot", dotOn());
+  DOT.liftSet = false; farBtn();
+  if (far) { if (document.pointerLockElement) document.exitPointerLock(); tipEl.classList.add("hidden"); $("guide").textContent = FAR_GUIDE(); $("guide").style.opacity = 0.85; }
   if (TOP.mark) TOP.mark.visible = false;
   if (on) {
     if (document.pointerLockElement) document.exitPointerLock();
@@ -1540,16 +1594,21 @@ function topApply() {   // 카메라를 머리 위 남쪽으로. 북쪽이 화�
 }
 function topClip() {   // 지붕 아래에 있거나 건물에 가려졌으면 머리 위를 잘라 낸다 (가끔만 잰다)
   // 광선은 겉면에서만 걸리므로, 아래에서 위로가 아니라 위에서 아래로 · 카메라에서 주인공 쪽으로 쏜다
-  const px = camera.position.x, pz = camera.position.z, cut = feet + 2.7;
+  const px = camera.position.x, pz = camera.position.z; let cut = feet + 2.7;
   TOP.v.set(px, feet + 16, pz); TOP.d.set(0, -1, 0);
-  ray.set(TOP.v, TOP.d); ray.far = 16 - 2.0; let hit = ray.intersectObjects(overhead, false)[0];
+  ray.set(TOP.v, TOP.d); ray.far = 16 - 1.9; const up = ray.intersectObjects(overhead, false); let hit = up[0];
   TOP.v.set(px, feet + TOP.h, pz + TOP.back); TOP.d.set(0, 1.2 - TOP.h, -TOP.back); const len = TOP.d.length(); TOP.d.divideScalar(len);
   ray.set(TOP.v, TOP.d); ray.far = len - 0.6; const sight = ray.intersectObjects(overhead, false);
   if (!hit) hit = sight.find((h) => h.point.y > cut);
+  let low = 1e9;   // 다락 · 낮은 처마처럼 머리 바로 위(1.9~2.7m)를 덮는 것
+  for (const h of up) if (h.point.y < cut + 0.05) low = Math.min(low, h.point.y);
+  for (const h of sight) if (h.point.y > feet + 1.9 && h.point.y < cut + 0.05) low = Math.min(low, h.point.y);
+  if (low < 1e9) { hit = hit || up[0] || sight[0]; cut = Math.max(feet + 1.9, low - 0.06); }
   // 잘라도 남는 벽이 몸을 가리는지: 무릎 높이로 한 번 더 잰다
   TOP.d.set(0, 0.4 - TOP.h, -TOP.back); const len2 = TOP.d.length(); TOP.d.divideScalar(len2);
-  ray.set(TOP.v, TOP.d); ray.far = len2 - 0.6;
-  TOP.steep = [...sight, ...ray.intersectObjects(overhead, false)].some((h) => h.point.y <= cut && h.point.y > feet + 0.9);
+  ray.set(TOP.v, TOP.d); ray.far = len2 - 0.6; const knee = ray.intersectObjects(overhead, false);
+  if (!hit) hit = knee.find((h) => h.point.y > cut);   // 처마가 다리 쪽만 가리는 경우
+  TOP.steep = [...sight, ...knee].some((h) => h.point.y <= cut && h.point.y > feet + 0.9);
   ray.far = Infinity;
   TOP.clip = !!hit; TOP.plane.constant = cut;
   renderer.clippingPlanes = TOP.clip ? [TOP.plane] : [];
@@ -1605,7 +1664,7 @@ function tpApply(measure) {   // 카메라를 등 뒤로. measure: 벽 · 천장
   camera.updateMatrixWorld(); TP.on = true;
 }
 function tpRestore() { if (!TP.on) return; camera.position.copy(TP.eye); camera.quaternion.copy(TP.quat); camera.updateMatrixWorld(); TP.on = false; }
-function setView(v) { viewPref = v; try { localStorage.setItem(VIEW_KEY, v); } catch (er) {} toast(v === "top" ? "내려다보기 시점 (시험판)" : v === "third" ? "3인칭 시점 (V 키로 바꾸기)" : "1인칭 시점 (V 키로 바꾸기)", 1800); }
+function setView(v) { farLook = false; viewPref = v; try { localStorage.setItem(VIEW_KEY, v); } catch (er) {} toast(v === "top" ? "내려다보기 시점 (V 키로 바꾸기)" : v === "third" ? "3인칭 시점 (V 키로 바꾸기)" : "1인칭 시점 (V 키로 바꾸기)", 1800); }
 
 /* 주인공: 팔다리가 따로 움직이는 사람.
    o: robe(윗옷 빛깔 숫자) · helmet(투구와 장화) · kid(아이: 땋은 머리, 작은 키) · old(흰 머리와 수염) · hat(갓)
@@ -1928,6 +1987,7 @@ function frame(dt) {
   if (lantern.intensity > 0) lantern.position.set(camera.position.x, camera.position.y + 0.35, camera.position.z);
   if (++frameNo % 3 === 0) updateAim();
   if ((isTouch || TOP.active) && frameNo % 6 === 0) updateUse();
+  if ((TOP.active || TOP.far) && frameNo % 45 === 0) farScan();
   if (autoRun && (inputLocked || !document.body.classList.contains("playing"))) stopAutoRun();
   WATERS.forEach((w) => { w.material.uniforms.time.value += dt * 0.5; });
   const top = TOP.active && document.body.classList.contains("playing");
@@ -1935,7 +1995,7 @@ function frame(dt) {
   if (top) { if (++TOP.tick % 8 === 0) topClip(); topApply(); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); }
   else if (renderer.clippingPlanes.length) renderer.clippingPlanes = [];
   if (tp) { tpApply(++TP.tick % 2 === 0); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); } else TP.cur = 0.5;
-  if (top && topStyle === "dot") dotRender(); else if (composer) composer.render(dt); else renderer.render(scene, camera);
+  if (dotOn() && document.body.classList.contains("playing")) dotRender(); else if (composer) composer.render(dt); else renderer.render(scene, camera);
   if (tp || top) tpRestore();
 }
 
@@ -2387,7 +2447,8 @@ function openHelp() {
     [K("J"), "여정 기록 (찾은 단서)"],
     [K("H"), "힌트"],
     [K("1") + "~" + K("9"), "가방의 물건을 손에 들기"],
-    [K("V"), "시점 바꾸기 (3인칭 · 1인칭)"],
+    [K("V"), "시점 바꾸기 (3인칭 · 1인칭 · 내려다보기)"],
+    [K("F"), "멀리 보기 (내려다보기일 때: 먼 곳 · 하늘 둘러보기)"],
     [K("M"), "소리 켜고 끄기"],
     [K("Esc"), "설정 · 창 닫기"],
     [K("F1"), "이 도움말"],
@@ -2421,7 +2482,7 @@ function openSettings() {
     <h3 style="margin:6px 0 6px">소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
     ${ADMIN ? `<h3 style="margin:6px 0 6px">관리자 <span class="note">(이 기기에서만 보여요)</span></h3><p class="note" id="admin-pres" style="margin:0 0 8px">접속자 수를 읽는 중…</p><div class="choices grid2" id="admin-go">${CHAPTERS.map((c, i) => `<button data-c="${i}"><b>${i === S.ch ? "✔ " : ""}제${i + 1}장</b> <span class="note">· ${c.place}</span></button>`).join("")}</div><p class="note" style="margin:8px 0 0">장을 누르면 문제를 풀지 않고 그 장으로 가요. 화면 오른쪽 위의 '다음 장 ▶' 단추${isTouch ? "" : "나 N 키"}로 한 장씩 넘길 수도 있어요.</p>` : ""}
-    <h3 style="margin:18px 0 6px">시점 <span class="note">(V 키로 바꾸기)</span></h3><div class="choices grid2" id="view-sel">${[...(THEME && THEME.topView ? [["top", "내려다보기", "옛 게임기처럼 위에서 (시험판)"]] : []), ["third", "3인칭", "내 모습이 보여요"], ["first", "1인칭", "내 눈으로 봐요"]].map(([k, t, d]) => `<button data-w="${k}"><b>${(topOn() ? "top" : thirdOn() ? "third" : "first") === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>
+    <h3 style="margin:18px 0 6px">시점 <span class="note">(V 키로 바꾸기)</span></h3><div class="choices grid2" id="view-sel">${[...(THEME && THEME.topView ? [["top", "내려다보기", "옛 게임기처럼 위에서"]] : []), ["third", "3인칭", "내 모습이 보여요"], ["first", "1인칭", "내 눈으로 봐요"]].map(([k, t, d]) => `<button data-w="${k}"><b>${(topOn() ? "top" : thirdOn() ? "third" : "first") === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">인물 목소리</h3><div class="choices grid2" id="voice-sel">${[["mumble", "웅얼웅얼", "말하는 느낌의 소리"], ...(window.speechSynthesis ? [["tts", "읽어 주기", "기기의 한국어 음성"]] : []), ["off", "끄기", "글만 보기"]].map(([k, t, d]) => `<button data-v="${k}" style="${AU.voice === k ? "border-color:var(--ink);font-weight:700" : ""}">${AU.voice === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     ${`<h3 style="margin:18px 0 6px">${isTouch ? "화면 돌리는 감도" : "마우스 감도"}</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
@@ -2520,7 +2581,7 @@ function presShow(el) {   // 관리자 설정 창: 지금 접속 수
 function loadChapter(i, resumePos) {
   presTell(i);
   if (BATTLE) battleEnd(false); if (SNEAK) sneakEnd(false);
-  loadedCh = i;
+  loadedCh = i; farLook = false; TOP.farAny = false; TOP.farWait = 0; DOT.liftSet = false;
   disposeRoot();
   ROOT = new THREE.Group(); scene.add(ROOT);
   seed = 7 + i * 101;
@@ -2566,12 +2627,13 @@ function showHUD(on) {
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
   showHUD(true); hintBadge(); adminNextChip();
+  farBtn();
   $("guide").textContent = topOn() ? TOP_GUIDE() : isTouch ? "화면을 끌어서 둘러보기 · 조이스틱으로 걷기 (위로 끝까지 밀면 달리기 고정) · 오른쪽 아래 조사 · 점프"
     : lockFailed ? "마우스를 끌어서 둘러보기 · WASD 걷기 · Shift 달리기 · Space 점프 · 클릭이나 E로 조사 · Tab 가방 · H 힌트 · F1 단축키"
     : "마우스로 둘러보기 · WASD 걷기 · Shift 달리기 · Space 점프 · 조준점(+)을 맞추고 클릭이나 E로 조사 · Tab 가방 · H 힌트 · F1 단축키";
   $("guide").style.opacity = 0.85;
   renderInv(); inputLocked = false; startTimer(); startCoach();
-  if (CH.onEnter) setTimeout(() => CH.onEnter(A), 400);
+  if (CH.onEnter) setTimeout(() => CH.onEnter?.(A), 400);
 }
 function progressBar(el, done) { $(el).innerHTML = CHAPTERS.map((_, i) => `<span class="${i < done ? "done" : ""}"></span>`).join(""); }
 function clearChapter(force) {
@@ -2837,6 +2899,7 @@ function buildIntroPages() {
       li[0].innerHTML = "<b>걷기</b><span>가고 싶은 곳을 눌러요. 그쪽으로 걸어가요</span>";
       li[1].innerHTML = "<b>조이스틱</b><span>왼쪽 아래를 밀어도 걸어요. 위로 끝까지 밀었다 떼면 달리기 고정</span>";
       li[2].innerHTML = "<b>조사하기</b><span>물건을 누르면 다가가서 조사해요. 조사(査) 단추도 돼요</span>";
+      if (li[3]) li[3].innerHTML = "<b>멀리 보기</b><span>먼 적진이나 하늘의 별은 멀리(遠) 단추로 둘러봐요. 다 보면 돌아가기</span>";
       const sw = $("ctl-box").querySelector(".ph-swipe"); if (sw) sw.innerHTML = "<i>●</i>";
     } $("ctl-swap").textContent = touchView ? "컴퓨터 조작법 보기" : "휴대폰 조작법 보기"; };
   $("ctl-swap").onclick = () => { touchView = !touchView; drawCtl(); };
@@ -3002,6 +3065,6 @@ window.__game = {
   info: () => { renderer.info.autoReset = false; renderer.info.reset(); frame(1 / 60); const r = { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs?.length, geos: renderer.info.memory.geometries, texs: renderer.info.memory.textures }; renderer.info.autoReset = true; return r; },   // 검사용: 한 프레임(그림자 · 후처리 포함)의 그리기 수 · 삼각형 수
   sky: () => ({ hdri: hdriSky.visible, sun: skyU.sun.value.toArray().map((v) => +v.toFixed(2)), exp: renderer.toneMappingExposure, flip: hdriSky.scale.y }),
   run: (on) => { running = on; },
-  TOP, scene, overhead: () => overhead, setTopStyle,
+  TOP, DOT, scene, overhead: () => overhead, setTopStyle, topClip, clickable: () => clickable, setFar, get farLook() { return farLook; },
   teleport: (x, z, y, p = 0) => { targetPos.x = x; targetPos.z = z; camera.position.x = x; camera.position.z = z; targetYaw = yaw = y; pitch = p; feet = WORLD.groundAt(x, z); vy = 0; },
 };

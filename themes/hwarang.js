@@ -1015,6 +1015,7 @@ export default {
   hero: { robe: 0x34506e },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   seal: "盟",   // 시작 화면의 낙관 글자
   saveKey: "hwarang-v1",
+  topView: true,
   title: "열다섯의 맹세",
   startLabel: "맹세 속으로",
   nextLabel: "돌에 새긴 글자가 다시 빛났다.",

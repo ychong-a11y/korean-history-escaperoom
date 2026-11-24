@@ -1215,6 +1215,7 @@ export default {
   hero: { robe: 0xeeeae0, woman: true, kid: true, skirt: 0x2b2b33 },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   seal: "紙",   // 시작 화면의 낙관 글자
   saveKey: "paper-v1",
+  topView: true,
   title: "숨겨진 종이 뭉치",
   startLabel: "종이 뭉치를 펼치다",
   nextLabel: "종이 뭉치의 다음 장이 펼쳐졌다.",

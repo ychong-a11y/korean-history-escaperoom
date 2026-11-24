@@ -640,5 +640,14 @@ body { word-break: keep-all; overflow-wrap: break-word; }
 
 /* ── 내려다보기 시점 (시험판): 거칠게 그린 화면을 또렷한 네모 점으로 키운다. 겨눔 표시 · 마우스 안내는 쓰지 않는다 ── */
 body.topview.dot #view canvas { image-rendering: pixelated; }
-body.topview #cross, body.topview #lockhint { display: none !important; }
+body.topview #cross, body.topview #lockhint, body.farlook #cross, body.farlook #lockhint { display: none !important; }
+/* '멀리' 단추: 내려다보기에서만. 멀리서 살펴볼 것이 있으면 빛난다. 둘러보는 동안에는 붉은 '돌아가기' */
+.act #btn-far { display: none; width: 54px; height: 54px; }
+body.topview .act #btn-far, body.farlook .act #btn-far { display: flex; }
+.act #btn-far b { font-size: 20px; }
+.act #btn-far.has { border-color: #ffd9a8; box-shadow: 0 0 0 3px rgba(255,200,120,.35); animation: farPulse 1.6s ease-in-out infinite; }
+.act #btn-far.on { background: rgba(163,40,31,.9); border-color: rgba(255,225,205,.85); width: 64px; height: 64px; }
+@keyframes farPulse { 50% { box-shadow: 0 0 0 7px rgba(255,200,120,.12); } }
+@media (prefers-reduced-motion: reduce) { .act #btn-far.has { animation: none; } }
+body.farlook.dot #view canvas { image-rendering: pixelated; }
 @media (pointer: fine) { body.topview.playing #use-tip { display: block !important; right: auto; left: 50%; bottom: 56px; transform: translateX(-50%); max-width: 60vw; font-size: 14px; padding: 8px 12px; } }

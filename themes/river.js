@@ -1143,6 +1143,7 @@ export default {
   seal: "江",   // 시작 화면의 낙관 글자
   hero: { robe: 0x34506e, helmet: true },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   saveKey: "river-v1",
+  topView: true,
   title: "물이 빠진 강",
   startLabel: "서함을 연다",
   nextLabel: "서함 속에서 강물 소리가 다시 들렸다.",

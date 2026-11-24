@@ -1257,6 +1257,7 @@ export default {
   hero: { robe: 0x34506e },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   seal: "星",   // 시작 화면의 낙관 글자
   saveKey: "gwiju-v1",
+  topView: true,
   minPlayers: 2,   // 함께하기 전용: 붓과 활, 둘 이상이 있어야 풀린다
   title: "별이 떨어진 집",
   startLabel: "돌탑에 손을 얹는다",

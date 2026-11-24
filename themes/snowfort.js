@@ -1229,6 +1229,7 @@ export default {
   hero: { robe: 0x34506e, hat: true, long: true },   // 3인칭 주인공의 기본 모습 (장마다 hero 로 바꾼다). 이것이 있으면 기본 시점이 3인칭이 된다
   seal: "雪",   // 시작 화면의 낙관 글자
   saveKey: "snowfort-v1",
+  topView: true,
   coopLatch: true,   // 함께하기에서 장 끝마다 '두 사람 빗장'
   title: "눈 덮인 산성",
   startLabel: "종이를 펼친다",
