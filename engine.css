@@ -598,3 +598,42 @@ figure.photo { margin: 8px 0; padding: 8px; background: #fbf6ea; border: 1px sol
 figure.photo img { display: block; width: 100%; max-height: 320px; object-fit: contain; background: #e9dfca; }
 figure.photo figcaption { margin-top: 4px; font-size: 13px; line-height: 1.45; color: #2b2118; }
 figure.photo figcaption small { display: block; font-size: 11px; color: #7a6a56; }
+
+/* ── 휴대폰 다듬기 ── */
+/* 한글은 낱말 단위로 줄을 바꾼다 ('떠/요'처럼 낱말 가운데서 꺾이지 않게). 너무 긴 낱말만 예외로 꺾는다 */
+body { word-break: keep-all; overflow-wrap: break-word; }
+@media (pointer: coarse) { .kb { display: none; } }
+/* 조작법 목록: 이름 칸은 한 줄, 설명 칸만 줄바꿈 */
+.ph-list li { align-items: flex-start; } .ph-list li::before { margin-top: 2px; }
+.ph-list li b { flex: none; white-space: nowrap; min-width: 72px; } .ph-list li span { flex: 1; min-width: 0; }
+.ctl-foot { text-wrap: balance; }
+/* 좁은 화면의 안내 단추: 작은 단추 둘은 나란히, 가장 중요한 단추는 아래 한 줄 가득 */
+@media (max-width: 600px) {
+  .screen .actions { gap: 8px; }
+  .screen .actions .btn { flex: 1 1 auto; min-height: 44px; }
+  .screen .actions #btn-start, .screen .actions #btn-nextpage { flex-basis: 100%; order: 9; }
+}
+/* 휴대폰 가로 화면: 자물쇠는 오른쪽, 설명과 단추는 왼쪽. 스크롤 없이 한눈에 보고 돌릴 수 있게 (크기는 fitLock 이 맞춤) */
+@media (max-height: 520px) and (min-width: 560px) {
+  .modal:has(.lk) { max-width: min(760px, 94vw); }
+  .modal-body:has(> .lk) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); column-gap: 16px; align-items: start; padding: 16px 20px; }
+  .modal-body:has(> .lk) > * { grid-column: 1; min-width: 0; }
+  .modal-body:has(> .lk) > .lk { grid-column: 2; grid-row: 1 / span 40; align-self: center; justify-self: center; margin: 0; }
+  .modal-body:has(> .lk) > h2 { font-size: 18px; margin-bottom: 8px; padding-bottom: 4px; }
+  .modal-body:has(> .lk) > .actions { margin-top: 8px; justify-content: flex-start; }
+}
+/* 돌림판은 가로 화면에서 원판 옆에 돌리는 단추를 둔다 (아래에 두면 너무 작아져서) */
+@media (max-height: 520px) and (min-width: 560px) {
+  .modal-body:has(> .lk-ring) { grid-template-columns: minmax(0, .7fr) minmax(0, 1.6fr); }
+  .lk-ring { display: flex; align-items: center; gap: 12px; width: auto; }
+  .lk-ring svg { width: min(280px, calc(100vh - 88px)); flex: none; }
+  .ring-ctl { margin-top: 0; gap: 8px; } .ring-ctl div { gap: 4px; } .ring-ctl span { min-width: 56px; font-size: 13px; }
+  .ring-ctl button { width: 44px; height: 44px; }
+}
+/* 엔딩 연표: 설명이 길어도 날짜 아래로 흘러들지 않게 (넓은 화면은 내어쓰기, 휴대폰은 날짜를 윗줄에) */
+.timeline li { padding-left: 100px; text-indent: -100px; }
+.timeline li b.y { min-width: 100px; text-indent: 0; }
+@media (max-width: 600px) {
+  .timeline li { padding-left: 0; text-indent: 0; }
+  .timeline li b.y { display: block; min-width: 0; margin-bottom: 2px; }
+}

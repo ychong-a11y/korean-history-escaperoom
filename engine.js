@@ -1822,7 +1822,16 @@ function wrong(text) {
   const md = document.querySelector(".modal"); md.classList.remove("shake"); void md.offsetWidth; md.classList.add("shake");
 }
 function ok(text) { const m = $("msg"); if (m) { m.className = "msg ok"; m.textContent = text; } }
-function inject(html) { $("msg").insertAdjacentHTML("beforebegin", html); }
+function inject(html) { $("msg").insertAdjacentHTML("beforebegin", html); fitLock(); }
+/* 휴대폰 가로 화면: 자물쇠가 화면 높이를 넘으면 통째로 줄인다 (설명 · 단추는 왼쪽, 자물쇠는 오른쪽: engine.css) */
+function fitLock() {
+  const l = $("lk"); if (!l) return;
+  l.style.zoom = "";
+  if (!(innerHeight <= 520 && innerWidth >= 560)) return;
+  const avail = innerHeight - 72, h = l.offsetHeight;
+  if (h > avail) l.style.zoom = Math.max(0.55, avail / h).toFixed(3);
+}
+addEventListener("resize", () => setTimeout(fitLock, 60));
 function addBtn(label, cls, fn) { const b = document.createElement("button"); b.className = "btn " + cls; b.textContent = label; b.onclick = fn; $("acts").appendChild(b); return b; }
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } if (a.length > 1 && a.every((x, n) => x.i === n)) [a[0], a[1]] = [a[1], a[0]]; return a; }
 
@@ -2324,7 +2333,7 @@ function openHint() {
   const have = `<p class="note hint-left">남은 힌트 <b>${ADMIN ? "제한 없음 (관리자)" : left + "개"}</b> · 처음에 ${HINT_START}개, 방을 하나 탈출할 때마다 1개를 받아요.</p>`;
   const more = idx >= H.length ? "" : can ? `<button class="btn gold" id="more">${idx ? "다음 힌트" : "힌트 보기"} (힌트 1개 · +1분)</button>` : `<button class="btn gold" id="hint-wait">${HINT_WAIT}초 기다리고 힌트 1개 받기</button>`;
   const none = idx < H.length && !can ? `<p class="note">힌트가 다 떨어졌어요. 이 방을 탈출하면 1개를 받고, 급하면 잠깐 기다려서 1개를 받을 수 있어요.</p>` : "";
-  card("힌트", (shown || `<p>정말 막혔을 때만 써 보세요. 가방(Tab)의 여정 기록을 다시 읽어 보는 것도 방법이에요.</p><p class="note">힌트를 볼 때마다 기록에 1분이 더해져요.</p>`) + have + none, more);
+  card("힌트", (shown || `<p>정말 막혔을 때만 써 보세요. 가방<span class="kb">(Tab)</span>의 여정 기록을 다시 읽어 보는 것도 방법이에요.</p><p class="note">힌트를 볼 때마다 기록에 1분이 더해져요.</p>`) + have + none, more);
   if ($("more")) $("more").onclick = () => { if (!ADMIN) { if (hintLeft() < 1) return openHint(); hintSet(hintLeft() - 1); } S.hintIdx[S.ch] = idx + 1; S.hints++; S.elapsed += 60; save(); openHint(); };
   if ($("hint-wait")) $("hint-wait").onclick = () => hintRefill($("hint-wait"), openHint);
 }
@@ -2646,16 +2655,16 @@ const CTL_TOUCH = `<div class="phone"><div class="phone-screen">
     <b class="n n1">1</b><b class="n n2">2</b><b class="n n3">3</b><b class="n n4">4</b><b class="n n5">5</b>
   </div></div>
 <ol class="ph-list">
-  <li><b>둘러보기</b> — 화면을 손가락으로 끌어요</li>
-  <li><b>걷기</b> — 왼쪽 아래 조이스틱을 밀어요. 위로 끝까지 밀었다 떼면 달리기 고정</li>
-  <li><b>조사하기</b> — 물건을 직접 누르거나 조사(査) 단추</li>
-  <li><b>조사 · 점프</b> — 오른쪽 아래 단추 (맨 오른쪽이 조사)</li>
-  <li><b>가방 · 힌트</b> — 위쪽 버튼 (모은 물건과 단서)</li>
+  <li><b>둘러보기</b><span>화면을 손가락으로 끌어요</span></li>
+  <li><b>걷기</b><span>왼쪽 아래 조이스틱을 밀어요. 위로 끝까지 밀었다 떼면 달리기 고정</span></li>
+  <li><b>조사하기</b><span>물건을 직접 누르거나 조사(査) 단추</span></li>
+  <li><b>조사 · 점프</b><span>오른쪽 아래 단추 (맨 오른쪽이 조사)</span></li>
+  <li><b>가방 · 힌트</b><span>위쪽 단추 (모은 물건과 단서)</span></li>
 </ol>
 <p class="ctl-foot">휴대폰은 <b>가로로</b> 돌리면 훨씬 넓게 보여요.</p>`;
 const TIPS = `<div class="tip-grid">
   <div><i>一</i><b>보이는 건 전부 조사</b><span>벽의 글, 상자, 사람까지. 가까이 가면 이름이 떠요.</span></div>
-  <div><i>二</i><b>단서는 여정 기록에 자동으로</b><span>외울 필요 없어요. 가방(Tab) 속 여정 기록을 펼치면 언제든 다시 볼 수 있어요.</span></div>
+  <div><i>二</i><b>단서는 여정 기록에 자동으로</b><span>외울 필요 없어요. 가방<span class="kb">(Tab)</span> 속 여정 기록을 펼치면 언제든 다시 볼 수 있어요.</span></div>
   <div><i>三</i><b>숫자 · 방향 · 순서를 눈여겨보기</b><span>자물쇠의 답은 늘 주변 단서 안에 있어요. 찍지 말고 이유를 찾아요.</span></div>
   <div><i>四</i><b>앞 장의 단서가 다시 쓰여요</b><span>지나간 장의 기록도 여정 기록에 남아 있어요.</span></div>
   <div><i>五</i><b>5분 넘게 막히면 힌트</b><span>힌트는 처음에 3개. 방을 하나 탈출할 때마다 1개씩 받아요. 하나 쓰면 기록 +1분.</span></div>
