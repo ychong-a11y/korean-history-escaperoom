@@ -1440,7 +1440,7 @@ function animate() {
     const old = dprScale;
     if (fps < 42 && dprScale > 0.55) dprScale = Math.max(0.55, dprScale * 0.85);
     else if (fps > 57 && dprScale < 1) dprScale = Math.min(1, dprScale * 1.1);
-    if (old !== dprScale && !TOP.active) { renderer.setPixelRatio(BASE_DPR * dprScale); composer?.setPixelRatio?.(BASE_DPR * dprScale); }
+    if (old !== dprScale && !dotOn()) { const r = TOP.active ? topDpr() : BASE_DPR * dprScale; renderer.setPixelRatio(r); composer?.setPixelRatio?.(r); }
   }
 }
 /* ── 3인칭 시점 ── 눈 자리(camera.position)는 예전 그대로 두고, 그리기 직전에만 카메라를 등 뒤로 뺐다가 그린 뒤 되돌린다.
@@ -1456,17 +1456,73 @@ const thirdOn = () => !topOn() && (viewPref && viewPref !== "top" ? viewPref ===
    · 지붕 아래로 들어가거나 건물 뒤에 가려지면 머리 위쪽을 잘라 내어 안이 보이게 한다
    · 화면을 일부러 거칠게(세로 약 300줄) 그린다. 그만큼 휴대폰에서 가볍다
    휴대폰은 이 시점이 기본, 컴퓨터는 설정이나 V 키로 고른다. 활쏘기 · 숨어 가기 장면에서는 잠깐 원래 시점으로 돌아간다. */
-const TOP = { active: false, fov: 29, h: 10, back: 8.6, rows: 240, backCur: 8.6, steep: false, clip: false, tick: 0, plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), 0), goal: null, mark: null, v: new THREE.Vector3(), d: new THREE.Vector3() };
+const TOP = { active: false, fov: 29, h: 10, back: 8.6, rows: 200, backCur: 8.6, steep: false, clip: false, tick: 0, plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), 0), goal: null, mark: null, v: new THREE.Vector3(), d: new THREE.Vector3() };
 function topOn() { return !!(THEME && THEME.topView) && !BATTLE && !SNEAK && (viewPref ? viewPref === "top" : isTouch); }
 const TOP_GUIDE = () => (isTouch ? "조이스틱을 밀거나 가고 싶은 곳을 눌러 걷기 · 물건을 누르면 조사" : "WASD · 방향키나 가고 싶은 곳을 클릭해 걷기 · 물건을 클릭하거나 E로 조사 · Tab 가방 · H 힌트 · V 시점");
-const topDpr = () => Math.min(BASE_DPR, TOP.rows / innerHeight);
+/* 화면 느낌 (내려다보기 전용, 설정에서 고름 · 이 기기에 기억)
+   dot   도트: 세로 약 200줄로 그린 뒤 색을 줄이고(채널마다 6단계 + 무늬 섞기) 물체 둘레에 어두운 선을 넣는다. 화면 점 하나가 기기 화소의 정수 배가 되게 맞춘다
+   sharp 선명: 기기 해상도(최대 2배)로 또렷하게. 느리면 자동으로 낮춘다 */
+const TOPSTYLE_KEY = "hk-topstyle";
+let topStyle = (() => { try { return localStorage.getItem(TOPSTYLE_KEY) === "sharp" ? "sharp" : "dot"; } catch (er) { return "dot"; } })();
+const dotOn = () => TOP.active && topStyle === "dot";
+const topDpr = () => (topStyle === "dot" ? devicePixelRatio / Math.max(1, Math.round((innerHeight * devicePixelRatio) / TOP.rows)) : Math.min(devicePixelRatio, 2) * dprScale);
+function setTopStyle(v) {
+  topStyle = v; try { localStorage.setItem(TOPSTYLE_KEY, v); } catch (er) {}
+  document.body.classList.toggle("dot", dotOn());
+  if (TOP.active) { renderer.setPixelRatio(topDpr()); composer?.setPixelRatio?.(topDpr()); }
+}
+const DOT = { rt: null, scene: null, cam: null, mat: null, size: new THREE.Vector2() };
+function dotRender() {   // 장면을 작은 그림으로 그린 뒤, 색 줄이기 · 테두리 선을 입혀 화면에 옮긴다
+  renderer.getDrawingBufferSize(DOT.size);
+  const w = DOT.size.x, h = DOT.size.y;
+  if (!DOT.rt || DOT.rt.width !== w || DOT.rt.height !== h) {
+    DOT.rt?.dispose(); DOT.rt?.depthTexture?.dispose();
+    const float = renderer.capabilities.isWebGL2 && renderer.extensions.has("EXT_color_buffer_float");
+    DOT.rt = new THREE.WebGLRenderTarget(w, h, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, type: float ? THREE.HalfFloatType : THREE.UnsignedByteType, depthBuffer: true });
+    DOT.rt.depthTexture = new THREE.DepthTexture(w, h); DOT.rt.depthTexture.minFilter = DOT.rt.depthTexture.magFilter = THREE.NearestFilter;
+    if (!DOT.mat) {
+      DOT.mat = new THREE.ShaderMaterial({
+        uniforms: { tC: { value: null }, tD: { value: null }, px: { value: new THREE.Vector2() }, near: { value: 0.05 }, far: { value: 300 }, levels: { value: 7 } },
+        depthTest: false, depthWrite: false,
+        vertexShader: "varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }",
+        fragmentShader: `
+          uniform sampler2D tC; uniform sampler2D tD; uniform vec2 px; uniform float near; uniform float far; uniform float levels; varying vec2 vUv;
+          float lin(vec2 uv){ float n = texture2D(tD, uv).x * 2.0 - 1.0; return 2.0 * near * far / (far + near - n * (far - near)); }
+          float bayer(vec2 p){ vec2 q = floor(mod(p, 4.0)); float i = q.x + q.y * 4.0;
+            float m = i < 0.5 ? 0.0 : i < 1.5 ? 8.0 : i < 2.5 ? 2.0 : i < 3.5 ? 10.0 : i < 4.5 ? 12.0 : i < 5.5 ? 4.0 : i < 6.5 ? 14.0 : i < 7.5 ? 6.0 : i < 8.5 ? 3.0 : i < 9.5 ? 11.0 : i < 10.5 ? 1.0 : i < 11.5 ? 9.0 : i < 12.5 ? 15.0 : i < 13.5 ? 7.0 : i < 14.5 ? 13.0 : 5.0;
+            return (m + 0.5) / 16.0 - 0.5; }
+          void main(){
+            vec3 c = texture2D(tC, vUv).rgb;
+            float d = lin(vUv);
+            float m = min(min(lin(vUv + vec2(px.x, 0.0)), lin(vUv - vec2(px.x, 0.0))), min(lin(vUv + vec2(0.0, px.y)), lin(vUv - vec2(0.0, px.y))));
+            float edge = step(max(0.16, d * 0.014), d - m);   // 바로 옆에 더 가까운 물체가 있다 = 그 물체의 둘레
+            c *= mix(1.0, 0.28, edge);
+            gl_FragColor = vec4(c, 1.0);
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
+            vec3 q = gl_FragColor.rgb;
+            float g = dot(q, vec3(0.299, 0.587, 0.114)); q = mix(vec3(g), q, 1.18);   // 색을 조금 진하게
+            q = floor(q * (levels - 1.0) + 0.5 + bayer(gl_FragCoord.xy) * 0.4) / (levels - 1.0);
+            gl_FragColor.rgb = clamp(q, 0.0, 1.0);
+          }`,
+      });
+      DOT.scene = new THREE.Scene(); DOT.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+      const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), DOT.mat); quad.frustumCulled = false; DOT.scene.add(quad);
+    }
+  }
+  renderer.setRenderTarget(DOT.rt); renderer.render(scene, camera); renderer.setRenderTarget(null);
+  const u = DOT.mat.uniforms; u.tC.value = DOT.rt.texture; u.tD.value = DOT.rt.depthTexture; u.px.value.set(1 / w, 1 / h); u.near.value = camera.near; u.far.value = camera.far;
+  const cp = renderer.clippingPlanes; renderer.clippingPlanes = [];
+  renderer.render(DOT.scene, DOT.cam);
+  renderer.clippingPlanes = cp;
+}
 function topSync() {   // 시점이 바뀌는 순간에 한 번: 화각 · 해상도 · 안내 글
   const on = topOn() && !!S;
   if (on === TOP.active) return;
   TOP.active = on; TOP.goal = null; TOP.clip = false; renderer.clippingPlanes = [];
   camera.fov = on ? TOP.fov : 70; camera.updateProjectionMatrix();
   const r = on ? topDpr() : BASE_DPR * dprScale; renderer.setPixelRatio(r); composer?.setPixelRatio?.(r);
-  document.body.classList.toggle("topview", on);
+  document.body.classList.toggle("topview", on); document.body.classList.toggle("dot", dotOn());
   if (TOP.mark) TOP.mark.visible = false;
   if (on) {
     if (document.pointerLockElement) document.exitPointerLock();
@@ -1879,7 +1935,7 @@ function frame(dt) {
   if (top) { if (++TOP.tick % 8 === 0) topClip(); topApply(); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); }
   else if (renderer.clippingPlanes.length) renderer.clippingPlanes = [];
   if (tp) { tpApply(++TP.tick % 2 === 0); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); } else TP.cur = 0.5;
-  if (composer) composer.render(dt); else renderer.render(scene, camera);
+  if (top && topStyle === "dot") dotRender(); else if (composer) composer.render(dt); else renderer.render(scene, camera);
   if (tp || top) tpRestore();
 }
 
@@ -2378,6 +2434,10 @@ function openSettings() {
   if ($("admin-pres")) presShow($("admin-pres"));
   if ($("admin-go")) $("admin-go").onclick = (e) => { const b = e.target.closest("button"); if (b) adminGo(+b.dataset.c); };
   $("view-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; setView(b.dataset.w); openSettings(); };
+  if (topOn()) {
+    $("view-sel").insertAdjacentHTML("afterend", `<h3 style="margin:16px 0 8px">화면 느낌 <span class="note">(내려다보기)</span></h3><div class="choices grid2" id="style-sel">${[["dot", "도트", "옛 게임기처럼 굵은 점으로"], ["sharp", "선명", "또렷하고 매끈하게"]].map(([k, t, d]) => `<button data-s="${k}"><b>${topStyle === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>`);
+    $("style-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; setTopStyle(b.dataset.s); openSettings(); };
+  }
   $("voice-sel").onclick = (e) => { const b = e.target.closest("button"); if (!b) return; AU.voice = b.dataset.v; saveSound(); if (AU.voice === "tts") try { speechSynthesis.getVoices(); } catch (er) {} openSettings(); };
   $("gfx").onclick = (e) => {
     const b = e.target.closest("button"); if (!b) return;
@@ -2942,6 +3002,6 @@ window.__game = {
   info: () => { renderer.info.autoReset = false; renderer.info.reset(); frame(1 / 60); const r = { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs?.length, geos: renderer.info.memory.geometries, texs: renderer.info.memory.textures }; renderer.info.autoReset = true; return r; },   // 검사용: 한 프레임(그림자 · 후처리 포함)의 그리기 수 · 삼각형 수
   sky: () => ({ hdri: hdriSky.visible, sun: skyU.sun.value.toArray().map((v) => +v.toFixed(2)), exp: renderer.toneMappingExposure, flip: hdriSky.scale.y }),
   run: (on) => { running = on; },
-  TOP, scene, overhead: () => overhead,
+  TOP, scene, overhead: () => overhead, setTopStyle,
   teleport: (x, z, y, p = 0) => { targetPos.x = x; targetPos.z = z; camera.position.x = x; camera.position.z = z; targetYaw = yaw = y; pitch = p; feet = WORLD.groundAt(x, z); vy = 0; },
 };
