@@ -848,6 +848,7 @@ export default {
   hero: { robe: 0x4a6a8a, kid: true },
   seal: "音",
   saveKey: "sound-v1",
+  topView: true,   // 내려다보기 시점(시험판)을 고를 수 있다. 휴대폰에서는 기본
   title: "말과 글이 달라서",
   startLabel: "책 속으로",
   nextLabel: "낡은 책의 다음 장이 넘어갔다.",

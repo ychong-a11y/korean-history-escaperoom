@@ -637,3 +637,8 @@ body { word-break: keep-all; overflow-wrap: break-word; }
   .timeline li { padding-left: 0; text-indent: 0; }
   .timeline li b.y { display: block; min-width: 0; margin-bottom: 2px; }
 }
+
+/* ── 내려다보기 시점 (시험판): 거칠게 그린 화면을 또렷한 네모 점으로 키운다. 겨눔 표시 · 마우스 안내는 쓰지 않는다 ── */
+body.topview #view canvas { image-rendering: pixelated; }
+body.topview #cross, body.topview #lockhint { display: none !important; }
+@media (pointer: fine) { body.topview.playing #use-tip { display: block !important; right: auto; left: 50%; bottom: 56px; transform: translateX(-50%); max-width: 60vw; font-size: 14px; padding: 8px 12px; } }

@@ -1064,6 +1064,7 @@ function jar(x, z, s = 1) { const g = group(x, 0, z); g.scale.setScalar(s); cons
 /* ================================================================
    4. 조작 (마우스 잠금 · 끌기 · 이동 · 점프)
    ================================================================ */
+let overhead = [];   // 내려다보기: 머리 위를 가리는 것(지붕 · 나뭇잎까지 모두)
 let clickable = [], blockers = [], camBlock = [];   // camBlock: 3인칭 카메라가 뚫고 지나가면 안 되는 것 (사람은 뺀다)
 let WORLD = { blocked: () => false, groundAt: () => 0 };
 let feet = 0, vy = 0;   // 발 높이와 위아래 속도 (점프·낙하)
@@ -1078,21 +1079,23 @@ const REACH = 3.2;
 
 function tag(obj, id, label) { obj.traverse((m) => { if (m.isMesh) { m.userData.objId = id; m.userData.label = label; } }); }
 function collectClickables() {
-  clickable = []; blockers = [];
-  ROOT.traverse((m) => { if (!m.isMesh || m.userData.noPick) return; (m.userData.objId ? clickable : blockers).push(m); });
+  clickable = []; blockers = []; overhead = [];
+  ROOT.traverse((m) => { if (m.isMesh && m.visible && !personOf(m)) overhead.push(m); if (!m.isMesh || m.userData.noPick) return; (m.userData.objId ? clickable : blockers).push(m); });
   camBlock = [...blockers, ...clickable.filter((m) => { for (let o = m; o; o = o.parent) if (o.userData && o.userData.person) return false; return true; })];
 }
 function pick(cx, cy) {
-  const tp = thirdOn() && document.body.classList.contains("playing"); if (tp) tpApply(false);
+  const top = TOP.active && document.body.classList.contains("playing");
+  const tp = !top && thirdOn() && document.body.classList.contains("playing"); if (tp) tpApply(false); if (top) topApply();
   ndc.set((cx / innerWidth) * 2 - 1, -(cy / innerHeight) * 2 + 1);
   ray.setFromCamera(ndc, camera);
-  const hit = ray.intersectObjects([...clickable, ...blockers], false)[0];
-  if (tp) tpRestore();
+  const hits = ray.intersectObjects([...clickable, ...blockers], false);
+  const hit = top && TOP.clip ? hits.find((h) => h.point.y <= TOP.plane.constant + 0.02) : hits[0];
+  if (tp || top) tpRestore();
   lastHit = hit || null;
   if (!hit || !hit.object.userData.objId || hit.distance > 150) { lastPickFar = false; return null; }
   const id = hit.object.userData.objId;
   // 3인칭에서는 내 몸(눈 자리)에서 물건까지의 거리로 잰다. 등 뒤 카메라만큼 멀어 보이므로 조금 넉넉하게.
-  lastPickFar = (tp ? hit.point.distanceTo(camera.position) - 0.5 : hit.distance) > (CH.reach?.(id) ?? REACH);
+  lastPickFar = (top ? Math.hypot(hit.point.x - camera.position.x, hit.point.z - camera.position.z) : tp ? hit.point.distanceTo(camera.position) - 0.5 : hit.distance) > (CH.reach?.(id) ?? REACH);
   return hit.object;
 }
 function setHover(m) {
@@ -1178,7 +1181,7 @@ function updateAim() {
 // Esc 직후에는 브라우저가 1초쯤 다시 고정을 막는데, 이때는 끌기 모드로 바꾸지 않고 "클릭하면 다시 둘러보기" 안내만 띄운다.
 let lockFailed = false, lockWorked = false;
 function requestLock() {
-  if (isTouch || lockFailed || inputLocked || window.__watching) return;   // __watching: 개발용 자동 풀이 보기 중에는 마우스를 잡지 않는다
+  if (isTouch || lockFailed || inputLocked || window.__watching || TOP.active) return;   // __watching: 개발용 자동 풀이 보기 중에는 마우스를 잡지 않는다
   try { const p = renderer.domElement.requestPointerLock(); if (p && p.catch) p.catch(lockFail); } catch (e) { lockFail(); }
   setTimeout(() => { if (!locked() && !inputLocked && !document.hidden) lockFail(); }, 800);
 }
@@ -1191,7 +1194,7 @@ function lockFail() {
 }
 document.addEventListener("pointerlockerror", lockFail);
 renderer.domElement.addEventListener("click", () => {
-  if (inputLocked || isTouch || lockFailed || window.__watching) return;
+  if (inputLocked || isTouch || lockFailed || window.__watching || TOP.active) return;
   if (!locked()) { requestLock(); return; }
   if (BATTLE) return battleShoot(innerWidth / 2, innerHeight / 2);
   tryInteract(pick(innerWidth / 2, innerHeight / 2));
@@ -1216,7 +1219,7 @@ document.addEventListener("mousemove", (e) => {
   pitch = Math.max(-1.2, Math.min(1.0, pitch - e.movementY * k));
 });
 renderer.domElement.addEventListener("pointerdown", (e) => {
-  if (inputLocked || (e.pointerType === "mouse" && !lockFailed)) return;
+  if (inputLocked || (e.pointerType === "mouse" && !lockFailed && !TOP.active)) return;
   if (drag) return;
   drag = { id: e.pointerId, x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, moved: false };
   renderer.domElement.setPointerCapture(e.pointerId);
@@ -1224,6 +1227,7 @@ renderer.domElement.addEventListener("pointerdown", (e) => {
 renderer.domElement.addEventListener("pointermove", (e) => {
   if (!drag || drag.id !== e.pointerId || inputLocked) return;
   if (Math.abs(e.clientX - drag.sx) + Math.abs(e.clientY - drag.sy) > 8) drag.moved = true;
+  if (TOP.active) return;
   targetYaw += (e.clientX - drag.x) * 0.004 * sens;
   pitch = Math.max(-1.2, Math.min(1.0, pitch + (e.clientY - drag.y) * 0.003 * sens));
   drag.x = e.clientX; drag.y = e.clientY;
@@ -1232,7 +1236,11 @@ renderer.domElement.addEventListener("pointercancel", (e) => { if (drag && drag.
 renderer.domElement.addEventListener("pointerup", (e) => {
   if (!drag || drag.id !== e.pointerId) return;
   const tap = !drag.moved; drag = null;
-  if (tap && !inputLocked) { if (BATTLE) battleShoot(e.clientX, e.clientY); else tryInteract(pick(e.clientX, e.clientY)); }
+  if (tap && !inputLocked) {
+    if (BATTLE) battleShoot(e.clientX, e.clientY);
+    else if (TOP.active) { const m = pick(e.clientX, e.clientY); if (m && !lastPickFar) { TOP.goal = null; tryInteract(m); } else if (lastHit) topGo(lastHit.point, m); }
+    else tryInteract(pick(e.clientX, e.clientY));
+  }
 });
 
 function walk(forward, side) {
@@ -1319,9 +1327,9 @@ $("btn-use").addEventListener("pointerdown", (e) => { e.preventDefault(); useAct
 const NEAR_V = new THREE.Vector3();
 function shown(o) { for (; o; o = o.parent) if (o.visible === false) return false; return true; }
 function findNear() {
-  const m = pick(innerWidth / 2, innerHeight / 2);
+  const top = TOP.active, m = top ? null : pick(innerWidth / 2, innerHeight / 2);
   if (m && !lastPickFar) return m;
-  const ex = camera.position.x, ez = camera.position.z, fx = -Math.sin(yaw), fz = -Math.cos(yaw);
+  const fy = top ? heroYaw : yaw, ex = camera.position.x, ez = camera.position.z, fx = -Math.sin(fy), fz = -Math.cos(fy);
   let best = null, bs = 1e9, bp = null, bd = 0;
   for (const c of clickable) {
     if (!shown(c)) continue;
@@ -1332,7 +1340,7 @@ function findNear() {
     const dx = NEAR_V.x - ex, dz = NEAR_V.z - ez, dist = Math.hypot(dx, dz), d = Math.max(0, dist - rad);
     if (d > (CH.reach?.(c.userData.objId) ?? REACH)) continue;
     const cos = dist > 0.01 ? (dx * fx + dz * fz) / dist : 1;
-    if (cos < 0.2 && d > 0.6) continue;   // 등 뒤의 것은 고르지 않는다
+    if (top ? cos < -0.3 && d > 1.2 : cos < 0.2 && d > 0.6) continue;   // 등 뒤의 것은 고르지 않는다 (내려다보기는 옆까지 넉넉하게)
     const sc = d + (1 - cos) * 1.6;
     if (sc < bs) { bs = sc; best = c; bp = NEAR_V.clone(); bd = d; }
   }
@@ -1389,7 +1397,7 @@ addEventListener("keydown", (e) => {
   if (!inputLocked && S && /^[1-9]$/.test(e.key)) { const k = S.inv.filter((x) => !S.used.includes(x))[+e.key - 1]; if (k) hold(k); return; }
   if (ADMIN_SOLO && !e.repeat && e.code === "KeyR") { adminSwap(); return; }
   if (ADMIN && !e.repeat && e.code === "KeyN") { adminNext(); return; }
-  if (!e.repeat && e.code === "KeyV" && S && !inputLocked) { setView(thirdOn() ? "first" : "third"); return; }
+  if (!e.repeat && e.code === "KeyV" && S && !inputLocked) { setView(TOP.active ? "third" : thirdOn() ? "first" : THEME && THEME.topView ? "top" : "third"); return; }
   if (!e.repeat && S && !inputLocked && document.body.classList.contains("playing")) {
     if (e.code === "KeyH") { openHint(); return; }
     if (e.code === "KeyJ") { openJourney(); return; }
@@ -1417,7 +1425,7 @@ function setupComposer() {
   composer.addPass(new OutputPass());
 }
 setupComposer();
-addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); renderer.setSize(innerWidth, innerHeight); composer?.setSize(innerWidth, innerHeight); });
+addEventListener("resize", () => { camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); if (TOP.active) { renderer.setPixelRatio(topDpr()); composer?.setPixelRatio?.(topDpr()); } renderer.setSize(innerWidth, innerHeight); composer?.setSize(innerWidth, innerHeight); });
 
 let lastT = performance.now(), bob = 0, CH = { interact() {} }, ELAPSED_T = 0;
 let fpsFrames = 0, fpsTime = 0, frameNo = 0;
@@ -1432,7 +1440,7 @@ function animate() {
     const old = dprScale;
     if (fps < 42 && dprScale > 0.55) dprScale = Math.max(0.55, dprScale * 0.85);
     else if (fps > 57 && dprScale < 1) dprScale = Math.min(1, dprScale * 1.1);
-    if (old !== dprScale) { renderer.setPixelRatio(BASE_DPR * dprScale); composer?.setPixelRatio?.(BASE_DPR * dprScale); }
+    if (old !== dprScale && !TOP.active) { renderer.setPixelRatio(BASE_DPR * dprScale); composer?.setPixelRatio?.(BASE_DPR * dprScale); }
   }
 }
 /* ── 3인칭 시점 ── 눈 자리(camera.position)는 예전 그대로 두고, 그리기 직전에만 카메라를 등 뒤로 뺐다가 그린 뒤 되돌린다.
@@ -1440,7 +1448,78 @@ function animate() {
    기본 시점: 테마에 hero 가 있으면 3인칭, 없으면 1인칭. V 키나 설정에서 바꾸면 이 기기에 기억된다. */
 const VIEW_KEY = "hk-view";
 let viewPref = (() => { try { return localStorage.getItem(VIEW_KEY); } catch (er) { return null; } })();
-const thirdOn = () => (viewPref ? viewPref === "third" : !!(THEME && THEME.hero)) && !CH.firstPerson;
+const thirdOn = () => !topOn() && (viewPref && viewPref !== "top" ? viewPref === "third" : !!(THEME && THEME.hero)) && !CH.firstPerson;
+/* ── 내려다보기 시점 (시험판) ── 옛 게임기 놀이처럼 위에서 비스듬히 내려다본다. 테마에 topView: true 가 있을 때만 고를 수 있다.
+   3인칭과 같은 방식이라(그리기 직전에만 카메라를 옮김) 충돌 · 거리 · 퍼즐은 그대로다. 달라지는 것:
+   · 둘러보기가 없다. 조이스틱 · 방향키는 화면 방향 그대로(위 = 북쪽) 여덟 방향으로 걷는다
+   · 땅이나 물건을 누르면 그쪽으로 걸어가고, 물건에 닿으면 조사한다
+   · 지붕 아래로 들어가거나 건물 뒤에 가려지면 머리 위쪽을 잘라 내어 안이 보이게 한다
+   · 화면을 일부러 거칠게(세로 약 300줄) 그린다. 그만큼 휴대폰에서 가볍다
+   휴대폰은 이 시점이 기본, 컴퓨터는 설정이나 V 키로 고른다. 활쏘기 · 숨어 가기 장면에서는 잠깐 원래 시점으로 돌아간다. */
+const TOP = { active: false, fov: 29, h: 10, back: 8.6, rows: 240, backCur: 8.6, steep: false, clip: false, tick: 0, plane: new THREE.Plane(new THREE.Vector3(0, -1, 0), 0), goal: null, mark: null, v: new THREE.Vector3(), d: new THREE.Vector3() };
+function topOn() { return !!(THEME && THEME.topView) && !BATTLE && !SNEAK && (viewPref ? viewPref === "top" : isTouch); }
+const TOP_GUIDE = () => (isTouch ? "조이스틱을 밀거나 가고 싶은 곳을 눌러 걷기 · 물건을 누르면 조사" : "WASD · 방향키나 가고 싶은 곳을 클릭해 걷기 · 물건을 클릭하거나 E로 조사 · Tab 가방 · H 힌트 · V 시점");
+const topDpr = () => Math.min(BASE_DPR, TOP.rows / innerHeight);
+function topSync() {   // 시점이 바뀌는 순간에 한 번: 화각 · 해상도 · 안내 글
+  const on = topOn() && !!S;
+  if (on === TOP.active) return;
+  TOP.active = on; TOP.goal = null; TOP.clip = false; renderer.clippingPlanes = [];
+  camera.fov = on ? TOP.fov : 70; camera.updateProjectionMatrix();
+  const r = on ? topDpr() : BASE_DPR * dprScale; renderer.setPixelRatio(r); composer?.setPixelRatio?.(r);
+  document.body.classList.toggle("topview", on);
+  if (TOP.mark) TOP.mark.visible = false;
+  if (on) {
+    if (document.pointerLockElement) document.exitPointerLock();
+    targetYaw = yaw = 0; pitch = -0.05; tipEl.classList.add("hidden");
+    $("guide").textContent = TOP_GUIDE();
+  }
+}
+function topApply() {   // 카메라를 머리 위 남쪽으로. 북쪽이 화면 위
+  TP.eye.copy(camera.position); TP.quat.copy(camera.quaternion);
+  TOP.backCur += ((TOP.steep ? 2.4 : TOP.back) - TOP.backCur) * 0.1;   // 잘라 내고도 벽에 가려지면 머리 위로 올라가 내려다본다
+  const D = Math.hypot(TOP.h, TOP.back);
+  camera.position.set(TP.eye.x, feet + Math.sqrt(D * D - TOP.backCur * TOP.backCur), TP.eye.z + TOP.backCur);
+  camera.lookAt(TP.eye.x, feet + 0.9, TP.eye.z);
+  camera.updateMatrixWorld(); TP.on = true;
+}
+function topClip() {   // 지붕 아래에 있거나 건물에 가려졌으면 머리 위를 잘라 낸다 (가끔만 잰다)
+  // 광선은 겉면에서만 걸리므로, 아래에서 위로가 아니라 위에서 아래로 · 카메라에서 주인공 쪽으로 쏜다
+  const px = camera.position.x, pz = camera.position.z, cut = feet + 2.7;
+  TOP.v.set(px, feet + 16, pz); TOP.d.set(0, -1, 0);
+  ray.set(TOP.v, TOP.d); ray.far = 16 - 2.0; let hit = ray.intersectObjects(overhead, false)[0];
+  TOP.v.set(px, feet + TOP.h, pz + TOP.back); TOP.d.set(0, 1.2 - TOP.h, -TOP.back); const len = TOP.d.length(); TOP.d.divideScalar(len);
+  ray.set(TOP.v, TOP.d); ray.far = len - 0.6; const sight = ray.intersectObjects(overhead, false);
+  if (!hit) hit = sight.find((h) => h.point.y > cut);
+  // 잘라도 남는 벽이 몸을 가리는지: 무릎 높이로 한 번 더 잰다
+  TOP.d.set(0, 0.4 - TOP.h, -TOP.back); const len2 = TOP.d.length(); TOP.d.divideScalar(len2);
+  ray.set(TOP.v, TOP.d); ray.far = len2 - 0.6;
+  TOP.steep = [...sight, ...ray.intersectObjects(overhead, false)].some((h) => h.point.y <= cut && h.point.y > feet + 0.9);
+  ray.far = Infinity;
+  TOP.clip = !!hit; TOP.plane.constant = cut;
+  renderer.clippingPlanes = TOP.clip ? [TOP.plane] : [];
+}
+function topGo(p, m) {   // 누른 곳으로 걸어간다. m: 닿으면 조사할 물건
+  TOP.goal = { x: p.x, z: p.z, m: m || null, pt: p.clone(), best: 1e9, wait: 0 };
+  if (!TOP.mark) {
+    TOP.mark = new THREE.Mesh(new THREE.RingGeometry(0.16, 0.26, 20), new THREE.MeshBasicMaterial({ color: 0xa3281f, transparent: true, opacity: 0.85, depthTest: false }));
+    TOP.mark.rotation.x = -Math.PI / 2; TOP.mark.renderOrder = 9; TOP.mark.userData.noPick = true; scene.add(TOP.mark);
+  }
+  TOP.mark.position.set(p.x, WORLD.groundAt(p.x, p.z) + 0.05, p.z); TOP.mark.visible = !m;
+}
+function topWalk() {   // 한 프레임치 방향을 돌려준다 [앞(북), 옆(동)] 또는 null
+  const g = TOP.goal; if (!g) return null;
+  const dx = g.x - targetPos.x, dz = g.z - targetPos.z, dist = Math.hypot(dx, dz);
+  if (g.m && dist <= (CH.reach?.(g.m.userData.objId) ?? REACH) - 0.5) {
+    TOP.goal = null; TOP.mark.visible = false; lastPickFar = false; lastHit = { object: g.m, point: g.pt, distance: dist }; tryInteract(g.m); return null;
+  }
+  if (dist < 0.25) { TOP.goal = null; TOP.mark.visible = false; return null; }
+  if (dist < g.best - 0.004) { g.best = dist; g.wait = 0; } else if (++g.wait > 28) {   // 벽에 막혀 더 못 간다
+    const m = g.m; TOP.goal = null; TOP.mark.visible = false;
+    if (m) { lastPickFar = dist > (CH.reach?.(m.userData.objId) ?? REACH) + 0.6; lastHit = { object: m, point: g.pt, distance: dist }; tryInteract(m); }
+    return null;
+  }
+  return [-dz / dist, dx / dist];
+}
 const TP = { dist: 3.4, cur: 3.4, eye: new THREE.Vector3(), quat: new THREE.Quaternion(), on: false, back: new THREE.Vector3(), pivot: new THREE.Vector3(), tick: 0, clear: 3.4, v: new THREE.Vector3(), d: new THREE.Vector3(), side: new THREE.Vector3() };
 function tpApply(measure) {   // 카메라를 등 뒤로. measure: 벽 · 천장에 걸리는지 다시 잰다
   TP.eye.copy(camera.position); TP.quat.copy(camera.quaternion);
@@ -1470,7 +1549,7 @@ function tpApply(measure) {   // 카메라를 등 뒤로. measure: 벽 · 천장
   camera.updateMatrixWorld(); TP.on = true;
 }
 function tpRestore() { if (!TP.on) return; camera.position.copy(TP.eye); camera.quaternion.copy(TP.quat); camera.updateMatrixWorld(); TP.on = false; }
-function setView(v) { viewPref = v; try { localStorage.setItem(VIEW_KEY, v); } catch (er) {} toast(v === "third" ? "3인칭 시점 (V 키로 바꾸기)" : "1인칭 시점 (V 키로 바꾸기)", 1800); }
+function setView(v) { viewPref = v; try { localStorage.setItem(VIEW_KEY, v); } catch (er) {} toast(v === "top" ? "내려다보기 시점 (시험판)" : v === "third" ? "3인칭 시점 (V 키로 바꾸기)" : "1인칭 시점 (V 키로 바꾸기)", 1800); }
 
 /* 주인공: 팔다리가 따로 움직이는 사람.
    o: robe(윗옷 빛깔 숫자) · helmet(투구와 장화) · kid(아이: 땋은 머리, 작은 키) · old(흰 머리와 수염) · hat(갓)
@@ -1514,7 +1593,7 @@ function buildHero(o = {}) {
 function heroTick(dt, moved, air) {
   const hv = typeof CH.hero === "function" ? CH.hero(A) : CH.hero, want = hv || (THEME && THEME.hero) || {}, key = JSON.stringify(want) + S.ch;
   if (!HERO || key !== heroKey) { buildHero(want); heroKey = key; heroYaw = yaw; }
-  const u = HERO.userData.hero, show = thirdOn() && TP.cur > 0.9 && document.body.classList.contains("playing");
+  const u = HERO.userData.hero, show = (TOP.active || (thirdOn() && TP.cur > 0.9)) && document.body.classList.contains("playing");
   HERO.visible = show; if (!show) return;
   const dx = targetPos.x - HERO.position.x, dz = targetPos.z - HERO.position.z, sp = Math.hypot(dx, dz);
   if (BATTLE) heroYaw = yaw; else if (sp > 0.02 && moved > 0.0015) { let d = Math.atan2(-dx, -dz) - heroYaw; d = ((d + Math.PI) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2) - Math.PI; heroYaw += d * 0.2; }
@@ -1753,7 +1832,13 @@ function incenseDraw() {
 function frame(dt) {
   ELAPSED_T += dt;
   const jOn = Math.hypot(joy.x, joy.y) > 0.18;   // 조이스틱은 살짝 밀면 천천히, 끝까지 밀면 보통 걸음
-  const f = (keys.fwd || 0) - (keys.back || 0) - (jOn ? joy.y : 0), s = (keys.right || 0) - (keys.left || 0) + (jOn ? joy.x : 0);
+  let f = (keys.fwd || 0) - (keys.back || 0) - (jOn ? joy.y : 0), s = (keys.right || 0) - (keys.left || 0) + (jOn ? joy.x : 0);
+  topSync();
+  if (TOP.active) {
+    targetYaw = yaw = 0;
+    if (f || s) { TOP.goal = null; if (TOP.mark) TOP.mark.visible = false; const n = Math.min(1, Math.hypot(f, s)), a = Math.round(Math.atan2(s, f) / (Math.PI / 4)) * (Math.PI / 4); f = Math.cos(a) * n; s = Math.sin(a) * n; }   // 여덟 방향
+    else if (TOP.goal && !inputLocked) { const w = topWalk(); if (w) { f = w[0]; s = w[1]; } }
+  }
   // 걷기 속도 (기본 3.6m/초, Shift를 누르면 달리기 1.8배)
   if (f || s) { const n = Math.hypot(f, s), run = (running ? 1.8 : 1) * (swimming ? 0.5 : 1) * Math.min(1, n * 1.15); walk((f / n) * WALK_FWD * run * dt, (s / n) * WALK_SIDE * run * dt); }
   const bx = camera.position.x, bz = camera.position.z;
@@ -1786,13 +1871,16 @@ function frame(dt) {
   if (QMARKS) for (const sp of QMARKS.children) sp.position.y = sp.userData.y0 + Math.sin(ELAPSED_T * 2.4 + sp.userData.y0) * 0.05;
   if (lantern.intensity > 0) lantern.position.set(camera.position.x, camera.position.y + 0.35, camera.position.z);
   if (++frameNo % 3 === 0) updateAim();
-  if (isTouch && frameNo % 6 === 0) updateUse();
+  if ((isTouch || TOP.active) && frameNo % 6 === 0) updateUse();
   if (autoRun && (inputLocked || !document.body.classList.contains("playing"))) stopAutoRun();
   WATERS.forEach((w) => { w.material.uniforms.time.value += dt * 0.5; });
-  const tp = S && thirdOn() && document.body.classList.contains("playing");
+  const top = TOP.active && document.body.classList.contains("playing");
+  const tp = !top && S && thirdOn() && document.body.classList.contains("playing");
+  if (top) { if (++TOP.tick % 8 === 0) topClip(); topApply(); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); }
+  else if (renderer.clippingPlanes.length) renderer.clippingPlanes = [];
   if (tp) { tpApply(++TP.tick % 2 === 0); sky.position.copy(camera.position); hdriSky.position.copy(camera.position); } else TP.cur = 0.5;
   if (composer) composer.render(dt); else renderer.render(scene, camera);
-  if (tp) tpRestore();
+  if (tp || top) tpRestore();
 }
 
 /* ================================================================
@@ -2277,7 +2365,7 @@ function openSettings() {
     <h3 style="margin:6px 0 6px">소리 <span class="note">(M 키로 켜기/끄기)</span></h3>
     <div style="display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center"><span>음악</span><input type="range" id="vol-music" min="0" max="1" step="0.05" value="${AU.music}"><span>효과음</span><input type="range" id="vol-fx" min="0" max="1" step="0.05" value="${AU.fx}"></div>
     ${ADMIN ? `<h3 style="margin:6px 0 6px">관리자 <span class="note">(이 기기에서만 보여요)</span></h3><p class="note" id="admin-pres" style="margin:0 0 8px">접속자 수를 읽는 중…</p><div class="choices grid2" id="admin-go">${CHAPTERS.map((c, i) => `<button data-c="${i}"><b>${i === S.ch ? "✔ " : ""}제${i + 1}장</b> <span class="note">· ${c.place}</span></button>`).join("")}</div><p class="note" style="margin:8px 0 0">장을 누르면 문제를 풀지 않고 그 장으로 가요. 화면 오른쪽 위의 '다음 장 ▶' 단추${isTouch ? "" : "나 N 키"}로 한 장씩 넘길 수도 있어요.</p>` : ""}
-    <h3 style="margin:18px 0 6px">시점 <span class="note">(V 키로 바꾸기)</span></h3><div class="choices grid2" id="view-sel">${[["third", "3인칭", "내 모습이 보여요"], ["first", "1인칭", "내 눈으로 봐요"]].map(([k, t, d]) => `<button data-w="${k}"><b>${(thirdOn() ? "third" : "first") === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>
+    <h3 style="margin:18px 0 6px">시점 <span class="note">(V 키로 바꾸기)</span></h3><div class="choices grid2" id="view-sel">${[...(THEME && THEME.topView ? [["top", "내려다보기", "옛 게임기처럼 위에서 (시험판)"]] : []), ["third", "3인칭", "내 모습이 보여요"], ["first", "1인칭", "내 눈으로 봐요"]].map(([k, t, d]) => `<button data-w="${k}"><b>${(topOn() ? "top" : thirdOn() ? "third" : "first") === k ? "✔ " : ""}${t}</b> <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">인물 목소리</h3><div class="choices grid2" id="voice-sel">${[["mumble", "웅얼웅얼", "말하는 느낌의 소리"], ...(window.speechSynthesis ? [["tts", "읽어 주기", "기기의 한국어 음성"]] : []), ["off", "끄기", "글만 보기"]].map(([k, t, d]) => `<button data-v="${k}" style="${AU.voice === k ? "border-color:var(--ink);font-weight:700" : ""}">${AU.voice === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     <h3 style="margin:18px 0 6px">그래픽</h3><div class="choices" id="gfx">${[["high", "높음", "선명한 물 반사 · 구석 그림자 · 빛번짐 (좋은 컴퓨터)"], ["mid", "보통 (추천)", "물 반사 · 그림자"], ["low", "가볍게", "느린 컴퓨터 · 휴대폰"]].map(([k, t, d]) => `<button data-g="${k}" style="${GFX.level === k ? "border-color:var(--ink);font-weight:700" : ""}">${GFX.level === k ? "✔ " : ""}${t} <span class="note">· ${d}</span></button>`).join("")}</div>
     ${`<h3 style="margin:18px 0 6px">${isTouch ? "화면 돌리는 감도" : "마우스 감도"}</h3><div style="display:flex;gap:10px;align-items:center"><span class="note">느리게</span><input type="range" id="sens" min="0.3" max="2.5" step="0.1" value="${sens}" style="flex:1"><span class="note">빠르게</span><b id="sens-v" style="min-width:34px;text-align:right">${sens.toFixed(1)}</b></div>
@@ -2418,7 +2506,7 @@ function showHUD(on) {
 function play() {
   ["intro", "clear", "ending"].forEach((x) => $(x).classList.add("hidden"));
   showHUD(true); hintBadge(); adminNextChip();
-  $("guide").textContent = isTouch ? "화면을 끌어서 둘러보기 · 조이스틱으로 걷기 (위로 끝까지 밀면 달리기 고정) · 오른쪽 아래 조사 · 점프"
+  $("guide").textContent = topOn() ? TOP_GUIDE() : isTouch ? "화면을 끌어서 둘러보기 · 조이스틱으로 걷기 (위로 끝까지 밀면 달리기 고정) · 오른쪽 아래 조사 · 점프"
     : lockFailed ? "마우스를 끌어서 둘러보기 · WASD 걷기 · Shift 달리기 · Space 점프 · 클릭이나 E로 조사 · Tab 가방 · H 힌트 · F1 단축키"
     : "마우스로 둘러보기 · WASD 걷기 · Shift 달리기 · Space 점프 · 조준점(+)을 맞추고 클릭이나 E로 조사 · Tab 가방 · H 힌트 · F1 단축키";
   $("guide").style.opacity = 0.85;
@@ -2683,7 +2771,14 @@ function buildIntroPages() {
   howto.replaceWith(p1, p2);
   p0.insertAdjacentHTML("beforebegin", `<div class="itabs" id="intro-tabs"><button data-p="0"><i>一</i>이야기</button><button data-p="1"><i>二</i>조작법</button><button data-p="2"><i>三</i>잘 푸는 법</button></div>`);
   let touchView = isTouch;
-  const drawCtl = () => { $("ctl-box").innerHTML = touchView ? CTL_TOUCH : CTL_PC; $("ctl-swap").textContent = touchView ? "컴퓨터 조작법 보기" : "휴대폰 조작법 보기"; };
+  const drawCtl = () => { $("ctl-box").innerHTML = touchView ? CTL_TOUCH : CTL_PC;
+    if (touchView && topOn()) {   // 내려다보기: 둘러보기가 없고, 눌러서 걷는다
+      const li = $("ctl-box").querySelectorAll(".ph-list li");
+      li[0].innerHTML = "<b>걷기</b><span>가고 싶은 곳을 눌러요. 그쪽으로 걸어가요</span>";
+      li[1].innerHTML = "<b>조이스틱</b><span>왼쪽 아래를 밀어도 걸어요. 위로 끝까지 밀었다 떼면 달리기 고정</span>";
+      li[2].innerHTML = "<b>조사하기</b><span>물건을 누르면 다가가서 조사해요. 조사(査) 단추도 돼요</span>";
+      const sw = $("ctl-box").querySelector(".ph-swipe"); if (sw) sw.innerHTML = "<i>●</i>";
+    } $("ctl-swap").textContent = touchView ? "컴퓨터 조작법 보기" : "휴대폰 조작법 보기"; };
   $("ctl-swap").onclick = () => { touchView = !touchView; drawCtl(); };
   drawCtl();
   $("intro-tabs").querySelectorAll("button").forEach((b) => (b.onclick = () => setIntroPage(+b.dataset.p)));
@@ -2713,7 +2808,11 @@ let coachT = null;
 function startCoach() {
   if (coachT || lsGet(COACH_KEY) || S.ch !== 0) return;
   const K = (t, c = "") => `<kbd class="${c}">${t}</kbd>`;
-  const steps = isTouch ? [
+  const steps = topOn() ? [
+    ["一", isTouch ? "왼쪽 아래 <b>조이스틱</b>을 밀거나, 가고 싶은 곳을 <b>눌러</b> 걸어 보세요" : "<b>WASD</b>나 방향키, 또는 가고 싶은 곳을 <b>클릭</b>해 걸어 보세요", "walk"],
+    ["二", isTouch ? "<b>물건을 눌러</b> 조사해 보세요. 가까이에서 <b>조사</b> 단추를 눌러도 돼요" : "<b>물건을 클릭</b>해 조사해 보세요. 가까이에서 <b>E</b>를 눌러도 돼요", "inspect"],
+    ["三", isTouch ? "위쪽 <b>가방</b>을 눌러 소지품을 살펴보세요" : "<b>Tab</b>을 눌러 가방을 열어 보세요", "bag"],
+  ] : isTouch ? [
     ["一", "화면을 <b>끌어서</b> 주위를 둘러보세요", "look"],
     ["二", "왼쪽 아래 <b>조이스틱</b>을 밀어 걸어 보세요", "walk"],
     ["三", "물건에 다가가 <b>조사</b> 단추를 누르거나 물건을 직접 눌러 보세요", "inspect"],
@@ -2843,5 +2942,6 @@ window.__game = {
   info: () => { renderer.info.autoReset = false; renderer.info.reset(); frame(1 / 60); const r = { calls: renderer.info.render.calls, tris: renderer.info.render.triangles, progs: renderer.info.programs?.length, geos: renderer.info.memory.geometries, texs: renderer.info.memory.textures }; renderer.info.autoReset = true; return r; },   // 검사용: 한 프레임(그림자 · 후처리 포함)의 그리기 수 · 삼각형 수
   sky: () => ({ hdri: hdriSky.visible, sun: skyU.sun.value.toArray().map((v) => +v.toFixed(2)), exp: renderer.toneMappingExposure, flip: hdriSky.scale.y }),
   run: (on) => { running = on; },
+  TOP, scene, overhead: () => overhead,
   teleport: (x, z, y, p = 0) => { targetPos.x = x; targetPos.z = z; camera.position.x = x; camera.position.z = z; targetYaw = yaw = y; pitch = p; feet = WORLD.groundAt(x, z); vy = 0; },
 };
